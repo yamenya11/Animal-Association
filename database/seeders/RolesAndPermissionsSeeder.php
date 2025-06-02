@@ -48,6 +48,49 @@ class RolesAndPermissionsSeeder extends Seeder
                 'password' => bcrypt('password'),
             ]);
             $adminUser->assignRole($adminRole);
-        }  
+        }
+        
+        
+        $vetEmail = 'vet@example.com';
+        if (!User::where('email', $vetEmail)->exists()) {
+            $vetUser = User::factory()->create([
+                'name' => 'Vet User',
+                'email' => $vetEmail,
+                'password' => bcrypt('password'),
+            ]);
+            $vetUser->assignRole($vetRole);
+        }
+
+
+
+
+        $doctorEmail ='doctor@example.com';
+        if(!User::Where('email',$doctorEmail)->exists()){
+            $doctorEmail=User::factory()->create([
+                'name'=>'Doctor User',
+                'email'=>$doctorEmail,
+                'passward'=>bcrypt('password'),
+
+
+
+            ]);
+            $doctorEmail->assignRole($doctorRole);
+
+        }
+
+
+        $userEmail ='user@example.com';
+        if(!User::Where('email',$userEmail)->exists()){
+            $userEmail=User::factory()->create([
+                'name'=>'Doctor User',
+                'email'=>$userEmail,
+                'passward'=>bcrypt('password'),
+
+
+
+            ]);
+            $userEmail->assignRole($userRole);
+
+        }
     }
 }
