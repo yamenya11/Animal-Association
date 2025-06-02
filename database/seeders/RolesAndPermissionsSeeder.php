@@ -69,7 +69,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $doctorEmail=User::factory()->create([
                 'name'=>'Doctor User',
                 'email'=>$doctorEmail,
-                'passward'=>bcrypt('password'),
+                'password'=>bcrypt('password'),
 
 
 
@@ -84,7 +84,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $userEmail=User::factory()->create([
                 'name'=>'Doctor User',
                 'email'=>$userEmail,
-                'passward'=>bcrypt('password'),
+                'password'=>bcrypt('password'),
 
 
 
