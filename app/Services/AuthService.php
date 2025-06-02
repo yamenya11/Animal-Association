@@ -42,7 +42,36 @@ class AuthService{
     }
 
 
+function login($request){
+  
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        
+         ]);
+         $user = User::where('email', $request->email)->first();
 
+         if (!$user || !Hash::check($request->password, $user->password)) {
+             throw ValidationException::withMessages([
+                 'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة.'],
+             ]);
+         }
+
+         $token = $user->createToken('auth_token')->plainTextToken;
+    return [
+        'status' => true,
+        'message' => ' التسجيل بنجاح.',
+        'data' => [
+            'user' => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'role'  => $user->getRoleNames()->first(),
+            ],
+            'token' => $token,
+        ],
+    ];
+}
 
 
 
