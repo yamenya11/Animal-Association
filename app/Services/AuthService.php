@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
+use Illuminate\Http\Request;
 class AuthService{
 
     function register ($request): array
@@ -57,6 +58,7 @@ function login($request){
              ]);
          }
 
+         $role = $user->getRoleNames()->first();
          $token = $user->createToken('auth_token')->plainTextToken;
     return [
         'status' => true,
@@ -66,16 +68,27 @@ function login($request){
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
-                'role'  => $user->getRoleNames()->first(),
+                'role'  => $role,
             ],
             'token' => $token,
         ],
     ];
+
+
+
 }
 
 
 
+public function logout(Request $request): array
+{
+    $request->user()->currentAccessToken()->delete();
 
+    return [
+        'status' => true,
+        'message' => 'تم تسجيل الخروج بنجاح.',
+    ];
+}
 
 
 
