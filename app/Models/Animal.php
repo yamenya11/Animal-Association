@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\Adoption;
 class Animal extends Model
 {
     use HasFactory;
@@ -18,4 +18,9 @@ class Animal extends Model
     'image',
     'is_adopted',
 ];
+
+public function adoptions()
+{
+    return $this->hasMany(Adoption::class);
+}
 }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\AnimalService;
 use Illuminate\Http\JsonResponse;
+use App\Services\AdoptionService;
 class AnimalController extends Controller
 {
     
