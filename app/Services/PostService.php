@@ -17,15 +17,20 @@ class PostService
             'image'   => 'nullable|image|max:2048', // اختياري
         ]);
 
-           $data = [
+      if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $file_extension = date('YmdHi') . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('public/images/photo', $file_extension); 
+          
+           }
+     $data = [
             'user_id' => Auth::id(),
             'title'   => $request->title,
             'content' => $request->content,
-            'status'  => 'pending', // بانتظار موافقة المدير
+            'status'  => 'pending', 
+            'image'=>$path
         ];
-
          $post = Post::create($data);
-
         return [
             'status'  => true,
             'message' => 'تم إرسال المنشور بانتظار الموافقة.',

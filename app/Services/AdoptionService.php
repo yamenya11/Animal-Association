@@ -5,7 +5,8 @@ use App\Models\Adoption;
 use Illuminate\Http\Request;
 use  App\Models\Animal;
 use Illuminate\Support\Facades\Auth;
-class AdoptionService {
+class AdoptionService
+ {
      public function createAdoption(Request $request, $userId): array
     {
 

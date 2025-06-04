@@ -6,8 +6,8 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\AnimalController;
 use App\Http\Controllers\API\AdoptionController;
 use App\Http\Controllers\API\PostController;
-
-
+use App\Http\Controllers\API\AnimalCaseController;
+use App\Http\Controllers\API\AppointmentController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -29,3 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts', [PostController::class, 'store']);
    // Route::get('/posts', [PostController::class, 'index']);
 });
+
+Route::middleware('auth:sanctum')->post('/animal-cases', [AnimalCaseController::class, 'store']);
+
+Route::middleware('auth:sanctum')->post('/appointments/request', [AppointmentController::class, 'request']);
+Route::middleware('auth:sanctum')->get('/appointments/pending', [AppointmentController::class, 'pending']);

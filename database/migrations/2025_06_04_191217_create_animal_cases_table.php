@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('comments', function (Blueprint $table) {
+        Schema::create('animal_cases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('post_id')->constrained()->onDelete('cascade');
-            $table->text('content');
+            $table->foreignId('animal_id')->constrained()->onDelete('cascade');
+            $table->string('case_type'); // مثل: مرض، إصابة، متابعة
+            $table->text('description')->nullable();
+            $table->string('image')->nullable(); // صورة توضيحية للحالة
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comments');
+        Schema::dropIfExists('animal_cases');
     }
 };
