@@ -17,6 +17,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
+Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'profile']);
+
 
 Route::get('/animals/available', [AnimalController::class, 'available']);  ///عرض الحيوانات للتبني
 

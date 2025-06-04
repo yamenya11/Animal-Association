@@ -91,7 +91,30 @@ public function logout(Request $request): array
 }
 
 
+public function profile():array
+{
+    $userId = Auth::id();
+    $userData = User::select([
+        'name as user_name',
+        'email as user_email',
+        'wallet_balance',
+        'experience',
+        'region',
+    ])->where('id', $userId)->first();
 
+    if (!$userData) {
+        return [
+            'status' => false,
+            'message' => 'المستخدم غير موجود',
+        ];
+    }
+
+    return [
+        'status' => true,
+        'data' => $userData,
+    ];
+
+}
 
 
 }

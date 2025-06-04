@@ -32,4 +32,11 @@ class AuthController extends Controller
     $response = $this->authService->logout($request);
     return response()->json($response, 200);
 }
+
+ // عرض ملف المستخدم
+    public function profile()
+    {
+        $response = $this->authService->profile();
+        return response()->json($response);
+    }
 }
