@@ -12,6 +12,7 @@ use App\Models\Adoption;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Models\Like;
+use App\Models\VolunteerRequest;
 
 class User extends Authenticatable
 {
@@ -43,6 +44,10 @@ public function comments() {
 
 public function likes() {
     return $this->hasMany(Like::class);
+    }
+
+    public function volinter() {
+    return $this->hasMany(User::class);
     }
     
 

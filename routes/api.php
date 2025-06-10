@@ -8,6 +8,9 @@ use App\Http\Controllers\API\AdoptionController;
 use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\API\AnimalCaseController;
 use App\Http\Controllers\API\AppointmentController;
+use App\Http\Controllers\API\VolunteerController;
+
+use Spatie\Permission\Models\Role;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -15,8 +18,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+//Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/profile', [AuthController::class, 'profile']);
+});
 Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'profile']);
 
 
@@ -35,4 +42,21 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->post('/animal-cases', [AnimalCaseController::class, 'store']);
 
 Route::middleware('auth:sanctum')->post('/appointments/request', [AppointmentController::class, 'request']);
-Route::middleware('auth:sanctum')->get('/appointments/pending', [AppointmentController::class, 'pending']);
+Route::middleware('auth:sanctum')->get('/appointments/pending', [AppointmentController::class, 'pending']); //vet
+
+
+
+Route::middleware('auth:sanctum')->group(function(){
+    // المستخدم يرسل طلب تطوع
+    Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
+
+ 
+});
+
+
+   // المسارات الخاصة بالإدمن فقط
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/volunteer/requests', [VolunteerController::class, 'index']);
+ Route::post('/volunteer/requests/{id}', [VolunteerController::class, 'respond']);
+
+});
