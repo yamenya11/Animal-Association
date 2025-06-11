@@ -18,9 +18,12 @@ return new class extends Migration
             $table->timestamps();
         });
     }
-
+//2025_06_03_204445
     /**
      * Reverse the migrations.
+     * 
+           
+
      */
     public function down(): void
     {
