@@ -26,7 +26,7 @@ class PostStatusUpdated extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+         return ['mail', 'database'];
     }
 
     /**
@@ -46,10 +46,13 @@ class PostStatusUpdated extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toDatabase(object $notifiable): array
     {
-        return [
-            //
+         return [
+            'post_id' => $this->post->id,
+            'title' => $this->post->title,
+            'action' => $this->action,
+            'message' => 'تم ' . ($this->action === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك',
         ];
     }
 }

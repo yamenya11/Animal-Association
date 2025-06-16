@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\PostService;
+use App\Services\AdoptionService;
 use App\Models\Post;
+use App\Models\User;
 class AdminPostController extends Controller
 {
     protected $postService;
-
-    public function __construct(PostService $postService)
-    {
-        $this->postService = $postService;
-    }
+    protected $Adopt;
+   public function __construct(PostService $postService, AdoptionService $Adopt)
+{
+    $this->postService = $postService;
+    $this->Adopt = $Adopt;
+}
 
       public function respond(Request $request, $postId)
     {
@@ -53,5 +56,34 @@ class AdminPostController extends Controller
     ]);
 } 
 
+ // للإدمن: الموافقة / الرفض
+    public function respond_Adopt(Request $request, $id)
+    {
+       
+      // $user=User::Auth();
+        $request->validate([
+           // 'user_id'=>$user,
+            'status' => 'required|in:approved,rejected',
+            
+        ]);
+   
+        $resp= $this->Adopt->accept_Adopt_Admin(
+            $id,
+            $request->status,
+         
+        );
+    //    $result = $this->Adopt->accept_Adopt_Admin($resp);
+        return response()->json($resp);
+    }
+
+    public function getAllAdoptionRequests()
+{
+    $adoptions = $this->Adopt->getAllAdoptions();
+
+    return response()->json([
+        'status' => true,
+        'data' => $adoptions
+    ]);
+}
 
 }

@@ -34,25 +34,25 @@ class AppointmentService
         ];
     }
 
-    public function getPendingAppointments()
-    {
-    return Appointment::select([
-            'appointments.id',
-            'appointments.status',
-            'appointments.scheduled_at',
-            'users.name as name_usre',
-            'users.email as email_user',
-            'animal_cases.case_type',
-            'animal_cases.description',
-            'animals.name as animal_name',
-            'animals.type as animal_type',
-        ])
-        ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
-        ->leftJoin('animal_cases', 'appointments.animal_case_id', '=', 'animal_cases.id')
-        ->leftJoin('animals', 'animal_cases.animal_id', '=', 'animals.id')
-        ->where('appointments.status', 'pending')
-        ->orderBy('appointments.scheduled_at', 'asc')
-        ->get();
-    }
+    // public function getPendingAppointments()
+    // {
+    // return Appointment::select([
+    //         'appointments.id',
+    //         'appointments.status',
+    //         'appointments.scheduled_at',
+    //         'users.name as name_usre',
+    //         'users.email as email_user',
+    //         'animal_cases.case_type',
+    //         'animal_cases.description',
+    //         'animals.name as animal_name',
+    //         'animals.type as animal_type',
+    //     ])
+    //     ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
+    //     ->leftJoin('animal_cases', 'appointments.animal_case_id', '=', 'animal_cases.id')
+    //     ->leftJoin('animals', 'animal_cases.animal_id', '=', 'animals.id')
+    //     ->where('appointments.status', 'pending')
+    //     ->orderBy('appointments.scheduled_at', 'asc')
+    //     ->get();
+    // }
 
 }

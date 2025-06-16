@@ -13,7 +13,7 @@ use App\Models\Post;
 use App\Models\Comment;
 use App\Models\Like;
 use App\Models\VolunteerRequest;
-
+use App\Models\AnimalCase;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
@@ -49,6 +49,10 @@ public function likes() {
     public function volinter() {
     return $this->hasMany(User::class);
     }
+    
+     public function animal_cases() {
+    return $this->hasMany(AnimalCase::class);
+}
     
 
     /**

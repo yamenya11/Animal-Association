@@ -32,9 +32,10 @@ class AdoptionController extends Controller
     public function myAdoptions()
     {
         $userId = Auth::id();
-        $adoptions = $this->adoptionService->getUserAdoptions($userId);
+        $adoptions = $this->adoptionService->getUserAdoptions();
 
         return response()->json([
+            
             'status' => true,
             'data' => $adoptions,
         ]);

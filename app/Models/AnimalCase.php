@@ -10,10 +10,11 @@ class AnimalCase extends Model
 {
     use HasFactory;
      protected $fillable = [
-        'animal_id',
+        'name_animal',
         'case_type',
         'description',
         'image',
+        'user_id'
     ];
 
      public function animal()
@@ -24,4 +25,9 @@ class AnimalCase extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+   public function user()
+{
+    return $this->belongsTo(User::class);
+}
 }
