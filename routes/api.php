@@ -13,6 +13,8 @@ use App\Http\Controllers\AdminPostController;
 use App\Http\Controllers\Post\CommentController;
 use App\Http\Controllers\Post\LikeController;
 use Spatie\Permission\Models\Role;
+use App\Http\Controllers\API\AdminController;
+use App\Http\Controllers\API\EmployeeController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -68,4 +70,40 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/volunteer/requests/{id}', [VolunteerController::class, 'respond']);
     Route::post('/admin/posts/{id}/respond', [AdminPostController::class, 'respond']);
     Route::get('/admin/posts', [AdminPostController::class, 'index']);
+});
+
+// مسارات المدير
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    // إدارة المستخدمين
+    Route::get('/admin/users', [AdminController::class, 'getUsers']);
+    Route::put('/admin/users/{userId}', [AdminController::class, 'updateUser']);
+    Route::delete('/admin/users/{userId}', [AdminController::class, 'deleteUser']);
+
+    // إدارة الخدمات
+    Route::get('/admin/services', [AdminController::class, 'getServices']);
+    Route::post('/admin/services', [AdminController::class, 'addService']);
+    Route::put('/admin/services/{serviceId}', [AdminController::class, 'updateService']);
+    Route::delete('/admin/services/{serviceId}', [AdminController::class, 'deleteService']);
+
+    // التقارير
+    Route::get('/admin/reports/performance', [AdminController::class, 'getPerformanceReport']);
+    Route::get('/admin/reports/daily', [AdminController::class, 'getDailyReport']);
+});
+
+// مسارات الموظف
+Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
+    // إدارة المستخدمين
+    Route::get('/employee/users', [EmployeeController::class, 'getUsers']);
+
+    // إدارة المحتوى
+    Route::get('/employee/content/pending', [EmployeeController::class, 'getPendingContent']);
+    Route::post('/employee/content/{contentId}/approve', [EmployeeController::class, 'approveContent']);
+    Route::post('/employee/content/{contentId}/reject', [EmployeeController::class, 'rejectContent']);
+
+    // التقارير
+    Route::get('/employee/reports/daily', [EmployeeController::class, 'getDailyReport']);
+
+    // التواصل مع المتطوعين
+    Route::get('/employee/volunteers', [EmployeeController::class, 'getVolunteers']);
+    Route::post('/employee/volunteers/{volunteerId}/message', [EmployeeController::class, 'sendMessageToVolunteer']);
 });

@@ -7,16 +7,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Post;
-class PostStatusUpdated extends Notification
+
+class PostStatusUpdated extends Notification implements ShouldQueue
 {
     use Queueable;
 
-   protected $post;
-    protected $action;
-    public function __construct(Post $post, string $action)
+    protected $post;
+    protected $status;
+
+    public function __construct(Post $post, string $status)
     {
-         $this->post = $post;
-        $this->action = $action;
+        $this->post = $post;
+        $this->status = $status;
     }
 
     /**
@@ -24,21 +26,25 @@ class PostStatusUpdated extends Notification
      *
      * @return array<int, string>
      */
-    public function via(object $notifiable): array
+    public function via($notifiable)
     {
-        return ['mail'];
+        return ['database', 'mail'];
     }
 
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail($notifiable)
     {
+        $statusText = $this->status === 'approved' ? 'تمت الموافقة على' : 'تم رفض';
+        
         return (new MailMessage)
-                    ->subject('تم قبول منشورك')
-                    ->greeting('مرحباً ' . $notifiable->name)
-                  ->line('تم ' . ($this->action === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك المعنون بـ: "' . $this->post->title . '"')
-                ->line('شكراً لاستخدامك منصتنا!');
+            ->subject('تحديث حالة المنشور')
+            ->line("مرحباً {$notifiable->name}")
+            ->line("{$statusText} منشورك: {$this->post->title}")
+            ->line($this->post->notes ? "ملاحظات: {$this->post->notes}" : '')
+            ->action('عرض المنشور', url('/posts/' . $this->post->id))
+            ->line('شكراً لاستخدامك منصتنا');
     }
 
     /**
@@ -46,10 +52,13 @@ class PostStatusUpdated extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toArray($notifiable)
     {
         return [
-            //
+            'post_id' => $this->post->id,
+            'post_title' => $this->post->title,
+            'status' => $this->status,
+            'notes' => $this->post->notes
         ];
     }
 }
