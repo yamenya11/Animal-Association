@@ -39,6 +39,13 @@ class PostService
         ];
     }
 
+    function show_post(){
+         return Post::join('users', 'posts.user_id', '=', 'users.id')
+        ->select('posts.content', 'posts.title', 'posts.image', 'users.name', 'users.email', 'posts.status')
+        ->where('posts.status', '!=', 'pending') // هنا نمنع إظهار pending
+        ->get();
+
+    }
  
     public function respondToPost($postId, string $action): array
     {
@@ -51,8 +58,8 @@ class PostService
         ];
     }
 
-    $post->status = $action;
-    $post->save();
+      $post->status = $action;
+      $post->save();
 
     // إرسال الإشعار لصاحب المنشور
     $post->user->notify(new PostStatusUpdated($post, $action));
@@ -78,6 +85,28 @@ class PostService
         }
 
         $comment = $post->comments()->create([
+            'user_id' => Auth::id(),
+            'content' => $content,
+        ]);
+
+        return [
+            'status' => true,
+            'message' => 'تم إضافة التعليق.',
+            'data' => $comment,
+        ];
+    }
+     public function replay_comment($commentId, $content): array
+    {
+        $comment = Comment::where('id', $commentId)->first();
+
+        if (!$comment) {
+            return [
+                'status' => false,
+                'message' => 'التعليق  غير موجود .'
+            ];
+        }
+
+        $reply_comment = $comment->comments()->create([
             'user_id' => Auth::id(),
             'content' => $content,
         ]);

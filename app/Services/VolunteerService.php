@@ -65,8 +65,8 @@ class VolunteerService
                 'message' => 'إجراء غير صالح.',
             ];
         }
-       $vr = VolunteerRequest::find($id);
-    $vr->status = 'approved';
+        $vr = VolunteerRequest::find($id);
+        $vr->status = 'approved';
         $vr->status = $action;
         $vr->notes  = $notes;
         $vr->save();

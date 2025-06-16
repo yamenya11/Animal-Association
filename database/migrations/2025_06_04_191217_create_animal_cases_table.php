@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('animal_cases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('animal_id')->constrained()->onDelete('cascade');
+            $table->String('name_animal');
             $table->string('case_type'); // مثل: مرض، إصابة، متابعة
             $table->text('description')->nullable();
             $table->string('image')->nullable(); // صورة توضيحية للحالة

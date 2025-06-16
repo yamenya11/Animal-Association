@@ -3,13 +3,13 @@ namespace App\Services;
 
 use App\Models\AnimalCase;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 class AnimalCaseService
 {
     public function createCase(Request $request): array
     {
           $validated = $request->validate([
-            'animal_id'  => 'required|exists:animals,id',
+            'name_animal'  => 'required|string|max:255',
             'case_type'  => 'required|string|max:255',
             'description' => 'nullable|string',
             'image'      => 'nullable|image|max:2048', // اختيارية
@@ -24,7 +24,9 @@ class AnimalCaseService
         }
 
          
-         $case = AnimalCase::create($validated);
+         $validated['user_id'] = Auth::id();
+
+        $case = AnimalCase::create($validated);
 
           return [
             'status' => true,
@@ -32,6 +34,14 @@ class AnimalCaseService
             'data' => $case,
             'image_url' => asset('storage/' . $case->image)
         ];
+    }
+
+     public function getAnimalCasesByUser()
+    {
+        return AnimalCase::with('animal')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
     }
 
 }

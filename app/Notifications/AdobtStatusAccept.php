@@ -7,18 +7,17 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-
-class VolunteerRequestApproved extends Notification
+class AdobtStatusAccept extends Notification
 {
     use Queueable;
 
-    
- protected $volunteerRequest;
+    protected $adoptRequest;
 
-   
-    public function __construct($volunteerRequest)
+
+    public function __construct($adoptRequest)
     {
-      $this->volunteerRequest = $volunteerRequest;
+        $this->adoptRequest=$adoptRequest;
+        //
     }
 
     /**
@@ -28,7 +27,7 @@ class VolunteerRequestApproved extends Notification
      */
     public function via(object $notifiable): array
     {
-         return ['mail', 'database'];
+        return ['mail', 'database'];
     }
 
     /**
@@ -37,11 +36,12 @@ class VolunteerRequestApproved extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
+    
         ->from(config('mail.from.address'), config('mail.from.name'))
-            ->subject('تمت الموافقة على طلب التطوع')
-            ->greeting('مرحباً ' . $notifiable->name)
-            ->line('نود إعلامك أنه تمت الموافقة على طلب التطوع الخاص بك.')
-            ->line('شكراً لانضمامك معنا ونتمنى لك تجربة تطوعية مفيدة.');
+        ->subject('تمت الموافقة على طلب التبني')
+        ->greeting('مرحباً ' . $notifiable->name)
+        ->line('نود إعلامك أنه تمت الموافقة على طلب التبني الخاص بك.')
+        ->line('شكراً لانضمامك معنا ونتمنى لك تجربة مفيدة.');
     }
 
     /**
@@ -52,8 +52,8 @@ class VolunteerRequestApproved extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'volunteer_request_id' => $this->volunteerRequest->id ?? null,
-            'message' => 'تمت الموافقة على طلب التطوع الخاص بك',
+            'adoption_id' => $this->adoptRequest->id ?? null,
+            'message' => 'تمت الموافقة على طلب التبني الخاص بك',
         ];
     }
 }

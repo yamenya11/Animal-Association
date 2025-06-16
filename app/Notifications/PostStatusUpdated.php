@@ -28,7 +28,7 @@ class PostStatusUpdated extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        return ['mail'];
     }
 
     /**
@@ -52,13 +52,10 @@ class PostStatusUpdated extends Notification implements ShouldQueue
      *
      * @return array<string, mixed>
      */
-    public function toArray($notifiable)
+    public function toArray(object $notifiable): array
     {
         return [
-            'post_id' => $this->post->id,
-            'post_title' => $this->post->title,
-            'status' => $this->status,
-            'notes' => $this->post->notes
+            //
         ];
     }
 }

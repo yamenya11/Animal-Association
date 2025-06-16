@@ -18,7 +18,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // 1. إنشاء الأدوار
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $vetRole = Role::firstOrCreate(['name' => 'vet']);
-        $doctorRole = Role::firstOrCreate(['name' => 'doctor']);
+       $employeeRole = Role::firstOrCreate(['name' => 'employee']);
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
         // 2. إنشاء الصلاحيات
@@ -38,24 +38,24 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminRole->syncPermissions($permissions);
         $vetRole->syncPermissions(['edit animals', 'create animals', 'view reports']);
         $userRole->syncPermissions(['view reports']);
+        $employeeRole->syncPermissions(['view reports', 'edit animals']); // مثال
+
 
         // 4. إنشاء مدير واحد فقط إذا لم يكن موجودًا
-        $adminEmail = 'admin@example.com';
-        if (!User::where('email', $adminEmail)->exists()) {
+       if (!User::where('email', 'admin@example.com')->exists()) {
             $adminUser = User::factory()->create([
                 'name' => 'Admin User',
-                'email' => $adminEmail,
+                'email' => 'admin@example.com',
                 'password' => bcrypt('password'),
             ]);
             $adminUser->assignRole($adminRole);
         }
         
         
-        $vetEmail = 'vet@example.com';
-        if (!User::where('email', $vetEmail)->exists()) {
+        if (!User::where('email', 'vet@example.com')->exists()) {
             $vetUser = User::factory()->create([
                 'name' => 'Vet User',
-                'email' => $vetEmail,
+                'email' => 'vet@example.com',
                 'password' => bcrypt('password'),
             ]);
             $vetUser->assignRole($vetRole);
@@ -64,33 +64,24 @@ class RolesAndPermissionsSeeder extends Seeder
 
 
 
-        $doctorEmail ='doctor@example.com';
-        if(!User::Where('email',$doctorEmail)->exists()){
-            $doctorEmail=User::factory()->create([
-                'name'=>'Doctor User',
-                'email'=>$doctorEmail,
-                'password'=>bcrypt('password'),
+    if (!User::where('email', 'staff@example.com')->exists()) {
+    $employeeUser = User::factory()->create([
+        'name' => 'Employee User',
+        'email' => 'staff@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $employeeUser->assignRole('employee'); // تأكد أن الدور موجود
+}
 
 
-
+        if (!User::where('email', 'user@example.com')->exists()) {
+            $normalUser = User::factory()->create([
+                'name' => 'Normal User',
+                'email' => 'user@example.com',
+                'password' => bcrypt('password'),
             ]);
-            $doctorEmail->assignRole($doctorRole);
-
-        }
-
-
-        $userEmail ='user@example.com';
-        if(!User::Where('email',$userEmail)->exists()){
-            $userEmail=User::factory()->create([
-                'name'=>'Doctor User',
-                'email'=>$userEmail,
-                'password'=>bcrypt('password'),
-
-
-
-            ]);
-            $userEmail->assignRole($userRole);
-
+            $normalUser->assignRole($userRole);
         }
     }
 }
