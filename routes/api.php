@@ -13,6 +13,9 @@ use App\Http\Controllers\AdminPostController;
 use App\Http\Controllers\Post\CommentController;
 use App\Http\Controllers\Post\LikeController;
 use Spatie\Permission\Models\Role;
+use App\Http\Controllers\API\AdminController;
+use App\Http\Controllers\API\EmployeeController;
+use App\Http\Controllers\NotificationController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -104,6 +107,14 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // التقارير
     Route::get('/admin/reports/performance', [AdminController::class, 'getPerformanceReport']);
     Route::get('/admin/reports/daily', [AdminController::class, 'getDailyReport']);
+
+    // مسارات إدارة الفعاليات للمدير
+    Route::get('/admin/events', [AdminController::class, 'getEvents']);
+    Route::post('/admin/events', [AdminController::class, 'createEvent']);
+    Route::put('/admin/events/{eventId}', [AdminController::class, 'updateEvent']);
+    Route::delete('/admin/events/{eventId}', [AdminController::class, 'deleteEvent']);
+    Route::get('/admin/events/{eventId}/participants', [AdminController::class, 'getEventParticipants']);
+    Route::put('/admin/events/{eventId}/participants/{participantId}', [AdminController::class, 'updateParticipantStatus']);
 });
 
 // مسارات الموظف
@@ -122,4 +133,20 @@ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
     // التواصل مع المتطوعين
     Route::get('/employee/volunteers', [EmployeeController::class, 'getVolunteers']);
     Route::post('/employee/volunteers/{volunteerId}/message', [EmployeeController::class, 'sendMessageToVolunteer']);
+
+    // مسارات الفعاليات للموظفين
+    Route::get('/employee/events', [EmployeeController::class, 'getAvailableEvents']);
+    Route::post('/employee/events/{eventId}/register', [EmployeeController::class, 'registerForEvent']);
+    Route::post('/employee/events/{eventId}/cancel', [EmployeeController::class, 'cancelEventRegistration']);
+    Route::get('/employee/my-events', [EmployeeController::class, 'getMyEvents']);
+});
+
+// مسارات إدارة الحيوانات
+Route::middleware('auth:sanctum', 'role:admin')->group(function () {
+    Route::get('/animals', [AnimalController::class, 'index']);
+    Route::get('/animals/{id}', [AnimalController::class, 'show']);
+    Route::post('/animals', [AnimalController::class, 'store']);
+    Route::put('/animals/{id}', [AnimalController::class, 'update']);
+    Route::delete('/animals/{id}', [AnimalController::class, 'destroy']);
+    Route::post('/animals/upload-image', [AnimalController::class, 'uploadImage']);
 });

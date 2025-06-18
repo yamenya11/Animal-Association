@@ -84,4 +84,47 @@ class AdminController extends Controller
             'data' => $report
         ]);
     }
+
+    // إدارة الفعاليات
+    public function getEvents(): JsonResponse
+    {
+        $events = $this->adminService->getAllEvents();
+        return response()->json([
+            'status' => true,
+            'data' => $events
+        ]);
+    }
+
+    public function createEvent(Request $request): JsonResponse
+    {
+        $response = $this->adminService->createEvent($request);
+        return response()->json($response, $response['status'] ? 201 : 400);
+    }
+
+    public function updateEvent(Request $request, $eventId): JsonResponse
+    {
+        $response = $this->adminService->updateEvent($request, $eventId);
+        return response()->json($response, $response['status'] ? 200 : 400);
+    }
+
+    public function deleteEvent($eventId): JsonResponse
+    {
+        $response = $this->adminService->deleteEvent($eventId);
+        return response()->json($response, $response['status'] ? 200 : 400);
+    }
+
+    public function getEventParticipants($eventId): JsonResponse
+    {
+        $participants = $this->adminService->getEventParticipants($eventId);
+        return response()->json([
+            'status' => true,
+            'data' => $participants
+        ]);
+    }
+
+    public function updateParticipantStatus(Request $request, $eventId, $participantId): JsonResponse
+    {
+        $response = $this->adminService->updateParticipantStatus($eventId, $participantId, $request->status);
+        return response()->json($response, $response['status'] ? 200 : 400);
+    }
 } 

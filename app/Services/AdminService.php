@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Service;
+use App\Models\Event;
+use App\Models\EventParticipant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -126,10 +128,10 @@ class AdminService
             'total_volunteers' => DB::table('volunteer_requests')
                 ->where('status', 'approved')
                 ->count(),
-            'revenue' => DB::table('services')
-                ->join('appointments', 'services.id', '=', 'appointments.service_id')
-                ->where('appointments.status', 'completed')
-                ->sum('services.price')
+           // 'revenue' => DB::table('services')
+              //  ->join('appointments', 'services.id', '=', 'appointments.service_id')
+              //  ->where('appointments.status', 'completed')
+               // ->sum('services.price')
         ];
 
         return $report;
@@ -149,15 +151,157 @@ class AdminService
                 ->count(),
             'completed_appointments' => DB::table('appointments')
                 ->whereDate('created_at', $today)
-                ->where('status', 'completed')
+                ->where('status', 'approved')
                 ->count(),
             'daily_revenue' => DB::table('services')
-                ->join('appointments', 'services.id', '=', 'appointments.service_id')
-                ->whereDate('appointments.created_at', $today)
-                ->where('appointments.status', 'completed')
-                ->sum('services.price')
+                // ->join('appointments', 'services.id', '=', 'appointments.service_id')
+                // ->whereDate('appointments.created_at', $today)
+                // ->where('appointments.status', 'completed')
+                // ->sum('services.price')
         ];
 
         return $report;
+    }
+
+    // إدارة الفعاليات
+    public function getAllEvents()
+    {
+        return Event::with(['creator', 'participants.user'])
+            ->latest()
+            ->get();
+    }
+
+    public function createEvent(Request $request): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'location' => 'required|string',
+                'max_participants' => 'nullable|integer|min:1'
+            ]);
+
+            $event = Event::create([
+                ...$validated,
+                'created_by' => auth()->id(),
+                'status' => 'pending'
+            ]);
+
+            DB::commit();
+
+            return [
+                'status' => true,
+                'message' => 'تم إنشاء الفعالية بنجاح',
+                'data' => $event
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'message' => 'حدث خطأ أثناء إنشاء الفعالية',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function updateEvent(Request $request, $eventId): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $event = Event::findOrFail($eventId);
+
+            $validated = $request->validate([
+                'title' => 'sometimes|string|max:255',
+                'description' => 'sometimes|string',
+                'start_date' => 'sometimes|date',
+                'end_date' => 'sometimes|date|after:start_date',
+                'location' => 'sometimes|string',
+                'max_participants' => 'nullable|integer|min:1',
+                'status' => 'sometimes|in:pending,active,completed,cancelled'
+            ]);
+
+            $event->update($validated);
+
+            DB::commit();
+
+            return [
+                'status' => true,
+                'message' => 'تم تحديث الفعالية بنجاح',
+                'data' => $event
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'message' => 'حدث خطأ أثناء تحديث الفعالية',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function deleteEvent($eventId): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $event = Event::findOrFail($eventId);
+            $event->delete();
+
+            DB::commit();
+
+            return [
+                'status' => true,
+                'message' => 'تم حذف الفعالية بنجاح'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'message' => 'حدث خطأ أثناء حذف الفعالية',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function getEventParticipants($eventId)
+    {
+        return EventParticipant::with('user')
+            ->where('event_id', $eventId)
+            ->get();
+    }
+
+    public function updateParticipantStatus($eventId, $participantId, $status): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $participant = EventParticipant::where('event_id', $eventId)
+                ->where('id', $participantId)
+                ->firstOrFail();
+
+            $participant->update([
+                'status' => $status
+            ]);
+
+            DB::commit();
+
+            return [
+                'status' => true,
+                'message' => 'تم تحديث حالة المشارك بنجاح',
+                'data' => $participant
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'message' => 'حدث خطأ أثناء تحديث حالة المشارك',
+                'error' => $e->getMessage()
+            ];
+        }
     }
 } 
