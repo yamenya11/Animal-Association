@@ -16,46 +16,60 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\EmployeeController;
 use App\Http\Controllers\NotificationController;
-
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
- Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
 Route::middleware('auth:sanctum')->group(function () {
     Route:: post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
 });
-//Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'profile']);
 
 
-Route::get('/animals/available', [AnimalController::class, 'available']);  ///عرض الحيوانات للتبني
+//المحفظة
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
+    Route::get('/wallet/balance', [WalletController::class, 'balance']);
+});
+
+
+//اضافة اعلان
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/ads', [AdController::class, 'store']);
+    Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);//عرض الاعلانات للمستخدمين
+});
+
+Route::get('/animals/available', [AnimalController::class, 'available']);  /// للعامة عرض الحيوانات للتبني
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/adoptions/request', [AdoptionController::class, 'requestAdoption']);
-    Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
+    Route::post('/adoptions/request', [AdoptionController::class, 'requestAdoption']);//طلب تبني
+    Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);  //عرض طلبت التبني للمستخدم
 });
+
+//////////////
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts', [PostController::class, 'store']);
    
 });
- Route::get('/posts/get', [PostController::class, 'show_all_post']);
 
+Route::get('/posts/get', [PostController::class, 'show_all_post']);//عرض البوستات   للعامة
 
+//////////////////
 
 Route::middleware('auth:sanctum')->post('/animal-cases', [AnimalCaseController::class, 'store']);
 
 Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
-Route::get('/animal-cases', [AnimalCaseController::class, 'index']);
+Route::get('/animal-cases', [AnimalCaseController::class, 'index']);  //عرض حالات الحيوانات المصابة
 Route::post('/appointments/request', [AppointmentController::class, 'request']);
+Route::get('/volunteer/requests', [VolunteerController::class, 'index']);
+Route::post('/volunteer/requests/{id}', [VolunteerController::class, 'respond']);
 
 });
-
-
 
 
 Route::middleware('auth:sanctum')->get('/appointments/pending', [AppointmentController::class, 'pending']); //vet
@@ -66,10 +80,15 @@ Route::middleware('auth:sanctum')->group(function(){
  
 });
 
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts/{post}/comment', [CommentController::class, 'store']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/posts/{post}/like', [LikeController::class, 'toggle']);
+    Route::post('/comments/{commentId}/reply', [CommentController::class, 'reply']);
+    Route::get('posts/{postId}/comments', [CommentController::class, 'index']);
+
 });
 
    // المسارات الخاصة بالإدمن فقط
@@ -80,13 +99,14 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::post('/admin/adopt/{id}/respond_adopt', [AdminPostController::class, 'respond_Adopt']);
     Route::get('/admin/posts', [AdminPostController::class, 'index']);
     Route::get('/admin/adoptions', [AdminPostController::class, 'getAllAdoptionRequests']);//عرض طلبات التبني
+    Route::get('/admin/ads/pending', [AdminAd_midiaController::class, 'index']);
+    // الرد على إعلان (موافقة أو رفض)
+    Route::post('/admin/ads/{adId}/respond', [AdminAd_midiaController::class, 'respond']);
 });
-
 
 Route::middleware('auth:sanctum')->group(function () {
     // جلب كل الإشعارات للمستخدم الحالي
     Route::get('/notifications', [NotificationController::class, 'index']);
-
     // تعيين إشعار كمقروء
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });

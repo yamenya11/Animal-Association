@@ -31,4 +31,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'fcm' => [
+    'key' => env('FIREBASE_API_KEY'),
+    'credentials' => env('FIREBASE_CREDENTIALS'),
+],
+
+
 ];

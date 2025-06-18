@@ -6,19 +6,19 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
-use App\Services\PostService;
+use App\Services\LikeService;
 class LikeController extends Controller
 {
-    protected $postService;
+    protected $likeservice;
 
-    public function __construct(PostService $postService)
+    public function __construct(LikeService $likeservice)
     {
-        $this->postService = $postService;
+        $this->likeservice = $likeservice;
     }
 
  public function toggle($postId)
 {
-    $response = $this->postService->toggleLike($postId);
+    $response = $this->likeservice->toggleLike($postId);
     return response()->json($response);
 }
 

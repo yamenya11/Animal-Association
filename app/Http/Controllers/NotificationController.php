@@ -9,7 +9,7 @@ class NotificationController extends Controller
         // جلب جميع إشعارات المستخدم
     public function index(Request $request)
     {
-        $user = $request->user();
+    $user = $request->user();
 
     $notifications = $user->notifications()
         ->orderBy('created_at', 'desc')

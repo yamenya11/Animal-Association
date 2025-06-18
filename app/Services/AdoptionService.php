@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use  App\Models\Animal;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\AdobtStatusAccept;
+use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
+
 class AdoptionService
  {
      public function createAdoption(Request $request, $userId): array
@@ -32,7 +35,6 @@ class AdoptionService
             'message' => '  م إنشاء طلب التبني بنجاح بانتظار الموافقة من قبل المسئول',
             'data' => $adoption,
         ];
-
     }
 
       public function getUserAdoptions()
@@ -45,7 +47,7 @@ class AdoptionService
     }
 
     public function getAllAdoptions()
-{
+      { 
     return Adoption::select([
             'adoptions.id',
             'adoptions.status',
@@ -58,41 +60,54 @@ class AdoptionService
         ->leftJoin('animals', 'adoptions.animal_id', '=', 'animals.id')
         ->where('adoptions.status', 'pending')
         ->get();
-}
+        }
 
-    public function accept_Adopt_Admin($adoptionId,$status): array{
- 
-        $User_adopt = Adoption::findOrFail($adoptionId);
+public function accept_Adopt_Admin($adoptionId, $status): array
+{
+    $adoptionRequest = Adoption::with(['user', 'animal'])->findOrFail($adoptionId);
 
-        if (!in_array($status, ['approved', 'rejected'])) {
+    if (!in_array($status, ['approved', 'rejected'])) {
         return [
             'status' => false,
             'message' => 'إجراء غير صالح.',
+            'code' => 400
         ];
     }
 
-     $User_adopt->status ='approved'; 
-       $User_adopt->status = $status;
+    DB::beginTransaction();
+    try {
+        $adoptionRequest->status = $status;
+        $adoptionRequest->save();
 
-     $User_adopt->save();
+        if ($status === 'approved') {
+            $animal = $adoptionRequest->animal;
+            $animal->is_adopted = true;
+            $animal->save();
+        }
 
-if ($status === 'approved') {
-        $animal = $User_adopt->animal;
-        $animal->is_adopted = true;
-        $animal->save();
+        // إرسال الإشعار عبر الخدمة
+        $notificationService = app(NotificationService::class);
+        $notificationService->sendAdoptionStatusNotification($adoptionRequest);
+
+        DB::commit();
+
+        return [
+            'status' => true,
+            'message' => $status === 'approved' 
+                ? 'تمت الموافقة على طلب التبني.' 
+                : 'تم رفض طلب التبني.',
+            'data' => $adoptionRequest,
+            'code' => 200
+        ];
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return [
+            'status' => false,
+            'message' => 'حدث خطأ أثناء معالجة الطلب: ' . $e->getMessage(),
+            'code' => 500
+        ];
     }
-$User_adopt->user->notify(new AdobtStatusAccept($User_adopt));
-       return [
-        'status' => true,
-        'message' => $status === 'approved'
-            ? 'تمت الموافقة على طلب التبني.'
-            : 'تم رفض طلب التبني.',
-        
-            'data' => $User_adopt,
-    ];
-
-
-
-    }
+}
 
 }

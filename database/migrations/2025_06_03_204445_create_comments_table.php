@@ -13,15 +13,20 @@ return new class extends Migration
     {
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
-              ->constrained()
-              ->onDelete('cascade');
-              
-            $table->foreignId('post_id')
-              ->constrained()
-              ->onDelete('cascade');
-                    
-              $table->text('content');
+           $table->foreignId('user_id')
+            ->constrained()
+            ->onDelete('cascade');
+
+        $table->foreignId('post_id')
+            ->constrained()
+            ->onDelete('cascade');
+
+        $table->foreignId('parent_id') // هذا الحقل يجعل التعليق ردًا
+            ->nullable()
+            ->constrained('comments')
+            ->onDelete('cascade');
+
+        $table->text('content');
             $table->timestamps();
         });
     }

@@ -30,7 +30,7 @@ class AdminPostController extends Controller
 
 
    public function index()
-{
+  {
     // جلب كل المنشورات التي لم تتم الموافقة عليها بعد
     $pendingPosts = Post::where('status', 'pending')->with('user')->latest()->get();
 
@@ -54,7 +54,7 @@ class AdminPostController extends Controller
         'status' => true,
         'data' => $posts
     ]);
-} 
+  } 
 
  // للإدمن: الموافقة / الرفض
     public function respond_Adopt(Request $request, $id)

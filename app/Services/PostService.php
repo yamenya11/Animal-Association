@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Comment;
 use App\Models\Like;
 use App\Notifications\PostStatusUpdated;
+use App\Services\NotificationService;
 class PostService
 {
 
@@ -17,7 +18,7 @@ class PostService
             'content' => 'required|string',
             'image'   => 'nullable|image|max:2048', // اختياري
         ]);
-
+ $path = null;
       if ($request->hasFile('image')) {
             $file = $request->file('image');
             $file_extension = date('YmdHi') . '.' . $file->getClientOriginalExtension();
@@ -41,15 +42,15 @@ class PostService
 
     function show_post(){
          return Post::join('users', 'posts.user_id', '=', 'users.id')
-        ->select('posts.content', 'posts.title', 'posts.image', 'users.name', 'users.email', 'posts.status')
+        ->select('posts.id','posts.content', 'posts.title', 'posts.image', 'users.name', 'users.email', 'posts.status')
         ->where('posts.status', '!=', 'pending') // هنا نمنع إظهار pending
         ->get();
 
     }
  
-    public function respondToPost($postId, string $action): array
-    {
-        $post = Post::findOrFail($postId);
+  public function respondToPost($postId, string $action): array
+{
+    $post = Post::with('user')->findOrFail($postId);
 
     if (!in_array($action, ['approved', 'rejected'])) {
         return [
@@ -58,11 +59,12 @@ class PostService
         ];
     }
 
-      $post->status = $action;
-      $post->save();
+    $post->status = $action;
+    $post->save();
 
-    // إرسال الإشعار لصاحب المنشور
-    $post->user->notify(new PostStatusUpdated($post, $action));
+    // إشعار عبر خدمة الإشعارات
+    $notificationService = app(NotificationService::class);
+    $notificationService->sendPostStatusNotification($post, $action);
 
     return [
         'status' => true,
@@ -71,7 +73,9 @@ class PostService
             : 'تم رفض المنشور.',
         'data' => $post,
     ];
-    }
+}
+
+
 
   public function addComment($postId, $content): array
     {
@@ -95,80 +99,81 @@ class PostService
             'data' => $comment,
         ];
     }
-     public function replay_comment($commentId, $content): array
-    {
-        $comment = Comment::where('id', $commentId)->first();
+        public function replay_comment($commentId, $content): array
+        {
+            $comment = Comment::find($commentId);
 
-        if (!$comment) {
+            if (!$comment) {
+                return [
+                    'status' => false,
+                    'message' => 'التعليق غير موجود.'
+                ];
+            }
+
+            $reply = new Comment();
+            $reply->user_id = Auth::id();
+            $reply->content = $content;
+            $reply->parent_id = $comment->id; // تأكد أن جدول comments فيه حقل parent_id
+            $reply->post_id = $comment->post_id; // حتى يرتبط بنفس المنشور
+            $reply->save();
+
             return [
-                'status' => false,
-                'message' => 'التعليق  غير موجود .'
+                'status' => true,
+                'message' => 'تم إضافة الرد بنجاح.',
+                'data' => $reply,
+            ];
+        }
+            public function deleteComment($commentId): array
+        {
+            $comment = Comment::where('id', $commentId)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (!$comment) {
+                return [
+                    'status' => false,
+                    'message' => 'لا يمكنك حذف هذا التعليق أو التعليق غير موجود.',
+                ];
+            }
+
+            $comment->delete();
+
+            return [
+                'status' => true,
+                'message' => 'تم حذف التعليق بنجاح.',
             ];
         }
 
-        $reply_comment = $comment->comments()->create([
-            'user_id' => Auth::id(),
-            'content' => $content,
-        ]);
+        public function toggleLike($postId): array
+        {
+            $post = Post::where('id', $postId)->where('status', 'approved')->first();
 
-        return [
-            'status' => true,
-            'message' => 'تم إضافة التعليق.',
-            'data' => $comment,
-        ];
-    }
+            if (!$post) {
+                return [
+                    'status' => false,
+                    'message' => 'المنشور غير موجود أو لم تتم الموافقة عليه بعد.',
+                ];
+            }
 
-    public function deleteComment($commentId): array
-{
-    $comment = Comment::where('id', $commentId)
-        ->where('user_id', Auth::id())
-        ->first();
+            $existingLike = $post->likes()->where('user_id', Auth::id())->first();
 
-    if (!$comment) {
-        return [
-            'status' => false,
-            'message' => 'لا يمكنك حذف هذا التعليق أو التعليق غير موجود.',
-        ];
-    }
-
-    $comment->delete();
-
-    return [
-        'status' => true,
-        'message' => 'تم حذف التعليق بنجاح.',
-    ];
-}
-
-public function toggleLike($postId): array
-{
-    $post = Post::where('id', $postId)->where('status', 'approved')->first();
-
-    if (!$post) {
-        return [
-            'status' => false,
-            'message' => 'المنشور غير موجود أو لم تتم الموافقة عليه بعد.',
-        ];
-    }
-
-    $existingLike = $post->likes()->where('user_id', Auth::id())->first();
-
-    if ($existingLike) {
-        $existingLike->delete();
-        return [
-            'status' => true,
-            'message' => 'تم إلغاء الإعجاب بالمنشور.',
-        ];
-    } else {
-        $like = $post->likes()->create([
-            'user_id' => Auth::id()
-        ]);
-        return [
-            'status' => true,
-            'message' => 'تم تسجيل الإعجاب.',
-            'data' => $like
-        ];
-    }
-}
+            if ($existingLike) {
+                $existingLike->delete();
+                return [
+                    'status' => true,
+                    'message' => 'تم إلغاء الإعجاب بالمنشور.',
+                ];
+            } else {
+                $like = $post->likes()->create([
+                    'user_id' => Auth::id()
+                ]);
+                return [
+                    'status' => true,
+                    'message' => 'تم تسجيل الإعجاب.',
+                    'data' => $like
+                ];
+            }
+        }
    
 
 }

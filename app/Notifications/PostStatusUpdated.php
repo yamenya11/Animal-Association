@@ -7,7 +7,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Post;
-
 class PostStatusUpdated extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -28,7 +27,19 @@ class PostStatusUpdated extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail'];
+         $channels = ['database'];
+        
+        // إضافة البريد الإلكتروني إذا كان موجوداً
+        if ($notifiable->email) {
+            $channels[] = 'mail';
+        }
+        
+        // إضافة FCM إذا كان هناك token
+        if ($notifiable->fcm_token) {
+            $channels[] = 'fcm';
+        }
+        
+        return $channels;
     }
 
     /**
@@ -36,15 +47,32 @@ class PostStatusUpdated extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        $statusText = $this->status === 'approved' ? 'تمت الموافقة على' : 'تم رفض';
-        
         return (new MailMessage)
-            ->subject('تحديث حالة المنشور')
-            ->line("مرحباً {$notifiable->name}")
-            ->line("{$statusText} منشورك: {$this->post->title}")
-            ->line($this->post->notes ? "ملاحظات: {$this->post->notes}" : '')
-            ->action('عرض المنشور', url('/posts/' . $this->post->id))
-            ->line('شكراً لاستخدامك منصتنا');
+                    ->subject('تم قبول منشورك')
+                    ->greeting('مرحباً ' . $notifiable->name)
+                  ->line('تم ' . ($this->action === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك المعنون بـ: "' . $this->post->title . '"')
+                ->line('شكراً لاستخدامك منصتنا!');
+    }
+
+
+    
+
+    public function toFcm(object $notifiable): array
+    {
+        $statusMessage = $this->action === 'approved' 
+            ? 'تمت الموافقة على منشورك' 
+            : 'تم رفض منشورك';
+
+        return [
+            'title' => 'تحديث حالة المنشور',
+            'body' => $statusMessage . ': ' . $this->post->title,
+            'data' => [
+                'post_id' => $this->post->id,
+                'type' => 'post_status_update',
+                'status' => $this->action,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
+            ]
+        ];
     }
 
     /**
@@ -54,8 +82,11 @@ class PostStatusUpdated extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            //
+         return [
+            'post_id' => $this->post->id,
+            'title' => $this->post->title,
+            'action' => $this->action,
+            'message' => 'تم ' . ($this->action === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك',
         ];
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 
-class VolunteerRequestApproved extends Notification
+class VolunteerRequestApproved extends Notification  implements ShouldQueue
 {
     use Queueable;
 
@@ -28,7 +28,17 @@ class VolunteerRequestApproved extends Notification
      */
     public function via(object $notifiable): array
     {
-         return ['mail', 'database'];
+          $channels = ['database'];
+
+        if ($notifiable->email) {
+            $channels[] = 'mail';
+        }
+
+        if ($notifiable->fcm_token) {
+            $channels[] = 'fcm';
+        }
+
+        return $channels;
     }
 
     /**
@@ -36,12 +46,34 @@ class VolunteerRequestApproved extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-        ->from(config('mail.from.address'), config('mail.from.name'))
+       return (new MailMessage)
+            ->from(config('mail.from.address'), config('mail.from.name'))
             ->subject('تمت الموافقة على طلب التطوع')
             ->greeting('مرحباً ' . $notifiable->name)
             ->line('نود إعلامك أنه تمت الموافقة على طلب التطوع الخاص بك.')
             ->line('شكراً لانضمامك معنا ونتمنى لك تجربة تطوعية مفيدة.');
+    }
+
+      
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => 'طلب التطوع',
+            'body' => 'تمت الموافقة على طلب التطوع الخاص بك!',
+            'data' => [
+                'volunteer_request_id' => $this->volunteerRequest->id ?? null,
+                'type' => 'volunteer_approved',
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
+            ],
+            'android' => [
+                'priority' => 'high'
+            ],
+            'apns' => [
+                'headers' => [
+                    'apns-priority' => '10'
+                ]
+            ]
+        ];
     }
 
     /**

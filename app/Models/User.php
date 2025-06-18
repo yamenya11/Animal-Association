@@ -14,9 +14,12 @@ use App\Models\Comment;
 use App\Models\Like;
 use App\Models\VolunteerRequest;
 use App\Models\AnimalCase;
-class User extends Authenticatable
+use Stephenjude\Wallet\Traits\HasWallet;
+use Stephenjude\Wallet\Interfaces\Wallet;
+
+class User extends Authenticatable implements Wallet
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles,HasWallet;
 
     /**
      * The attributes that are mass assignable.
@@ -27,6 +30,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'wallet_balance'
     ];
 
     public function adoptions()
@@ -54,7 +58,15 @@ public function likes() {
     return $this->hasMany(AnimalCase::class);
 }
     
-
+ public function ads()
+    {
+        return $this->hasMany(Ad::class);
+    }
+    
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
     /**
      * The attributes that should be hidden for serialization.
      *
