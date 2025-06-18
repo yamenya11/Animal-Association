@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Post;
+
 class PostStatusUpdated extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -22,23 +23,19 @@ class PostStatusUpdated extends Notification implements ShouldQueue
 
     /**
      * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
      */
     public function via($notifiable)
     {
-         $channels = ['database'];
-        
-        // إضافة البريد الإلكتروني إذا كان موجوداً
+        $channels = ['database'];
+
         if ($notifiable->email) {
             $channels[] = 'mail';
         }
-        
-        // إضافة FCM إذا كان هناك token
+
         if ($notifiable->fcm_token) {
             $channels[] = 'fcm';
         }
-        
+
         return $channels;
     }
 
@@ -48,18 +45,18 @@ class PostStatusUpdated extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->subject('تم قبول منشورك')
-                    ->greeting('مرحباً ' . $notifiable->name)
-                  ->line('تم ' . ($this->action === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك المعنون بـ: "' . $this->post->title . '"')
-                ->line('شكراً لاستخدامك منصتنا!');
+            ->subject('تحديث حالة المنشور')
+            ->greeting('مرحباً ' . $notifiable->name)
+            ->line('تم ' . ($this->status === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك المعنون بـ: "' . $this->post->title . '"')
+            ->line('شكراً لاستخدامك منصتنا!');
     }
 
-
-    
-
+    /**
+     * Get the FCM notification representation.
+     */
     public function toFcm(object $notifiable): array
     {
-        $statusMessage = $this->action === 'approved' 
+        $statusMessage = $this->status === 'approved' 
             ? 'تمت الموافقة على منشورك' 
             : 'تم رفض منشورك';
 
@@ -69,24 +66,22 @@ class PostStatusUpdated extends Notification implements ShouldQueue
             'data' => [
                 'post_id' => $this->post->id,
                 'type' => 'post_status_update',
-                'status' => $this->action,
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
-            ]
+                'status' => $this->status,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ],
         ];
     }
 
     /**
      * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-         return [
+        return [
             'post_id' => $this->post->id,
             'title' => $this->post->title,
-            'action' => $this->action,
-            'message' => 'تم ' . ($this->action === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك',
+            'status' => $this->status,
+            'message' => 'تم ' . ($this->status === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك',
         ];
     }
 }
