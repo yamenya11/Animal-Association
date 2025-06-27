@@ -14,20 +14,17 @@ return new class extends Migration
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
         
-        // المستخدم الذي طلب الموعد
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
+        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // المستخدم الذي طلب الموعد
 
-        // الموظف المسؤول عن الموعد (اختياري بالبداية)
-        $table->foreignId('employee_id')->nullable()->constrained('users')->onDelete('set null');
+    $table->foreignId('employee_id')->nullable()->constrained('users')->onDelete('set null'); // الموظف المسؤول
 
-        // الحالة الحيوانية
-        $table->foreignId('animal_case_id')->constrained('animal_cases')->onDelete('cascade');
+    $table->foreignId('animal_case_id')->constrained('animal_cases')->onDelete('cascade'); // الحالة الحيوانية
 
-        // موعد الحجز
-        $table->dateTime('scheduled_at');
+    $table->dateTime('scheduled_at');
 
-        // حالة الموعد
-        $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+    $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+
+    $table->boolean('is_immediate')->default(false); // لتحديد إذا كان موعد فوري أم لا
             $table->timestamps();
         });
     }

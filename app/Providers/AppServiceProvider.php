@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Notifications\Channels\NotificationChannel;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -20,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-       
+         Schema::defaultStringLength(191);
         Notification::extend('fcm', function ($app) {
             return new class($app->make(FCMService::class)) implements NotificationChannel {
                 protected $fcmService;

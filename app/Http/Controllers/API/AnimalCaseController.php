@@ -15,14 +15,15 @@ class AnimalCaseController extends Controller
         $this->animalCaseService = $animalCaseService;
     }
 
-     public function store(Request $request)
+    public function store(Request $request)
     {
         $response = $this->animalCaseService->createCase($request);
 
         return response()->json($response, $response['status'] ? 201 : 400);
     }
 
-     public function index(): JsonResponse
+    // جلب الحالات الخاصة بالمستخدم
+    public function index(): JsonResponse
     {
         $cases = $this->animalCaseService->getAnimalCasesByUser();
 

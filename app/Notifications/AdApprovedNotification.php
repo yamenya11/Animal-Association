@@ -51,7 +51,7 @@ class AdApprovedNotification extends Notification implements ShouldQueue
                     ->greeting('مرحباً ' . $notifiable->name)
                     ->line('نود إعلامك أنه تمت الموافقة على إعلانك بعنوان:')
                    ->line('**' . $this->ad->title . '**')
-                  ->action('عرض الإعلان', route('ads.show', $this->ad->id))
+                  ->action('عرض الإعلان', route('/ads', $this->ad->id))
                  ->line('شكراً لاستخدامك منصتنا.');
     }
 
@@ -88,7 +88,7 @@ class AdApprovedNotification extends Notification implements ShouldQueue
             'ad_id' => $this->ad->id,
             'title' => 'تمت الموافقة على إعلانك',
             'message' => 'تمت الموافقة على إعلانك: ' . $this->ad->title,
-            'url' => route('ads.show', $this->ad->id),
+            'url' => url('/ads' . $this->ad->id),
             'icon' => asset('images/notification-icon.png')
         ];
     }

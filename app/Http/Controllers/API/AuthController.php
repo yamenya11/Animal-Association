@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\AuthService;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -39,4 +40,20 @@ class AuthController extends Controller
         $response = $this->authService->profile();
         return response()->json($response);
     }
+
+
+    public function toggleAvailability()
+{
+    $user = Auth::user(); // أو User::find($id); لو كان الموظف من لوحة الإدارة
+    $user->available = !$user->available;
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'تم تحديث حالة التوفر',
+        'available' => $user->available
+    ]);
+}
+
+
 }

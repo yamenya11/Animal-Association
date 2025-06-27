@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\AnimalController;
@@ -16,107 +17,163 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\EmployeeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Wallet\WalletController;
+use App\Http\Controllers\AdController;
+use App\Http\Controllers\AdminAd_midiaController;
+use App\Http\Controllers\DonateController;
+use App\Http\Controllers\StafController;
+use App\Http\Controllers\ProfileController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+
+//Route::post('/user/toggle-availability', [AuthController::class, 'toggleAvailability'])->middleware('auth');
+
+// ==== المسارات العامة (بدون مصادقة) ====
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route:: post('/logout', [AuthController::class, 'logout']);
-    Route::get('/profile', [AuthController::class, 'profile']);
-});
+Route::get('/animals/available', [AnimalController::class, 'available']); // عرض الحيوانات للتبني (للعامة)
+Route::get('/posts/get', [PostController::class, 'show_all_post']); // عرض البوستات (للعامة)
 
-
-//المحفظة
+// ==== المسارات التي تتطلب مصادقة (لجميع المستخدمين المسجلين) ====
 Route::middleware('auth:sanctum')->group(function () {
+    // الملف الشخصي
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/profile', [ProfileController::class, 'profile']);
+    Route::get('/profile/update', [ProfileController::class, 'update']);
+
+    // المحفظة
     Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
     Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
     Route::get('/wallet/balance', [WalletController::class, 'balance']);
-});
 
-
-//اضافة اعلان
-Route::middleware('auth:sanctum')->group(function () {
+    // الإعلانات
     Route::post('/ads', [AdController::class, 'store']);
-    Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);//عرض الاعلانات للمستخدمين
-});
+    Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);
 
-Route::get('/animals/available', [AnimalController::class, 'available']);  /// للعامة عرض الحيوانات للتبني
+    // التبني
+    Route::post('/adoptions/request', [AdoptionController::class, 'requestAdoption']);
+    Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
 
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/adoptions/request', [AdoptionController::class, 'requestAdoption']);//طلب تبني
-    Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);  //عرض طلبت التبني للمستخدم
-});
-
-//////////////
-
-Route::middleware('auth:sanctum')->group(function () {
+    // البوستات
     Route::post('/posts', [PostController::class, 'store']);
-   
-});
 
-Route::get('/posts/get', [PostController::class, 'show_all_post']);//عرض البوستات   للعامة
-
-//////////////////
-
-Route::middleware('auth:sanctum')->post('/animal-cases', [AnimalCaseController::class, 'store']);
-
-Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
-Route::get('/animal-cases', [AnimalCaseController::class, 'index']);  //عرض حالات الحيوانات المصابة
-Route::post('/appointments/request', [AppointmentController::class, 'request']);
-Route::get('/volunteer/requests', [VolunteerController::class, 'index']);
-Route::post('/volunteer/requests/{id}', [VolunteerController::class, 'respond']);
-
-});
-
-
-Route::middleware('auth:sanctum')->get('/appointments/pending', [AppointmentController::class, 'pending']); //vet
-
-Route::middleware('auth:sanctum')->group(function(){
-    // المستخدم يرسل طلب تطوع
-    Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
- 
-});
-
-
-
-Route::middleware('auth:sanctum')->group(function () {
+    // التعليقات والإعجابات
     Route::post('/posts/{post}/comment', [CommentController::class, 'store']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/posts/{post}/like', [LikeController::class, 'toggle']);
     Route::post('/comments/{commentId}/reply', [CommentController::class, 'reply']);
     Route::get('posts/{postId}/comments', [CommentController::class, 'index']);
 
+    // التطوع
+    Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
+
+
+  Route::get('/appointments/client', [AppointmentController::class, 'showAppointmentMyUser']);//عرض مواعيد المستخدم
+
+
+    // الإشعارات
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+});
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/animal-cases/immediate-request', [AnimalCaseController::class, 'store']);
+    // مسارات أخرى عامة للمستخدمين المسجلين
+
 });
 
-   // المسارات الخاصة بالإدمن فقط
-    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/donations', [DonateController::class, 'approvedDonations']);});
+
+
+  //التبرع
+   Route::post('/donates', [DonateController::class, 'create_donate'])
+     ->middleware('auth:sanctum');
+
+
+
+
+
+// ==== مسارات الموظفين (Employee) ====
+ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
+    Route::get('/animal-cases', [AnimalCaseController::class, 'index']); // عرض حالات الحيوانات
+    Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
+    Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
+    //Route::post('/animal-cases/immediate-request', [AnimalCaseController::class, 'immediateRequest']);
+
+
+    Route::get('/volunteer/requests/employee', [VolunteerController::class, 'index']); // عرض طلبات التطوع
+    Route::post('/volunteer/requests/{id}/respons', [VolunteerController::class, 'respond']); // الرد على طلب التطوع
+
+    Route::get('/animal-cases/immediate', [StafController::class, 'listImmediateCases']);
+    Route::get('/doctors', [StafController::class, 'availableDoctors']);
+    Route::post('/appointments/schedule/{caseId}', [StafController::class, 'scheduleImmediate']);
+
+
+    Route::get('/cases/regular', [StafController::class, 'listRegularCases']);//عرض الحالات العادية
+    Route::get('/cases/immediate', [StafController::class, 'listImmediateCases']); //عرض الحالات الضرورية
+
+    Route::post('/user/toggle-availability', [AuthController::class, 'toggleAvailability']);
+});
+
+// Route::prefix('employee')->group(function () {
+
+// });
+
+
+
+// ==== مسارات الإدمن (Admin) ====
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/volunteer/requests', [VolunteerController::class, 'index']);
     Route::post('/volunteer/requests/{id}', [VolunteerController::class, 'respond']);
     Route::post('/admin/posts/{id}/respond', [AdminPostController::class, 'respond']);
-     Route::post('/admin/adopt/{id}/respond_adopt', [AdminPostController::class, 'respond_Adopt']);
+    Route::post('/admin/adopt/{id}/respond_adopt', [AdminPostController::class, 'respond_Adopt']);
     Route::get('/admin/posts', [AdminPostController::class, 'index']);
-    Route::get('/admin/adoptions', [AdminPostController::class, 'getAllAdoptionRequests']);//عرض طلبات التبني
+    Route::get('/admin/adoptions', [AdminPostController::class, 'getAllAdoptionRequests']);
     Route::get('/admin/ads/pending', [AdminAd_midiaController::class, 'index']);
-    // الرد على إعلان (موافقة أو رفض)
     Route::post('/admin/ads/{adId}/respond', [AdminAd_midiaController::class, 'respond']);
+    Route::post('/donates/{id}/respond', [DonateController::class, 'respond']);
+    Route::get('/donates', [DonateController::class, 'index']);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Route::middleware('auth:sanctum')->group(function () {
-    // جلب كل الإشعارات للمستخدم الحالي
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    // تعيين إشعار كمقروء
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/events/user', [AdminController::class, 'listActiveEvents']);
+    Route::post('/events/{eventId}/register', [AdminController::class, 'registerForEvent']);
 });
 
+
+
+
+
+
+
+
+///////////////////////////////////fromyaser
 // مسارات المدير
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // إدارة المستخدمين
-    Route::get('/admin/users', [AdminController::class, 'getUsers']);
-    Route::put('/admin/users/{userId}', [AdminController::class, 'updateUser']);
-    Route::delete('/admin/users/{userId}', [AdminController::class, 'deleteUser']);
+     Route::get('/users', [AdminController::class, 'getUsers']);
+        Route::put('/users/{userId}', [AdminController::class, 'updateUser']);
+        Route::delete('/users/{userId}', [AdminController::class, 'deleteUser']);
 
     // إدارة الخدمات
     Route::get('/admin/services', [AdminController::class, 'getServices']);
@@ -124,17 +181,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('/admin/services/{serviceId}', [AdminController::class, 'updateService']);
     Route::delete('/admin/services/{serviceId}', [AdminController::class, 'deleteService']);
 
-    // التقارير
+    // // التقارير
     Route::get('/admin/reports/performance', [AdminController::class, 'getPerformanceReport']);
     Route::get('/admin/reports/daily', [AdminController::class, 'getDailyReport']);
 
-    // مسارات إدارة الفعاليات للمدير
-    Route::get('/admin/events', [AdminController::class, 'getEvents']);
-    Route::post('/admin/events', [AdminController::class, 'createEvent']);
-    Route::put('/admin/events/{eventId}', [AdminController::class, 'updateEvent']);
-    Route::delete('/admin/events/{eventId}', [AdminController::class, 'deleteEvent']);
-    Route::get('/admin/events/{eventId}/participants', [AdminController::class, 'getEventParticipants']);
-    Route::put('/admin/events/{eventId}/participants/{participantId}', [AdminController::class, 'updateParticipantStatus']);
+    // // مسارات إدارة الفعاليات للمدير
+        Route::get('/events', [AdminController::class, 'getEvents']);
+        Route::post('/events', [AdminController::class, 'createEvent']);
+        Route::put('/events/{eventId}', [AdminController::class, 'updateEvent']);
+        Route::delete('/events/{eventId}', [AdminController::class, 'deleteEvent']);
+        Route::get('/events/{eventId}/participants', [AdminController::class, 'getEventParticipants']);
+        Route::put('/events/{eventId}/participants/{participantId}', [AdminController::class, 'updateParticipantStatus']);
 });
 
 // مسارات الموظف
@@ -162,11 +219,11 @@ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
 });
 
 // مسارات إدارة الحيوانات
-Route::middleware('auth:sanctum', 'role:admin')->group(function () {
-    Route::get('/animals', [AnimalController::class, 'index']);
-    Route::get('/animals/{id}', [AnimalController::class, 'show']);
-    Route::post('/animals', [AnimalController::class, 'store']);
-    Route::put('/animals/{id}', [AnimalController::class, 'update']);
-    Route::delete('/animals/{id}', [AnimalController::class, 'destroy']);
-    Route::post('/animals/upload-image', [AnimalController::class, 'uploadImage']);
+Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
+     Route::get('/animals', [EmployeeController::class, 'index']);           // عرض كل الحيوانات
+    Route::get('/animals/{id}', [EmployeeController::class, 'show']);       // عرض حيوان محدد
+    Route::post('/animals', [EmployeeController::class, 'store']);          // إضافة حيوان
+    Route::put('/animals/{id}', [EmployeeController::class, 'update']);     // تعديل حيوان
+    Route::delete('/animals/{id}', [EmployeeController::class, 'destroy']); // حذف حيوان
+    Route::post('/animals/upload-image', [EmployeeController::class, 'uploadImage']);
 });

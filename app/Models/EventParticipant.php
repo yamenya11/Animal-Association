@@ -4,20 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
-class VolunteerRequest extends Model
+
+class EventParticipant extends Model
 {
     use HasFactory;
-
      protected $fillable = [
-      'user_id',
-      'phone',
-      'status',
-      'notes',
-      'full_name',
-      'availability'
-
+        'event_id',
+        'user_id',
+        'status',
+        'notes'
     ];
+
+     public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
 
     public function user()
     {

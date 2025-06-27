@@ -5,10 +5,13 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Service;
 use App\Models\Event;
+use App\Models\Donate;
+use App\Models\AdMedia;
 use App\Models\EventParticipant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AdminService
 {
@@ -21,36 +24,40 @@ class AdminService
             'email',
             'created_at',
             'wallet_balance',
-            'experience',
-            'region'
+            'level',
+            'address',
+            'profile_image',
+            'phone'
         ])->get();
     }
 
-    public function updateUser(Request $request, $userId): array
-    {
-        $user = User::findOrFail($userId);
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $userId,
-            'password' => 'sometimes|min:6',
-            'wallet_balance' => 'sometimes|numeric',
-            'experience' => 'sometimes|numeric',
-            'region' => 'sometimes|string'
-        ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        }
+public function updateUserAsAdmin(Request $request, $userId): array
+{
+    $user = User::findOrFail($userId);
 
-        $user->update($validated);
+    $validated = $request->validate([
+        'name'     => 'sometimes|string|max:255',
+        'email'    => ['sometimes', 'email', Rule::unique('users')->ignore($userId)],
+        'phone'    => ['sometimes', 'digits:10', Rule::unique('users')->ignore($userId)],
+        'password' => 'sometimes|string|min:6',
+        'level'    => 'sometimes|string|max:255',
+        'address'  => 'sometimes|string|max:255',
+    ]);
 
-        return [
-            'status' => true,
-            'message' => 'تم تحديث بيانات المستخدم بنجاح',
-            'data' => $user
-        ];
+    if (isset($validated['password'])) {
+        $validated['password'] = Hash::make($validated['password']);
     }
+
+    $user->update($validated);
+
+    return [
+        'status' => true,
+        'message' => 'تم تحديث بيانات المستخدم من قبل المسؤول بنجاح',
+        'data' => $user,
+    ];
+}
 
     public function deleteUser($userId): array
     {
@@ -69,99 +76,116 @@ class AdminService
         return Service::all();
     }
 
-    public function createService(Request $request): array
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'duration' => 'required|integer'
-        ]);
+    // public function createService(Request $request): array
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'description' => 'required|string',
+    //         'price' => 'required|numeric',
+    //         'duration' => 'required|integer'
+    //     ]);
 
-        $service = Service::create($validated);
+    //     $service = Service::create($validated);
 
-        return [
-            'status' => true,
-            'message' => 'تم إضافة الخدمة بنجاح',
-            'data' => $service
-        ];
-    }
+    //     return [
+    //         'status' => true,
+    //         'message' => 'تم إضافة الخدمة بنجاح',
+    //         'data' => $service
+    //     ];
+    // }
 
-    public function updateService(Request $request, $serviceId): array
-    {
-        $service = Service::findOrFail($serviceId);
+    // public function updateService(Request $request, $serviceId): array
+    // {
+    //     $service = Service::findOrFail($serviceId);
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'price' => 'sometimes|numeric',
-            'duration' => 'sometimes|integer'
-        ]);
+    //     $validated = $request->validate([
+    //         'name' => 'sometimes|string|max:255',
+    //         'description' => 'sometimes|string',
+    //         'price' => 'sometimes|numeric',
+    //         'duration' => 'sometimes|integer'
+    //     ]);
 
-        $service->update($validated);
+    //     $service->update($validated);
 
-        return [
-            'status' => true,
-            'message' => 'تم تحديث الخدمة بنجاح',
-            'data' => $service
-        ];
-    }
+    //     return [
+    //         'status' => true,
+    //         'message' => 'تم تحديث الخدمة بنجاح',
+    //         'data' => $service
+    //     ];
+    // }
 
-    public function deleteService($serviceId): array
-    {
-        $service = Service::findOrFail($serviceId);
-        $service->delete();
+    // public function deleteService($serviceId): array
+    // {
+    //     $service = Service::findOrFail($serviceId);
+    //     $service->delete();
 
-        return [
-            'status' => true,
-            'message' => 'تم حذف الخدمة بنجاح'
-        ];
-    }
+    //     return [
+    //         'status' => true,
+    //         'message' => 'تم حذف الخدمة بنجاح'
+    //     ];
+    // }
 
-    // التقارير
-    public function generatePerformanceReport()
-    {
-        $report = [
-            'total_users' => User::count(),
-            'total_adoptions' => DB::table('adoptions')->count(),
-            'total_appointments' => DB::table('appointments')->count(),
-            'total_volunteers' => DB::table('volunteer_requests')
-                ->where('status', 'approved')
-                ->count(),
-           // 'revenue' => DB::table('services')
-              //  ->join('appointments', 'services.id', '=', 'appointments.service_id')
-              //  ->where('appointments.status', 'completed')
-               // ->sum('services.price')
-        ];
+  public function generatePerformanceReport()
+{
+    $report = [
+        'total_users'        => User::count(),
+        'total_adoptions'    => DB::table('adoptions')->count(),
+        'total_appointments' => DB::table('appointments')->count(),
+        'total_volunteers'   => DB::table('volunteer_requests')
+                                    ->where('status', 'approved')
+                                    ->count(),
+        'total_donations'    => DB::table('donates')->count(),
+        'total_ads_requests' => DB::table('ad_media')->count(),
 
-        return $report;
-    }
+        // إذا كنت تريد جمع قيمة التبرعات:
+        // 'total_donation_amount' => DB::table('donations')->sum('amount'),
 
-    public function generateDailyReport()
-    {
-        $today = now()->format('Y-m-d');
+        // 'revenue' => DB::table('services')
+        //     ->join('appointments', 'services.id', '=', 'appointments.service_id')
+        //     ->where('appointments.status', 'completed')
+        //     ->sum('services.price'),
+    ];
 
-        $report = [
-            'new_users' => User::whereDate('created_at', $today)->count(),
-            'new_adoptions' => DB::table('adoptions')
-                ->whereDate('created_at', $today)
-                ->count(),
-            'new_appointments' => DB::table('appointments')
-                ->whereDate('created_at', $today)
-                ->count(),
-            'completed_appointments' => DB::table('appointments')
-                ->whereDate('created_at', $today)
-                ->where('status', 'approved')
-                ->count(),
-            'daily_revenue' => DB::table('services')
-                // ->join('appointments', 'services.id', '=', 'appointments.service_id')
-                // ->whereDate('appointments.created_at', $today)
-                // ->where('appointments.status', 'completed')
-                // ->sum('services.price')
-        ];
+    return $report;
+}
 
-        return $report;
-    }
+
+   public function generateDailyReport()
+{
+    $today = now()->toDateString();
+
+    $report = [
+        'new_users' => DB::table('users')
+            ->whereDate('created_at', $today)
+            ->count(),
+
+        'new_adoptions' => DB::table('adoptions')
+            ->whereDate('created_at', $today)
+            ->count(),
+
+        'new_appointments' => DB::table('appointments')
+            ->whereDate('created_at', $today)
+            ->count(),
+
+        'new_volunteers' => DB::table('volunteer_requests')
+            ->where('status', 'approved')
+            ->whereDate('created_at', $today)
+            ->count(),
+
+        'new_donations' => DB::table('donates')
+            ->whereDate('created_at', $today)
+            ->count(),
+
+        'new_ads_requests' => DB::table('ad_media')
+            ->whereDate('created_at', $today)
+            ->count(),
+    ];
+
+    return [
+        'status' => true,
+        'data' => $report,
+    ];
+}
 
     // إدارة الفعاليات
     public function getAllEvents()
@@ -171,42 +195,28 @@ class AdminService
             ->get();
     }
 
-    public function createEvent(Request $request): array
-    {
-        try {
-            DB::beginTransaction();
+   public function createEvent(Request $request): array
+{
+    $validated = $request->validate([
+        'title'            => 'required|string|max:255',
+        'description'      => 'required|string',
+        'start_date'       => 'required|date',
+        'end_date'         => 'required|date|after:start_date',
+        'location'         => 'required|string',
+        'max_participants' => 'nullable|integer|min:1',
+    ]);
 
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after:start_date',
-                'location' => 'required|string',
-                'max_participants' => 'nullable|integer|min:1'
-            ]);
+    $validated['created_by'] = auth()->id(); // أو id المشرف
 
-            $event = Event::create([
-                ...$validated,
-                'created_by' => auth()->id(),
-                'status' => 'pending'
-            ]);
+    $event = Event::create($validated);
 
-            DB::commit();
+    return [
+        'status'  => true,
+        'message' => 'تم إنشاء الفعالية بنجاح',
+        'data'    => $event,
+    ];
+}
 
-            return [
-                'status' => true,
-                'message' => 'تم إنشاء الفعالية بنجاح',
-                'data' => $event
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return [
-                'status' => false,
-                'message' => 'حدث خطأ أثناء إنشاء الفعالية',
-                'error' => $e->getMessage()
-            ];
-        }
-    }
 
     public function updateEvent(Request $request, $eventId): array
     {
@@ -226,9 +236,16 @@ class AdminService
             ]);
 
             $event->update($validated);
-
+         $UserId=Auth::user();
             DB::commit();
+          $eventp = EventParticipant->create([
 
+            'event_id'=>event->$event,
+            'user_id'=>user->$UserId,
+            'status'=>['registered'],
+            'notes'=>['kkmo'],
+
+          ]);
             return [
                 'status' => true,
                 'message' => 'تم تحديث الفعالية بنجاح',

@@ -5,7 +5,7 @@ use App\Models\Ad;
 use App\Models\AdMedia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-
+use App\Models\User;
 use Illuminate\Support\Str;
 use Stephenjude\Wallet\Exceptions\InsufficientFundException;
 use App\Notifications\AdApprovedNotification;
@@ -14,110 +14,127 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
+use App\Services\WalletService;
 class AdService
 {
 
     protected $notificationService;
-
-    public function __construct(NotificationService $notificationService)
+protected $walletService;
+    public function __construct(NotificationService $notificationService,WalletService $walletService)
 {
     $this->notificationService = $notificationService;
+      $this->walletService = $walletService;
 }
-     public function createAdWithMedia($request)
-    {
-        $request->validate([
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'media.*' => 'required|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240', // max 10MB
+   public function createAdWithMedia($request)
+{
+    $request->validate([
+        'title' => 'required|string',
+        'description' => 'required|string',
+        'price' => 'required|numeric',
+        'media.*' => 'required|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240', // max 10MB
+    ]);
+
+    $user = Auth::user();
+
+    // إنشاء الإعلان
+    $ad = Ad::create([
+        'user_id' => $user->id,
+        'title' => $request->title,
+        'description' => $request->description,
+        'price' => $request->price,
+    ]);
+
+    // رفع الميديا
+    foreach ($request->file('media') as $file) {
+        $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('ads_media', $filename, 'public'); // تخزين في public/ads_media
+
+        $mime = $file->getMimeType();
+        $type = str_starts_with($mime, 'image') ? 'image' : 'video';
+
+        // استخراج رابط العرض للواجهة
+        $url = Storage::url($path);
+
+        AdMedia::create([
+            'ad_id' => $ad->id,
+            'media_path' => $path, // نخزن المسار الحقيقي
+            'media_type' => $type,
         ]);
+    }
+
+    // تحميل العلاقة media
+    $ad->load('media');
+
+    return [
+        'status' => true,
+        'message' => 'تم إنشاء الإعلان بنجاح.',
+        'data' => [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'description' => $ad->description,
+            'price' => $ad->price,
+            'media' => $ad->media->map(function ($media) {
+                return [
+                    'type' => $media->media_type,
+                    'url' => asset('storage/' . $media->media_path),
+                ];
+            }),
+        ],
+    ];
+}
 
 
-          $user = Auth::user();
+public function approveAd($adId, $adminId)
+{
+    DB::beginTransaction();
+    
+    try {
+        $ad = Ad::with('user')->findOrFail($adId);
+        $user = $ad->user;
+        $amount = (float) $ad->price;
 
-      
-         $ad = Ad::create([
+        \Log::info('Attempting to withdraw', [
             'user_id' => $user->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'price' => $request->price,
+            'current_balance' => $user->wallet_balance,
+            'amount' => $amount
         ]);
-       
-        foreach ($request->file('media') as $file) {
-           $filename = uniqid() . '.' . $file->getClientOriginalExtension();
-           $path = $file->storeAs('ads_media', $filename, 'public'); // استخدم مسار واحد فقط
 
-            $mime = $file->getMimeType();
-          $type = str_starts_with($mime, 'image') ? 'image' : 'video';
-
-            AdMedia::create([
-                'ad_id' => $ad->id,
-                'media_path' => $path,
-                'media_type' => $type,
-            ]);
+        if ((float) $user->wallet_balance < $amount) {
+            throw new \Exception('رصيد غير كافي');
         }
 
-        return [
-            'status' => true,
-            'message' => 'تم إنشاء الإعلان بنجاح.',
-            'data' => $ad->load('media'),
-        ];
-    }
+        // Pass the ad to the withdraw method
+        $this->walletService->withdraw($user, $amount, $ad);
 
-    public function approveAd($adId, $adminId)
-{
-    $ad = Ad::with('user')->findOrFail($adId);
-
-    if ($ad->status !== 'pending') {
-        return response()->json([
-            'status' => false,
-            'message' => 'تمت معالجة هذا الإعلان مسبقاً.'
-        ], 400);
-    }
-
-    $user = $ad->user;
-
-    DB::beginTransaction();
-    try {
-        // 1. خصم المبلغ
-        $user->withdraw($ad->price, 'خصم مقابل إعلان #' . $ad->id);
-
-        // 2. تحديث حالة الإعلان
         $ad->update([
             'status' => 'approved',
             'approved_by' => $adminId,
-            'approved_at' => now()
+            'approved_at' => now(),
         ]);
 
-        // 3. إرسال الإشعارات
-        $this->notificationService->sendAdApprovedNotification($ad);
+        $user->notify(new AdApprovedNotification($ad));
 
         DB::commit();
 
-        return response()->json([
+        return [
             'status' => true,
             'message' => 'تمت الموافقة على الإعلان بنجاح',
-            'data' => $ad->fresh()
-        ]);
-
-    } catch (InsufficientFundException $e) {
-        DB::rollBack();
-        return response()->json([
-            'status' => false,
-            'message' => 'لا يوجد رصيد كافٍ للموافقة على الإعلان.',
-            'required' => $ad->price,
-            'current_balance' => $user->balance()
-        ], 400);
+            'ad' => $ad->fresh()
+        ];
 
     } catch (\Exception $e) {
         DB::rollBack();
-        return response()->json([
+        \Log::error('Approval failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return [
             'status' => false,
-            'message' => 'حدث خطأ أثناء الموافقة على الإعلان: ' . $e->getMessage()
-        ], 500);
+            'message' => 'فشل في الموافقة على الإعلان: ' . $e->getMessage()
+        ];
     }
 }
-
 
 
      public function getAllAds_for_user()
@@ -127,6 +144,7 @@ class AdService
             'ads.title',
             'ads.description',
             'ads.status',
+            'users.id',
             'users.name as name_usre',
             'users.email as email_user',
             'ad_media.media_path',

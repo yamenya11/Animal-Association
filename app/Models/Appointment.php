@@ -15,7 +15,8 @@ class Appointment extends Model
         'animal_case_id',
         'scheduled_at',
         'status',
-        'employee_id'
+        'employee_id',
+        'doctor_id'
     ];
 
      public function user()
@@ -23,12 +24,20 @@ class Appointment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function employee()
-{
-    return $this->belongsTo(User::class, 'employee_id');
-}
+
    public function animalCase()
 {
     return $this->belongsTo(AnimalCase::class);
 }
+public function doctor()
+{
+    return $this->belongsTo(User::class, 'doctor_id');
+}
+
+protected $casts = [
+    'scheduled_at' => 'datetime',
+];
+
+
+
 }

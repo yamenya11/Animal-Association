@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('animal_cases', function (Blueprint $table) {
             $table->id();
-            $table->String('name_animal');
-            $table->string('case_type'); // مثل: مرض، إصابة، متابعة
-            $table->text('description')->nullable();
-            $table->string('image')->nullable(); // صورة توضيحية للحالة
+            $table->string('name_animal');
+           $table->string('case_type');
+           $table->text('description')->nullable();
+            $table->string('image')->nullable();
+    //$table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->enum('request_type', ['regular', 'immediate'])->default('regular');
             $table->timestamps();
         });
     }

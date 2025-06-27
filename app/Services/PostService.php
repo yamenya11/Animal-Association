@@ -11,39 +11,47 @@ use App\Services\NotificationService;
 class PostService
 {
 
-    public function createPost(Request $request): array
-    {
-         $request->validate([
-            'title'   => 'required|string|max:255',
-            'content' => 'required|string',
-            'image'   => 'nullable|image|max:2048', // اختياري
-        ]);
- $path = null;
-      if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $file_extension = date('YmdHi') . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('public/images/photo', $file_extension); 
-          
-           }
-     $data = [
-            'user_id' => Auth::id(),
-            'title'   => $request->title,
-            'content' => $request->content,
-            'status'  => 'pending', 
-            'image'=>$path
-        ];
-         $post = Post::create($data);
-        return [
-            'status'  => true,
-            'message' => 'تم إرسال المنشور بانتظار الموافقة.',
-            'data'    => $post,
-        ];
+   public function createPost(Request $request): array
+{
+    $request->validate([
+        'title'   => 'required|string|max:255',
+        'content' => 'required|string',
+        'image'   => 'nullable|image|max:2048',
+    ]);
+
+    $path = null;
+    if ($request->hasFile('image')) {
+        $file = $request->file('image');
+        $fileName = date('YmdHi') . '.' . $file->getClientOriginalExtension();
+        // تخزين الملف داخل storage/app/public/images/photo
+        $path = $file->storeAs('images/photo', $fileName, 'public'); 
     }
+
+    $data = [
+        'user_id' => Auth::id(),
+        'title'   => $request->title,
+        'content' => $request->content,
+        'status'  => 'pending',
+        'image'   => $path, // تخزين المسار النسبي فقط
+    ];
+
+    $post = Post::create($data);
+
+    // إضافة رابط الصورة مباشرة عند الإرجاع
+    $post->image_url = $post->image ? asset('storage/' . $post->image) : null;
+
+    return [
+        'status'  => true,
+        'message' => 'تم إرسال المنشور بانتظار الموافقة.',
+        'data'    => $post,
+    ];
+}
+
 
     function show_post(){
          return Post::join('users', 'posts.user_id', '=', 'users.id')
-        ->select('posts.id','posts.content', 'posts.title', 'posts.image','users.name', 'users.name', 'users.email', 'posts.status')
-        ->where('posts.status', '!=', 'pending') // هنا نمنع إظهار pending
+->select('posts.id as post_id', 'posts.content', 'posts.title', 'posts.image', 'users.id as user_id', 'users.name', 'users.email', 'posts.status')
+->where('posts.status', '!=', 'pending') // هنا نمنع إظهار pending
         ->get();
 
     }

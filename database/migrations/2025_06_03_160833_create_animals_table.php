@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('type'); // مثل: قط، كلب، عصفور
-            $table->integer('age')->nullable(); // بالعمر (أشهر أو سنوات)
+            $table->date('birth_date')->nullable(); // بالعمر (أشهر أو سنوات)
             $table->text('health_info')->nullable(); // وصف للحالة أو الشخصية
             $table->string('image')->nullable(); // صورة
             $table->boolean('is_adopted')->default(false); // تم التبني أم لا

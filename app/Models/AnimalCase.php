@@ -6,17 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Animal;
 use App\Models\Appointment;
+use App\Models\User;
+
+
 class AnimalCase extends Model
 {
     use HasFactory;
      protected $fillable = [
-        'name_animal',
-        'case_type',
-        'description',
-        'image',
-        'user_id'
+    'user_id',
+    'name',
+    'type',
+    'breed',
+    'birth_date',
+    'health_info',
+    'image',
+    'is_adopted'
     ];
 
+
+    protected $casts = [
+    'birth_date' => 'date',
+    'is_adopted' => 'boolean'
+];
      public function animal()
     {
         return $this->belongsTo(Animal::class);

@@ -25,4 +25,6 @@ class AnimalController extends Controller
             'data' => $animals,
         ]);
     }
+
+    
 }

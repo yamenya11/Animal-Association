@@ -11,74 +11,85 @@ use Illuminate\Validation\ValidationException;
 
 class AuthService{
 
-    function register ($request): array
-    {
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-        ]);
-    
-        $user = User::create([
-            'name'     => $request->input('name'),
-            'email'    => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
-        ]);
-    
-        $user->assignRole('user');
-    
-        $token = $user->createToken('auth_token')->plainTextToken;
-    
-        return [
-            'status' => true,
-            'message' => 'تم التسجيل بنجاح.',
-            'data' => [
-                'user' => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                    'role'  => $user->getRoleNames()->first(),
-                ],
-                'token' => $token,
-            ],
-        ];
-    }
+ public function register(Request $request): array
+{
+    $request->validate([
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|email|unique:users,email',
+        'password' => 'required|min:6',
+        'phone' => 'nullable|digits:10|unique:users,phone',
+        'level'    => 'nullable|string|max:255',
+        'address'  => 'nullable|string|max:255',
+    ]);
 
+    $user = User::create([
+        'name'     => $request->name,
+        'email'    => $request->email,
+        'password' => bcrypt($request->password),
+        'phone'    => $request->phone,
+        'level'    => $request->level ?? 'unknown',
+        'address'  => $request->address ?? 'not set',
+    ]);
 
-function login($request){
-  
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
-        
-         ]);
-         $user = User::where('email', $request->email)->first();
+    $user->assignRole('Client');
 
-         if (!$user || !Hash::check($request->password, $user->password)) {
-             throw ValidationException::withMessages([
-                 'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة.'],
-             ]);
-         }
+    $token = $user->createToken('auth_token')->plainTextToken;
 
-         $role = $user->getRoleNames()->first();
-         $token = $user->createToken('auth_token')->plainTextToken;
     return [
         'status' => true,
-        'message' => ' التسجيل بنجاح.',
+        'message' => 'تم التسجيل بنجاح.',
         'data' => [
             'user' => [
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
-                'role'  => $role,
+                'phone' => $user->phone,
+                'level' => $user->level,
+                'address' => $user->address,
+                'role'  => $user->getRoleNames()->first(),
             ],
             'token' => $token,
         ],
     ];
-
-
-
 }
+
+
+
+function login($request)
+{
+    $request->validate([
+        'email'    => 'required|email',
+        'password' => 'required',
+    ]);
+
+    $user = User::where('email', $request->email)
+        ->with(['roles', 'permissions']) // تحميل الأدوار والصلاحيات
+        ->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        throw ValidationException::withMessages([
+            'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة.'],
+        ]);
+    }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return [
+        'status' => true,
+        'message' => 'تم تسجيل الدخول بنجاح.',
+        'data' => [
+            'user' => [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'roles'       => $user->roles->pluck('name'),         // جلب أسماء الأدوار
+                'permissions' => $user->permissions->pluck('name'),   // جلب أسماء الصلاحيات
+            ],
+            'token' => $token,
+        ],
+    ];
+}
+
 
 
 

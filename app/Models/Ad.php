@@ -26,4 +26,8 @@ class Ad extends Model
 {
     return $this->hasMany(AdMedia::class);
 }
+public function walletTransactions()
+{
+    return $this->hasMany(WalletTransaction::class, 'ad_id');
+}
 }

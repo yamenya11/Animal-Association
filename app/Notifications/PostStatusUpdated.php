@@ -45,10 +45,13 @@ class PostStatusUpdated extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('تحديث حالة المنشور')
-            ->greeting('مرحباً ' . $notifiable->name)
-            ->line('تم ' . ($this->status === 'approved' ? 'الموافقة' : 'رفض') . ' منشورك المعنون بـ: "' . $this->post->title . '"')
-            ->line('شكراً لاستخدامك منصتنا!');
+        ->subject('تحديث حالة المنشور - Animal App')
+        ->greeting('مرحباً ' . $notifiable->name)
+        ->line('حالة منشورك: **' . $this->post->title . '**')
+        ->line('**النتيجة:** ' . ($this->status === 'approved' ? 'مقبول ✅' : 'مرفوض ❌'))
+        ->action('عرض المنشور', url('/posts/' . $this->post->id))  # رابط مباشر للمنشور
+        ->line('شكراً لاستخدامك Animal App!')
+        ->salutation('مع تحيات، فريق Animal App');
     }
 
     /**

@@ -2,7 +2,8 @@
 namespace App\Services;
 
 use App\Models\User;
-
+use App\Models\WalletTransaction;
+use App\Models\Ad;
 class WalletService
 {
     
@@ -11,28 +12,38 @@ class WalletService
         return $user->deposit($amount);
     }
 
-     public function withdraw(User $user, float $amount): float
-    {
-        try {
-        // خصم الرصيد من المستخدم
-        $newBalance = $user->withdraw($amount);
+ public function withdraw(User $user, float $amount, ?Ad $ad = null): float
+{
+    $currentBalance = (float) $user->wallet_balance;
+    $amount = (float) $amount;
 
-        // تحويل المبلغ لحساب الأدمن
-        $admin = User::where('role', 'admin')->first(); // أو where('id', 1)
-        if ($admin) {
-            $admin->deposit($amount);
-        }
-
-        return $newBalance;
-
-    } catch (InsufficientFundException $e) {
-        throw new \Exception("Insufficient funds");
+    if ($currentBalance < $amount) {
+        throw new \Exception(sprintf(
+            'رصيد غير كافي (الرصيد الحالي: %.2f، المبلغ المطلوب: %.2f)',
+            $currentBalance,
+            $amount
+        ));
     }
-    }
+
+    $user->wallet_balance = $currentBalance - $amount;
+    $user->save();
+   
+    // تسجيل المعاملة
+    WalletTransaction::create([
+        'user_id' => $user->id,
+        'amount' => $amount,
+        'type' => 'withdrawal',
+        'description' => 'سحب مقابل إعلان',
+         'ad_id' => $ad ? $ad->id : null,
+    ]);
+
+    return $user->wallet_balance;
+}
+
 
      public function getBalance(User $user): float
     {
-        return $user->balance();
+       return (float) $user->wallet_balance;
     }
 
 }

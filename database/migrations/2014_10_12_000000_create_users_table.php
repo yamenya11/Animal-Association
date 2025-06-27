@@ -18,8 +18,9 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->decimal('wallet_balance',10,2)->default(0);
-            $table->string('experience')->default('unknown');
-            $table->string('region')->default('not set');
+            $table->string('level')->default('unknown');
+            $table->string('address')->default('not set');  // غيرنا region إلى address
+            $table->string('phone')->nullable()->unique(); // <-- هذا هو حقل رقم الهاتف  
             $table->rememberToken();
             $table->timestamps();
         });

@@ -14,7 +14,11 @@ return new class extends Migration
         Schema::create('adoptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');  // المستخدم الطالب للتبني
-            $table->foreignId('animal_id')->constrained()->onDelete('cascade'); // الحيوان المطلوب تبنيه
+            $table->foreignId('animal_id')->constrained('animals')->onDelete('cascade'); // الحيوان     
+            $table->string('type'); // مثل: قط، كلب، عصفور
+            $table->string('address')->default('not set');
+            $table->date('birth_date')->nullable(); // بالعمر (أشهر أو سنوات)
+            $table->string('phone')->nullable()->unique(); 
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // حالة الطلب
             $table->timestamps();
         });

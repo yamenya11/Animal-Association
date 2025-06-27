@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 class EmployeeService
 {
     // إدارة المستخدمين
+    //عرضس
     public function getAllUsers()
     {
         return User::select([
@@ -36,39 +37,39 @@ class EmployeeService
             ->get();
     }
 
-    public function approveContent($contentId, ?string $notes = null): array
-    {
-        $content = Post::findOrFail($contentId);
-        $content->status = 'approved';
-        $content->notes = $notes;
-        $content->save();
+    // public function approveContent($contentId, ?string $notes = null): array
+    // {
+    //     $content = Post::findOrFail($contentId);
+    //     $content->status = 'approved';
+    //     $content->notes = $notes;
+    //     $content->save();
 
-        // إرسال إشعار للمستخدم
-        $content->user->notify(new PostStatusUpdated($content, 'approved'));
+    //     // إرسال إشعار للمستخدم
+    //     $content->user->notify(new PostStatusUpdated($content, 'approved'));
 
-        return [
-            'status' => true,
-            'message' => 'تمت الموافقة على المحتوى بنجاح',
-            'data' => $content
-        ];
-    }
+    //     return [
+    //         'status' => true,
+    //         'message' => 'تمت الموافقة على المحتوى بنجاح',
+    //         'data' => $content
+    //     ];
+    // }
 
-    public function rejectContent($contentId, ?string $notes = null): array
-    {
-        $content = Post::findOrFail($contentId);
-        $content->status = 'rejected';
-        $content->notes = $notes;
-        $content->save();
+    // public function rejectContent($contentId, ?string $notes = null): array
+    // {
+    //     $content = Post::findOrFail($contentId);
+    //     $content->status = 'rejected';
+    //     $content->notes = $notes;
+    //     $content->save();
 
-        // إرسال إشعار للمستخدم
-        $content->user->notify(new PostStatusUpdated($content, 'rejected'));
+    //     // إرسال إشعار للمستخدم
+    //     $content->user->notify(new PostStatusUpdated($content, 'rejected'));
 
-        return [
-            'status' => true,
-            'message' => 'تم رفض المحتوى',
-            'data' => $content
-        ];
-    }
+    //     return [
+    //         'status' => true,
+    //         'message' => 'تم رفض المحتوى',
+    //         'data' => $content
+    //     ];
+    // }
 
     // التقارير
     public function generateDailyReport()

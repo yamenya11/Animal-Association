@@ -7,52 +7,83 @@ use App\Models\AnimalCase;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use App\Notifications\sendAppointmentStatusNotification;
+use App\Services\NotificationService;
 
 class AppointmentService
 {
 
-     public function requestAppointment(Request $request)
-    {
+ public function requestAppointment(Request $request)
+{
+    $validated = $request->validate([
+        'animal_case_id' => 'required|exists:animal_cases,id',
+        'scheduled_at'   => ['required', 'date', 'after:' . now()->addMinutes(5)],
+        'doctor_id'      => 'nullable|exists:users,id',
+    ]);
 
-          $validated = $request->validate([
-            'animal_case_id' => 'required|exists:animal_cases,id',
-            'scheduled_at' => 'required|date|after:now' .now()->addMinutes(5),
-        ]);
+    // التحقق من وجود موعد مفتوح أو معتمد لنفس الحالة
+    $existingAppointment = Appointment::where('animal_case_id', $validated['animal_case_id'])
+        ->whereIn('status', ['pending', 'approved'])
+        ->first();
 
-          $appointment = Appointment::create([
-            'user_id' => Auth::id(),
-            'animal_case_id' => $validated['animal_case_id'],
-            'scheduled_at' => $validated['scheduled_at'],
-            'status' => 'pending',
-        ]);
+    if ($existingAppointment) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'لا يمكن طلب موعد جديد لهذه الحالة لأن لديها موعد قيد المعالجة أو معتمد.',
+        ], 422);
+    }
 
-         return [
-            'status' => true,
-            'message' => 'تم إرسال طلب الموعد، في انتظار الموافقة.',
-            'data' => $appointment,
+    $appointmentData = [
+        'user_id'        => Auth::id(),
+        'animal_case_id' => $validated['animal_case_id'],
+        'scheduled_at'   => $validated['scheduled_at'],
+        'status'         => 'pending',
+        
+    ];
+
+    // أضف doctor_id فقط إذا موجودة في الطلب (ليست null)
+    if (!empty($validated['doctor_id'])) {
+        $appointmentData['doctor_id'] = $validated['doctor_id'];
+    }
+
+    $appointment = Appointment::create($appointmentData);
+
+    // تحميل بيانات الطبيب والمستخدم (الذي طلب الموعد)
+    $appointment->load(['doctor:id,name,email', 'user:id,name,email']);
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'تم إرسال طلب الموعد، في انتظار الموافقة.',
+        'data'    => $appointment,
+    ]);
+}
+
+public function acceptappointmentImm( $appointment, string $action): array{
+   $app = Appointment::with('user')->findOrFail($appointment);
+
+       if (!in_array($action, ['approved', 'rejected'])) {
+        return [
+            'status' => false,
+            'message' => 'إجراء غير صالح.',
         ];
     }
 
-    // public function getPendingAppointments()
-    // {
-    // return Appointment::select([
-    //         'appointments.id',
-    //         'appointments.status',
-    //         'appointments.scheduled_at',
-    //         'users.name as name_usre',
-    //         'users.email as email_user',
-    //         'animal_cases.case_type',
-    //         'animal_cases.description',
-    //         'animals.name as animal_name',
-    //         'animals.type as animal_type',
-    //     ])
-    //     ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
-    //     ->leftJoin('animal_cases', 'appointments.animal_case_id', '=', 'animal_cases.id')
-    //     ->leftJoin('animals', 'animal_cases.animal_id', '=', 'animals.id')
-    //     ->where('appointments.status', 'pending')
-    //     ->orderBy('appointments.scheduled_at', 'asc')
-    //     ->get();
-    // }
+    $app->status = $action;
+    $app->save();
+    
+    $notificationService = app(NotificationService::class);
+    $notificationService->sendAppointmentStatusNotification($app, 'approved');
+
+
+
+     return [
+        'status' => true,
+        'message' => $action === 'approved'
+            ? 'تمت الموافقة على الموعد.'
+            : 'تم رفض الموعد.',
+        'data' => $app,
+    ];
+
+}
 
 }

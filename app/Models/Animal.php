@@ -11,9 +11,10 @@ class Animal extends Model
 
 
     protected $fillable = [
+        'user_id',
     'name',
     'type',
-    'age',
+    'birth_date',
     'health_info',
     'image',
     'is_adopted',
@@ -23,4 +24,9 @@ public function adoptions()
 {
     return $this->hasMany(Adoption::class);
 }
+
+public function temporary()
+    {
+        return $this->hasMany(User::class);
+    }
 }
