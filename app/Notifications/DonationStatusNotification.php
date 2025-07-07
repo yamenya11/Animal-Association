@@ -31,15 +31,13 @@ class DonationStatusNotification extends Notification implements ShouldQueue
     {
       $channels = ['database'];
         
-        if ($notifiable->email) {
-            $channels[] = 'mail';
-        }
-        
-        if ($notifiable->fcm_token) {
-            $channels[] = 'fcm';
-        }
-        
-        return $channels;
+       $channels = ['database'];
+    
+    if ($notifiable->fcm_token) {
+        $channels[] = 'fcm';
+    }
+    
+    return $channels;
     }
 
     /**

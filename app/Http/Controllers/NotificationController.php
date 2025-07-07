@@ -10,19 +10,19 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
-        $notifications = $user->notifications()
-            ->orderBy('created_at', 'desc')
-            ->paginate(15) // الترقيم مهم لتطبيقات الموبايل
-            ->through(function ($notification) {
-                return $this->formatNotification($notification);
-            });
-            
-        return response()->json([
-            'status' => true,
-            'notifications' => $notifications,
-            'unread_count' => $user->unreadNotifications->count()
-        ]);
+
+    $notifications = $user->notifications()
+        ->orderBy('created_at', 'desc')
+        ->paginate(10)
+        ->through(function ($notification) {
+            return $this->formatNotification($notification);
+        });
+
+    return response()->json([
+        'status' => true,
+        'notifications' => $notifications,
+        'unread_count' => $user->unreadNotifications->count(),
+    ]);
     }
 
     public function markAsRead(Request $request, $id)
@@ -42,59 +42,84 @@ class NotificationController extends Controller
 
     public function markAllAsRead(Request $request)
     {
-        $request->user()
-            ->unreadNotifications
-            ->markAsRead();
+        $count = $request->user()
+            ->unreadNotifications()
+            ->update(['read_at' => now()]);
             
         return response()->json([
             'status' => true,
-            'message' => 'تم تعيين جميع الإشعارات كمقروءة'
+            'message' => "تم تعيين {$count} إشعارات كمقروءة"
         ]);
     }
 
-    protected function formatNotification(DatabaseNotification $notification)
+  protected function formatNotification(DatabaseNotification $notification)
+{
+    $data = is_array($notification->data)
+        ? $notification->data
+        : json_decode($notification->data, true) ?? [];
+
+    return [
+        'id' => $notification->id,
+        'type' => $data['type'] ?? 'general',
+        'title' => $this->getNotificationTitle($data),
+        'body' => $data['message'] ?? '',
+        'is_read' => !is_null($notification->read_at),
+        'created_at' => $notification->created_at->toIso8601String(),
+    ];
+}
+
+
+    protected function normalizeNotificationData($data): array
     {
-        $data = $notification->data;
+        if (is_array($data)) {
+            return $data;
+        }
         
-        return [
-            'id' => $notification->id,
-            'type' => $data['type'] ?? 'general',
-            'title' => $this->getNotificationTitle($data),
-            'body' => $data['message'] ?? '',
-            'is_read' => $notification->read_at !== null,
-            'created_at' => $notification->created_at->toIso8601String(),
-            'data' => $data,
-            'deep_link' => $this->getDeepLink($data) // روابط عميقة للتطبيق
-        ];
+        if (is_string($data)) {
+            return json_decode($data, true) ?? [];
+        }
+        
+        return (array)$data;
     }
 
     protected function getNotificationTitle(array $data): string
     {
-        switch ($data['type'] ?? '') {
-            case 'post_status_update':
-                return $data['status'] === 'approved' 
-                    ? 'تمت الموافقة على منشورك' 
-                    : 'تم رفض منشورك';
-            case 'adoption_approved':
-                return 'حالة طلب التبني';
-            case 'donation_status':
-                return 'تحديث حالة التبرع';
-            default:
-                return 'إشعار جديد';
-        }
+        $type = $data['type'] ?? '';
+        $status = $data['status'] ?? '';
+        
+        $titles = [
+            'post_status_update' => $status === 'approved' ? 
+                'تمت الموافقة على منشورك' : 'تم رفض منشورك',
+            'ad_approved' => 'تمت الموافقة على إعلانك',
+            'ad_rejected' => 'تم رفض إعلانك',
+            'adoption_approved' => 'تمت الموافقة على طلب التبني',
+            'adoption_rejected' => 'تم رفض طلب التبني',
+            'donation_status' => 'تحديث حالة التبرع',
+            'immediate_case' => 'حالة طارئة جديدة'
+        ];
+        
+        return $titles[$type] ?? 'إشعار جديد';
     }
 
     protected function getDeepLink(array $data): ?string
     {
-        switch ($data['type'] ?? '') {
-            case 'post_status_update':
-                return 'app://posts/'.$data['post_id'];
-            case 'adoption_approved':
-                return 'app://adoptions/'.$data['adoption_id'];
-            case 'donation_status':
-                return 'app://donations/'.$data['donation_id'];
-            default:
-                return null;
+        $type = $data['type'] ?? '';
+        $id = $data['id'] ?? $data[$type.'_id'] ?? null;
+        
+        if (!$id) {
+            return null;
         }
+        
+        $links = [
+            'post_status_update' => 'app://posts/',
+            'ad_approved' => 'app://ads/',
+            'ad_rejected' => 'app://ads/',
+            'adoption_approved' => 'app://adoptions/',
+            'adoption_rejected' => 'app://adoptions/',
+            'donation_status' => 'app://donations/',
+            'immediate_case' => 'app://cases/'
+        ];
+        
+        return isset($links[$type]) ? $links[$type].$id : null;
     }
 }

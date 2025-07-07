@@ -5,28 +5,46 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Adoption;
+use App\Models\TemporaryCareRequest;
 class Animal extends Model
 {
     use HasFactory;
 
 
     protected $fillable = [
-        'user_id',
+    'user_id',
     'name',
-    'type',
+    'type_id',
     'birth_date',
     'health_info',
     'image',
     'is_adopted',
+    'breed',
+    'available_for_care',
+    'purpose',
+    'describtion'
 ];
 
+ public function scopeAvailableForCare(Builder $query): Builder
+    {
+        return $query->where('purpose', 'temporary_care')
+                   ->where('available_for_care', true)
+                   ->where('is_adopted', false);
+    }
 public function adoptions()
 {
     return $this->hasMany(Adoption::class);
 }
-
-public function temporary()
+ public function animalType()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsTo(AnimalType::class, 'type_id');
     }
+     public function type()
+    {
+        return $this->belongsTo(AnimalType::class, 'type_id');
+    }
+public function temporaryCareRequests()
+{
+    return $this->hasMany(TemporaryCareRequest::class);
+}
 }

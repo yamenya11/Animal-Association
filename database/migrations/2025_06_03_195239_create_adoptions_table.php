@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');  // المستخدم الطالب للتبني
             $table->foreignId('animal_id')->constrained('animals')->onDelete('cascade'); // الحيوان     
-            $table->string('type'); // مثل: قط، كلب، عصفور
+            $table->foreignId('type_id')->constrained('animals')->onDelete('cascade'); // مثل: قط، كلب، عصفور
+            $table->string('breed')->nullable();
             $table->string('address')->default('not set');
             $table->date('birth_date')->nullable(); // بالعمر (أشهر أو سنوات)
             $table->string('phone')->nullable()->unique(); 

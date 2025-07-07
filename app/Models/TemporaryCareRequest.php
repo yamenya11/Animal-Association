@@ -8,15 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class TemporaryCareRequest extends Model
 {
     use HasFactory;
-      protected $fillable = [
-        'user_id',
-        'animal_id',
-        'address',
-        'duration',
-        'custom_duration',
-        'health_notes',
-        'status',
-    ];
+  protected $fillable = [
+    'user_id',
+    'animal_id',
+    'address',
+    'duration',
+    'custom_duration',
+    'health_info',
+    'vet_id',
+    'status',
+    'type'
+];
 
     public function user()
     {
@@ -28,4 +30,5 @@ class TemporaryCareRequest extends Model
     {
         return $this->belongsTo(Animal::class);
     }
+
 }

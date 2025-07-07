@@ -9,7 +9,7 @@ class Donate extends Model
 {
     use HasFactory;
     protected $fillable = [
-    'full_name', 'number', 'email', 'donation_type', 'amount', 'notes', 'is_approved', 'user_id'
+    'full_name', 'number', 'email', 'donation_type', 'ammountinkello', 'notes', 'is_approved', 'user_id'
 ];
 
       protected $casts = [

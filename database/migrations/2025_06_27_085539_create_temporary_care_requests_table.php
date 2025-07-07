@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('temporary_care_requests', function (Blueprint $table) {
             $table->id();
-            $table->id();
+           
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('animal_id')->constrained()->onDelete('cascade');
             $table->string('address');
+             $table->string('type');
+             $table->string('breed')->nullable();
             $table->string('duration');
             $table->string('custom_duration')->nullable();
             $table->text('health_info');

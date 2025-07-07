@@ -25,4 +25,28 @@ class LikeService
             return ['status' => true, 'message' => 'تم تسجيل الإعجاب.', 'data' => $like];
         }
     }
+
+public function getLikesCount($postId): int
+    {
+        $post = Post::findOrFail($postId);
+        return $post->likes()->count();
+    }
+
+    /**
+     * الحصول على جميع المنشورات مع عدد الإعجابات لكل منها
+     */
+    public function getAllLike(): array
+    {
+        return Post::withCount('likes')
+            ->get()
+            ->map(function ($post) {
+                return [
+                    'post_id' => $post->id,
+                    'title' => $post->title,
+                    'likes_count' => $post->likes_count
+                ];
+            })
+            ->toArray();
+    }
+    
 }

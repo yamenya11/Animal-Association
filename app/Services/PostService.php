@@ -11,50 +11,60 @@ use App\Services\NotificationService;
 class PostService
 {
 
-   public function createPost(Request $request): array
+ public function createPost(Request $request): array
 {
-    $request->validate([
-        'title'   => 'required|string|max:255',
+    $validated = $request->validate([
+        'type_post' => 'required|in:adoption,opinion,temporary_care',
+        'title' => 'required|string|max:255',
         'content' => 'required|string',
-        'image'   => 'nullable|image|max:2048',
+        'image' => 'nullable|image|max:2048',
     ]);
 
     $path = null;
     if ($request->hasFile('image')) {
-        $file = $request->file('image');
-        $fileName = date('YmdHi') . '.' . $file->getClientOriginalExtension();
-        // تخزين الملف داخل storage/app/public/images/photo
-        $path = $file->storeAs('images/photo', $fileName, 'public'); 
+        $path = $request->file('image')->store('images/photocaseanimal', 'public');
     }
 
-    $data = [
+    $post = Post::create([
         'user_id' => Auth::id(),
-        'title'   => $request->title,
-        'content' => $request->content,
-        'status'  => 'pending',
-        'image'   => $path, // تخزين المسار النسبي فقط
-    ];
+        'title' => $validated['title'],
+        'content' => $validated['content'],
+        'type_post' => $validated['type_post'],
+        'status' => 'pending',
+        'image' => $path,
+    ]);
 
-    $post = Post::create($data);
-
-    // إضافة رابط الصورة مباشرة عند الإرجاع
-    $post->image_url = $post->image ? asset('storage/' . $post->image) : null;
+    // إضافة رابط الصورة للاستجابة
+    $responseData = $post->toArray();
+    if ($post->image) {
+        $responseData['image_url'] = asset('storage/' . $post->image);
+    }
 
     return [
-        'status'  => true,
+        'status' => true,
         'message' => 'تم إرسال المنشور بانتظار الموافقة.',
-        'data'    => $post,
+        'data' => $responseData,
     ];
 }
 
 
-    function show_post(){
-         return Post::join('users', 'posts.user_id', '=', 'users.id')
-->select('posts.id as post_id', 'posts.content', 'posts.title', 'posts.image', 'users.id as user_id', 'users.name', 'users.email', 'posts.status')
-->where('posts.status', '!=', 'pending') // هنا نمنع إظهار pending
+   public function show_post()
+{
+    return Post::join('users', 'posts.user_id', '=', 'users.id')
+        ->select(
+            'posts.id as post_id',
+            'posts.content',
+            'posts.title',
+            'posts.type_post', // أضفنا هذا الحقل
+            'posts.image',
+            'users.id as user_id',
+            'users.name',
+            'users.email',
+            'posts.status'
+        )
+        ->where('posts.status', '!=', 'pending')
         ->get();
-
-    }
+}
  
   public function respondToPost($postId, string $action): array
 {
@@ -82,106 +92,4 @@ class PostService
         'data' => $post,
     ];
 }
-
-
-
-//   public function addComment($postId, $content): array
-//     {
-//         $post = Post::where('id', $postId)->where('status', 'approved')->first();
-
-//         if (!$post) {
-//             return [
-//                 'status' => false,
-//                 'message' => 'المنشور غير موجود أو لم يتم الموافقة عليه بعد.'
-//             ];
-//         }
-
-//         $comment = $post->comments()->create([
-//             'user_id' => Auth::id(),
-//             'content' => $content,
-//         ]);
-
-//         return [
-//             'status' => true,
-//             'message' => 'تم إضافة التعليق.',
-//             'data' => $comment,
-//         ];
-//     }
-//         public function replay_comment($commentId, $content): array
-//         {
-//             $comment = Comment::find($commentId);
-
-//             if (!$comment) {
-//                 return [
-//                     'status' => false,
-//                     'message' => 'التعليق غير موجود.'
-//                 ];
-//             }
-
-//             $reply = new Comment();
-//             $reply->user_id = Auth::id();
-//             $reply->content = $content;
-//             $reply->parent_id = $comment->id; // تأكد أن جدول comments فيه حقل parent_id
-//             $reply->post_id = $comment->post_id; // حتى يرتبط بنفس المنشور
-//             $reply->save();
-
-//             return [
-//                 'status' => true,
-//                 'message' => 'تم إضافة الرد بنجاح.',
-//                 'data' => $reply,
-//             ];
-//         }
-//             public function deleteComment($commentId): array
-//         {
-//             $comment = Comment::where('id', $commentId)
-//                 ->where('user_id', Auth::id())
-//                 ->first();
-
-//             if (!$comment) {
-//                 return [
-//                     'status' => false,
-//                     'message' => 'لا يمكنك حذف هذا التعليق أو التعليق غير موجود.',
-//                 ];
-//             }
-
-//             $comment->delete();
-
-//             return [
-//                 'status' => true,
-//                 'message' => 'تم حذف التعليق بنجاح.',
-//             ];
-//         }
-
-//         public function toggleLike($postId): array
-//         {
-//             $post = Post::where('id', $postId)->where('status', 'approved')->first();
-
-//             if (!$post) {
-//                 return [
-//                     'status' => false,
-//                     'message' => 'المنشور غير موجود أو لم تتم الموافقة عليه بعد.',
-//                 ];
-//             }
-
-//             $existingLike = $post->likes()->where('user_id', Auth::id())->first();
-
-//             if ($existingLike) {
-//                 $existingLike->delete();
-//                 return [
-//                     'status' => true,
-//                     'message' => 'تم إلغاء الإعجاب بالمنشور.',
-//                 ];
-//             } else {
-//                 $like = $post->likes()->create([
-//                     'user_id' => Auth::id()
-//                 ]);
-//                 return [
-//                     'status' => true,
-//                     'message' => 'تم تسجيل الإعجاب.',
-//                     'data' => $like
-//                 ];
-//             }
-//         }
-   
-
 }

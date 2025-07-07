@@ -55,41 +55,75 @@ class AuthService{
 
 
 
-function login($request)
+public function login($request)
 {
+    // التحقق من صحة البيانات المدخلة
     $request->validate([
         'email'    => 'required|email',
         'password' => 'required',
     ]);
 
+    // البحث عن المستخدم مع تحميل الأدوار والصلاحيات
     $user = User::where('email', $request->email)
-        ->with(['roles', 'permissions']) // تحميل الأدوار والصلاحيات
+        ->with(['roles', 'permissions'])
         ->first();
 
+    // التحقق من وجود المستخدم وصحة كلمة المرور
     if (!$user || !Hash::check($request->password, $user->password)) {
         throw ValidationException::withMessages([
             'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة.'],
         ]);
     }
 
+    // تحديث FCM Token إذا تم إرساله
+    if ($request->filled('fcm_token')) {
+        $this->updateFcmToken($user, $request->fcm_token);
+    }
+
+    // إنشاء token جديد للوصول
     $token = $user->createToken('auth_token')->plainTextToken;
+
+    // تسجيل عملية تسجيل الدخول
+    \Log::info('User logged in', [
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'ip' => $request->ip()
+    ]);
 
     return [
         'status' => true,
         'message' => 'تم تسجيل الدخول بنجاح.',
         'data' => [
-            'user' => [
-                'id'          => $user->id,
-                'name'        => $user->name,
-                'email'       => $user->email,
-                'roles'       => $user->roles->pluck('name'),         // جلب أسماء الأدوار
-                'permissions' => $user->permissions->pluck('name'),   // جلب أسماء الصلاحيات
-            ],
+            'user' => $this->formatUserData($user),
             'token' => $token,
         ],
     ];
 }
 
+protected function updateFcmToken($user, $fcmToken)
+{
+    try {
+        $user->update(['fcm_token' => $fcmToken]);
+        \Log::info('FCM token updated', ['user_id' => $user->id]);
+    } catch (\Exception $e) {
+        \Log::error('Failed to update FCM token', [
+            'user_id' => $user->id,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+protected function formatUserData($user)
+{
+    return [
+        'id'          => $user->id,
+        'name'        => $user->name,
+        'email'       => $user->email,
+        'roles'       => $user->roles->pluck('name'),
+        'permissions' => $user->permissions->pluck('name'),
+        // يمكن إضافة المزيد من الحقول حسب الحاجة
+    ];
+}
 
 
 

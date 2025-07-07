@@ -13,75 +13,56 @@ use App\Notifications\AdApprovedNotification;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 use App\Services\NotificationService;
+
 use Illuminate\Support\Facades\DB;
 use App\Services\WalletService;
 class AdService
 {
 
-    protected $notificationService;
+protected $notificationService;
 protected $walletService;
-    public function __construct(NotificationService $notificationService,WalletService $walletService)
+public function __construct(NotificationService $notificationService = null, WalletService $walletService = null)
 {
     $this->notificationService = $notificationService;
-      $this->walletService = $walletService;
+    $this->walletService = $walletService;
 }
-   public function createAdWithMedia($request)
-{
-    $request->validate([
-        'title' => 'required|string',
-        'description' => 'required|string',
-        'price' => 'required|numeric',
-        'media.*' => 'required|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240', // max 10MB
-    ]);
 
-    $user = Auth::user();
-
-    // إنشاء الإعلان
-    $ad = Ad::create([
-        'user_id' => $user->id,
-        'title' => $request->title,
-        'description' => $request->description,
-        'price' => $request->price,
-    ]);
-
-    // رفع الميديا
-    foreach ($request->file('media') as $file) {
-        $filename = uniqid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('ads_media', $filename, 'public'); // تخزين في public/ads_media
-
-        $mime = $file->getMimeType();
-        $type = str_starts_with($mime, 'image') ? 'image' : 'video';
-
-        // استخراج رابط العرض للواجهة
-        $url = Storage::url($path);
-
-        AdMedia::create([
-            'ad_id' => $ad->id,
-            'media_path' => $path, // نخزن المسار الحقيقي
-            'media_type' => $type,
+    public function createAdWithMedia($request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'price' => 'required|numeric',
+            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240',
         ]);
+
+        $ad = Ad::create([
+            'user_id' => Auth::id(),
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'price' => $validated['price'],
+            'status' => 'pending' // إضافة حالة افتراضية
+        ]);
+
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $path = $file->store('ads_media', 'public');
+                
+                AdMedia::create([
+                    'ad_id' => $ad->id,
+                    'media_path' => $path,
+                    'media_type' => Str::startsWith($file->getMimeType(), 'image') ? 'image' : 'video'
+                ]);
+            }
+        }
+
+        return [
+            'status' => true,
+            'message' => 'تم إنشاء الإعلان بنجاح',
+            'data' => $ad->load('media')
+        ];
     }
 
-    // تحميل العلاقة media
-    $ad->load('media');
-
-    return [
-        'status' => true,
-        'message' => 'تم إنشاء الإعلان بنجاح.',
-        'data' => [
-            'id' => $ad->id,
-            'title' => $ad->title,
-            'description' => $ad->description,
-            'price' => $ad->price,
-            'media' => $ad->media->map(function ($media) {
-                return [
-                    'type' => $media->media_type,
-                    'url' => asset('storage/' . $media->media_path),
-                ];
-            }),
-        ],
-    ];
-}
 
 
 public function approveAd($adId, $adminId)
@@ -112,8 +93,9 @@ public function approveAd($adId, $adminId)
             'approved_at' => now(),
         ]);
 
-        $user->notify(new AdApprovedNotification($ad));
-
+        // $user->notify(new AdApprovedNotification($ad));
+    //   $notificationService = app(NotificationService::class);
+    //   $notificationService->sendAdApprovedNotification($ad);
         DB::commit();
 
         return [
@@ -136,24 +118,42 @@ public function approveAd($adId, $adminId)
     }
 }
 
+public function getAllAds_for_user()
+{
+    $ads = Ad::with(['user', 'media'])
+        ->where('status', 'approved')
+        ->get()
+        ->map(function ($ad) {
+            return [
+                'id' => $ad->id,
+                'title' => $ad->title,
+                'description' => $ad->description,
+                'price' => $ad->price,
+                'user' => [
+                    'id' => $ad->user->id,
+                    'name' => $ad->user->name,
+                    'email' => $ad->user->email,
+                ],
+                'media' => $ad->media->map(function ($media) {
+                    return [
+                        'id' => $media->id,
+                        'url' => $media->media_type === 'video' 
+                            ? url("/api/stream-video/{$media->id}")
+                            : asset('storage/' . $media->media_path),
+                        'type' => $media->media_type,
+                        'thumbnail' => $media->media_type === 'video'
+                            ? asset('storage/video-thumbnails/'.pathinfo($media->media_path, PATHINFO_FILENAME).'.jpg')
+                            : asset('storage/' . $media->media_path),
+                    ];
+                })->toArray()
+            ];
+        });
 
-     public function getAllAds_for_user()
-   {
-    return Ad::select([
-            'ads.id',
-            'ads.title',
-            'ads.description',
-            'ads.status',
-            'users.id',
-            'users.name as name_usre',
-            'users.email as email_user',
-            'ad_media.media_path',
-            'ad_media.media_type',
-        ])
-        ->leftJoin('users', 'ads.user_id', '=', 'users.id')
-        ->leftJoin('ad_media', 'ads.user_id', '=', 'ad_media.id')
-        ->where('ads.status', 'approved')
-        ->get();
-      }
+    return [
+        'status' => true,
+        'data' => $ads,
+        'message' => 'تم جلب الإعلانات بنجاح'
+    ];
+}
 
 }

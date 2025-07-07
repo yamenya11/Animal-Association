@@ -17,6 +17,7 @@ return new class extends Migration
              $table->text('content');
              $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
              $table->string('title');
+             $table->enum('type_post', ['adoption', 'opinion', 'temporary_care'])->default('opinion');
              $table->string('image')->nullable();
              $table->timestamps();
         });

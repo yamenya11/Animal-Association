@@ -15,7 +15,7 @@ class DonateController extends Controller
     protected $donateService;
 
     protected $notificationService;
-        public function __construct(DonateService $donateService, NotificationService $notificationService)
+ public function __construct(DonateService $donateService=null, NotificationService $notificationService=null)
 {
     $this->donateService = $donateService;
     $this->notificationService = $notificationService;
@@ -76,7 +76,7 @@ class DonateController extends Controller
     ]);
 
     // إرسال الإشعار
-$this->notificationService->sendDonationStatusNotification($donation, $action ? 'approved' : 'rejected');
+//$this->notificationService->sendDonationStatusNotification($donation, $action ? 'approved' : 'rejected');
 
     return response()->json([
         'status' => true,

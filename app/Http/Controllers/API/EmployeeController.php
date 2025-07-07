@@ -40,6 +40,19 @@ class EmployeeController extends Controller
     }
 
 
+    public function updateAvailability(Animal $animal)
+{
+    $animal->update([
+        'available_for_care' => !$animal->available_for_care
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'تم تحديث حالة التوفر',
+        'is_available' => $animal->available_for_care
+    ]);
+}
+
 
 
 

@@ -13,7 +13,12 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-
+// 'firebase' => [
+//     'credentials' => storage_path('storage\firebase\firebase_credentials.json'),
+// ],
+'firebase' => [
+    'credentials' => storage_path('app/firebase/firebase_credentials.json'),
+],
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),
@@ -33,7 +38,7 @@ return [
 
     'fcm' => [
     'key' => env('FIREBASE_API_KEY'),
-    'credentials' => env('FIREBASE_CREDENTIALS'),
+    'credentials' => storage_path('app/firebase/firebase_credentials.json'),
 ],
 
 

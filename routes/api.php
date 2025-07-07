@@ -23,6 +23,8 @@ use App\Http\Controllers\AdminAd_midiaController;
 use App\Http\Controllers\DonateController;
 use App\Http\Controllers\StafController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TemporaryCareController;
+use App\Http\Controllers\GuideController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -41,7 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // الملف الشخصي
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [ProfileController::class, 'profile']);
-    Route::get('/profile/update', [ProfileController::class, 'update']);
+    Route::post('/profile/update', [ProfileController::class, 'update']);
+    Route::post('/profile/image', [ProfileController::class, 'uploadImage']);
 
     // المحفظة
     Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
@@ -49,13 +52,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wallet/balance', [WalletController::class, 'balance']);
 
     // الإعلانات
-    Route::post('/ads', [AdController::class, 'store']);
+    Route::post('/ads/user', [AdController::class, 'store']);
     Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);
-
+     Route::get('/ads/{id}/publisher', [AdController::class, 'show']);
     // التبني
     Route::post('/adoptions/request', [AdoptionController::class, 'requestAdoption']);
     Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
 
+
+        Route::post('/createRequest', [TemporaryCareController::class, 'createRequest']);
+         // إنشاء طلب رعاية مؤقتة جديد
+   // Route::post('/temporary-care/request', [TemporaryCareController::class, 'createRequest']);
+    
+    // الحصول على طلبات الرعاية للمستخدم الحالي
+    Route::get('/temporary-care/my-requests', [TemporaryCareController::class, 'getUserRequests']);
+    
+    // الحصول على الحيوانات المتاحة للرعاية
+    Route::get('/temporary-care/available-animals', [TemporaryCareController::class, 'getAvailableAnimals']);
     // البوستات
     Route::post('/posts', [PostController::class, 'store']);
 
@@ -66,7 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/comments/{commentId}/reply', [CommentController::class, 'reply']);
     Route::get('posts/{postId}/comments', [CommentController::class, 'index']);
 
-    // التطوع
+    Route::get('/posts/{post}/likes-count', [LikeController::class, 'likesCount']);
+    Route::get('/posts/likes-count/post', [LikeController::class, 'getAllLike']);    // التطوع
     Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
 
 
@@ -74,8 +88,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // الإشعارات
-    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/userall', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+    //الدليل
+    Route::get('/animal-guide', [GuideController::class, 'listAllByCategory']);
 
 });
 Route::middleware(['auth:sanctum'])->group(function () {

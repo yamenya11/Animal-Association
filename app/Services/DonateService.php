@@ -14,12 +14,12 @@ class DonateService{
         'full_name' => 'required|string|max:255',
         'number' => 'required|string|max:15',
         'donation_type' => 'required|string|max:15',
-        'amount' => 'required|numeric|min:1',
+       // 'amount' => 'required|numeric|min:1',
         'notes' => 'nullable|string|max:500',
+        'ammountinkello' => 'required|string|max:15',
     ]);
 
-       $validatedData['user_id'] = auth()->id(); // سيتم تعيين null تلقائياً إذا لم يكن مسجلاً
-
+    $validatedData['user_id'] = auth()->id(); // سيتم تعيين null تلقائياً إذا لم يكن مسجلاً
     $donation = Donate::create($validatedData);
 
     return [

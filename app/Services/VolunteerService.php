@@ -87,6 +87,7 @@ class VolunteerService
         $vr->notes  = $notes;
         $vr->save();
         $vr->user->notify(new VolunteerRequestApproved($vr));
+        
         return [
             'status'  => true,
             'message' => $action === 'approved'

@@ -18,7 +18,9 @@ use App\Models\AnimalCase;
 use Stephenjude\Wallet\Traits\HasWallet;
 use Stephenjude\Wallet\Interfaces\Wallet;
 use Stephenjude\Wallet\Exceptions\InsufficientFundException;
+use Illuminate\Notifications\DatabaseNotification;
 
+use App\Models\TemporaryCareRequest;
 
 class User extends Authenticatable implements Wallet
 {
@@ -29,20 +31,21 @@ class User extends Authenticatable implements Wallet
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'wallet_balance',
-        'fcm_token',
-        'level',
-        'address',
-        'phone',
-        'profile_image'
-
-        
-    ];
-
+  protected $fillable = [
+    'name',
+    'email',
+    'password',
+    'profile_image',
+    'address',
+    'phone',
+    'level',
+    'wallet_balance'
+];
+public function notifications()
+{
+    return $this->morphMany(DatabaseNotification::class, 'notifiable')
+               ->orderBy('created_at', 'desc');
+}
     public function adoptions()
    {
     return $this->hasMany(Adoption::class);
@@ -105,7 +108,7 @@ public function isEmployee(): bool
 }
 public function temporary()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(TemporaryCareRequest::class);
     }
 // في User model
 public function scopeAvailableEmployees($query)
@@ -145,6 +148,7 @@ public function depositFloat(float $amount, array $meta = [])
         'ad_id' => $meta['ad_id'] ?? null
     ]);
 }
+
     /**
      * The attributes that should be hidden for serialization.
      *

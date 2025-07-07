@@ -22,17 +22,13 @@ class AdobtStatusAccept extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-
-        if ($notifiable->email) {
-            $channels[] = 'mail';
-        }
-
-        if ($notifiable->fcm_token) {
-            $channels[] = 'fcm';
-        }
-
-        return $channels;
+       $channels = ['database'];
+    
+    if ($notifiable->fcm_token) {
+        $channels[] = 'fcm';
+    }
+    
+    return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

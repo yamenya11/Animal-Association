@@ -11,9 +11,8 @@ class AdApprovedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
    protected $ad;
-    /**
-     * Create a new notification instance.
-     */
+   
+
     public function __construct($ad)
     {
         $this->ad = $ad;
@@ -26,19 +25,13 @@ class AdApprovedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-         $channels = ['database'];
-        
-        // إرسال بريد إلكتروني فقط إذا كان لدى المستخدم عنوان بريد
-        if ($notifiable->email) {
-            $channels[] = 'mail';
-        }
-        
-        // إرسال إشعار FCM فقط إذا كان هناك token
-        if ($notifiable->fcm_token) {
-            $channels[] = 'fcm';
-        }
-        
-        return $channels;
+        $channels = ['database'];
+    
+    if ($notifiable->fcm_token) {
+        $channels[] = 'fcm';
+    }
+    
+    return $channels;
     }
 
     /**
@@ -46,13 +39,13 @@ class AdApprovedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-                    ->subject('تمت الموافقة على إعلانك - ' . config('app.name'))
-                    ->greeting('مرحباً ' . $notifiable->name)
-                    ->line('نود إعلامك أنه تمت الموافقة على إعلانك بعنوان:')
-                   ->line('**' . $this->ad->title . '**')
-                  ->action('عرض الإعلان', route('/ads', $this->ad->id))
-                 ->line('شكراً لاستخدامك منصتنا.');
+      return (new MailMessage)
+        ->subject('تمت الموافقة على إعلانك - ' . config('app.name'))
+        ->greeting('مرحباً ' . $notifiable->name)
+        ->line('نود إعلامك أنه تمت الموافقة على إعلانك بعنوان:')
+        ->line('**' . $this->ad->title . '**')
+        ->action('عرض إعلاناتي', url('/api/ads/show/user')) // استخدام المسار المتاح
+        ->line('شكراً لاستخدامك منصتنا.');
     }
 
 
@@ -60,19 +53,10 @@ class AdApprovedNotification extends Notification implements ShouldQueue
     {
         return [
             'title' => 'تمت الموافقة على إعلانك',
-            'body' => 'إعلانك "' . $this->ad->title . '" تمت الموافقة عليه',
+            'body' => 'إعلانك "'. $this->ad->title .'" تمت الموافقة عليه',
             'data' => [
                 'ad_id' => $this->ad->id,
-                'type' => 'ad_approved',
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
-            ],
-            'android' => [
-                'priority' => 'high'
-            ],
-            'apns' => [
-                'headers' => [
-                    'apns-priority' => '10'
-                ]
+                'type' => 'ad_approved'
             ]
         ];
     }
@@ -84,12 +68,14 @@ class AdApprovedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-         return [
-            'ad_id' => $this->ad->id,
-            'title' => 'تمت الموافقة على إعلانك',
-            'message' => 'تمت الموافقة على إعلانك: ' . $this->ad->title,
-            'url' => url('/ads' . $this->ad->id),
-            'icon' => asset('images/notification-icon.png')
-        ];
+       
+      
+    return [
+        'type' => 'ad_approved', // هذا الحقل ضروري
+        'ad_id' => $this->ad->id,
+        'title' => $this->ad->title,
+        'message' => 'تمت الموافقة على إعلانك: ' . $this->ad->title,
+        'status' => 'approved'
+    ];
     }
 }

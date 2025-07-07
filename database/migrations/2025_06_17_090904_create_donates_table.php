@@ -17,7 +17,8 @@ return new class extends Migration
                 $table->string('number');
                 $table->string('email')->nullable();
                 $table->string('donation_type', 50); // تحويل enum إلى string
-                $table->decimal('amount', 15, 2);     
+                $table->decimal('amount', 15, 2)->nullable(); 
+                 $table->string('ammountinkello')->nullable(); 
                 $table->text('notes')->nullable();
                 $table->boolean('is_approved')->default(false);                     
                $table->timestamps();

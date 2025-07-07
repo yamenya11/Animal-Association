@@ -12,15 +12,15 @@ use App\Models\User;
 class AnimalCase extends Model
 {
     use HasFactory;
-     protected $fillable = [
-    'user_id',
-    'name',
-    'type',
-    'breed',
-    'birth_date',
-    'health_info',
-    'image',
-    'is_adopted'
+   protected $fillable = [
+        'name_animal',
+        'case_type',
+        'description',
+        'image',
+        'emergency_address',
+        'emergency_phone',
+        'user_id',
+        'request_type'
     ];
 
 
