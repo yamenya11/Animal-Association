@@ -25,6 +25,8 @@ use App\Http\Controllers\StafController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TemporaryCareController;
 use App\Http\Controllers\GuideController;
+use App\Http\Controllers\PolicyPostController;
+use App\Http\Controllers\PolicyCommentController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -153,6 +155,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/admin/ads/{adId}/respond', [AdminAd_midiaController::class, 'respond']);
     Route::post('/donates/{id}/respond', [DonateController::class, 'respond']);
     Route::get('/donates', [DonateController::class, 'index']);
+    Route::post('/temporary-care-requests/{requestId}/respond', [TemporaryCareController::class, 'respondToRequest']);
+    Route::get('/temporary-care-requests', [TemporaryCareController::class, 'getAllRequests']);
 });
 
 
@@ -173,7 +177,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/events/user', [AdminController::class, 'listActiveEvents']);
+    Route::get('/events/user/', [AdminController::class, 'listActiveEvents']);
     Route::post('/events/{eventId}/register', [AdminController::class, 'registerForEvent']);
 });
 
@@ -188,9 +192,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // مسارات المدير
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // إدارة المستخدمين
-     Route::get('/users', [AdminController::class, 'getUsers']);
+     Route::get('/users/all', [AdminController::class, 'getUsers']);
         Route::put('/users/{userId}', [AdminController::class, 'updateUser']);
         Route::delete('/users/{userId}', [AdminController::class, 'deleteUser']);
+        Route::post('/users/{user}/change-role', [AdminController::class, 'changeUserRole']);
 
     // إدارة الخدمات
     Route::get('/admin/services', [AdminController::class, 'getServices']);
@@ -243,4 +248,21 @@ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
     Route::put('/animals/{id}', [EmployeeController::class, 'update']);     // تعديل حيوان
     Route::delete('/animals/{id}', [EmployeeController::class, 'destroy']); // حذف حيوان
     Route::post('/animals/upload-image', [EmployeeController::class, 'uploadImage']);
+});
+
+
+////////////////////////////managepost////////////////////////
+Route::middleware(['auth:sanctum', 'role:admin|employee'])->group(function () {
+
+        // إدارة البوستات
+        Route::post('/official-posts', [PolicyPostController::class, 'storeOfficial']);
+        Route::delete('/posts/{post}', [PolicyPostController::class, 'forceDestroy']);
+        Route::delete('/posts/{post}/force-delete', [PolicyPostController::class, 'forceDestroy']);
+        
+        // إدارة التعليقات
+        Route::post('/comments', [PolicyCommentController::class, 'store']);
+        Route::delete('/comments/{comment}/delete', [PolicyCommentController::class, 'forceDestroy']);
+        Route::post('/comments/{comment}/replyadmin', [PolicyCommentController::class, 'reply']);
+        Route::get('/posts/{post}/commentadmin', [PolicyCommentController::class, 'getCommentsWithReplies']);
+
 });

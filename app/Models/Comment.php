@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
  use App\Models\User;
 use App\Models\Post;
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Comment extends Model
 {
     use HasFactory;
@@ -38,4 +39,6 @@ class Comment extends Model
             $comment->replies()->delete();
         });
     }
+
+
 }

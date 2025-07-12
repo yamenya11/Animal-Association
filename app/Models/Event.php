@@ -19,6 +19,10 @@ class Event extends Model
         'created_by'
     ];
 
+    protected $casts = [
+    'start_date' => 'datetime',
+    'end_date' => 'datetime',
+];
      public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -28,4 +32,9 @@ class Event extends Model
     {
         return $this->hasMany(EventParticipant::class);
     }
+    public function scopeActive($query)
+{
+    return $query->where('status', 'active')
+        ->where('end_date', '>', now());
+}
 }

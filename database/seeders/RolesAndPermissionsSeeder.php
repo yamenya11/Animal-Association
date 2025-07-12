@@ -40,7 +40,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'respond volunteer',
             'view volunteer requests',
             'view notifications',
-            'mark notifications read'
+            'mark notifications read',
+              'view all courses',
+            'view active courses',
+            'view doctor courses',
+            'create courses',
+            'view courses',
+            'manage courses'
         ];
 
         foreach ($permissions as $permission) {
@@ -54,7 +60,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit animals',
             'create animals',
             'view animals',
-            'view reports'
+            'view reports',
+             'view doctor courses', 
+    'create courses',
+    'manage courses'
         ]);
         
         $employeeRole->syncPermissions([

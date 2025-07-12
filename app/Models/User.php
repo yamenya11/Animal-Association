@@ -63,9 +63,15 @@ public function likes() {
     return $this->hasMany(Like::class);
     }
 
-    public function volinter() {
-    return $this->hasMany(User::class);
+ public function volunteerRequest()
+{
+    return $this->hasOne(VolunteerRequest::class);
+}
+ public function isVolunteer(): bool
+    {
+        return $this->volunteerRequest()->where('status', 'approved')->exists();
     }
+
     
      public function animal_cases() {
     return $this->hasMany(AnimalCase::class);

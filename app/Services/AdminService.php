@@ -13,12 +13,41 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+use Spatie\Permission\Models\Role;
+
+
 class AdminService
 {
+
+
+public function changeUserRole(User $user, string $role): array
+{
+    // التحقق من وجود الدور في النظام أولاً
+    if (!Role::where('name', $role)->exists()) {
+        return [
+            'success' => false,
+            'message' => 'الدور المحدد غير موجود في النظام'
+        ];
+    }
+
+    // تغيير الأدوار (سيحل محل جميع الأدوار الحالية)
+    $user->syncRoles([$role]);
+    
+    return [
+        'success' => true,
+        'message' => 'تم تغيير دور المستخدم بنجاح',
+        'data' => [
+            'user_id' => $user->id,
+            'new_role' => $role,
+            'user_roles' => $user->getRoleNames()->toArray()
+        ]
+    ];
+}
     // إدارة المستخدمين
-    public function getAllUsers()
-    {
-        return User::select([
+  public function getAllUsers()
+{
+    return User::with(['roles:id,name', 'volunteerRequest'])
+        ->select([
             'id',
             'name',
             'email',
@@ -28,8 +57,40 @@ class AdminService
             'address',
             'profile_image',
             'phone'
-        ])->get();
-    }
+        ])
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'created_at' => $user->created_at,
+                'wallet_balance' => $user->wallet_balance,
+                'level' => $user->level,
+                'address' => $user->address,
+                'profile_image' => $user->profile_image,
+                'phone' => $user->phone,
+                'roles' => $user->roles->pluck('name'),
+                'volunteer_specialization' => $user->volunteerRequest ? $this->getVolunteerTypeName($user->volunteerRequest->volunteer_type) : null,
+                'volunteer_status' => $user->volunteerRequest ? $user->volunteerRequest->status : null
+            ];
+        });
+}
+
+// دالة مساعدة لتحويل volunteer_type إلى نص مقروء
+protected function getVolunteerTypeName($type)
+{
+    $types = [
+        'cleaning_shelters' => 'تنظيف الملاجئ',
+        'animal_care' => 'رعاية الحيوانات',
+        'photography_and_documentation' => 'التصوير والتوثيق',
+        'design_and_markiting' => 'التصميم والتسويق',
+        'social_midea_administrator' => 'إدارة السوشيال ميديا',
+        'school_awareness' => 'التوعية المدرسية'
+    ];
+    
+    return $types[$type] ?? $type;
+}
 
 
 
@@ -188,14 +249,43 @@ public function updateUserAsAdmin(Request $request, $userId): array
 }
 
     // إدارة الفعاليات
-    public function getAllEvents()
-    {
-        return Event::with(['creator', 'participants.user'])
-            ->latest()
-            ->get();
-    }
+ public function getAllEvents()
+{
+    $events = Event::with(['creator', 'participants.user'])
+        ->latest()
+        ->get()
+        ->map(function ($event) {
+            return [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description,
+                'start_date' => \Carbon\Carbon::parse($event->start_date)->format('Y-m-d H:i'),
+                'end_date' => \Carbon\Carbon::parse($event->end_date)->format('Y-m-d H:i'),
+                'location' => $event->location,
+                'status' => $this->getStatusDisplay($event->status),
+                'creator' => $event->creator->name ?? 'غير معروف',
+                'participants_count' => $event->participants->count()
+            ];
+        });
 
-   public function createEvent(Request $request): array
+    return response()->json([
+        'status' => true,
+        'events' => $events
+    ]);
+}
+
+protected function getStatusDisplay($status)
+{
+    return match ($status) {
+        'pending' => 'قيد الانتظار',
+        'active' => 'نشط',
+        'completed' => 'منتهي',
+        default => $status
+    };
+}
+
+
+ public function createEvent(Request $request): array
 {
     $validated = $request->validate([
         'title'            => 'required|string|max:255',
@@ -206,7 +296,10 @@ public function updateUserAsAdmin(Request $request, $userId): array
         'max_participants' => 'nullable|integer|min:1',
     ]);
 
-    $validated['created_by'] = auth()->id(); // أو id المشرف
+    $validated['created_by'] = auth()->id();
+
+    // ✅ تفعيل الحدث فوراً إذا كان المستخدم أدمن
+    $validated['status'] = auth()->user()->hasRole('admin') ? 'active' : 'pending';
 
     $event = Event::create($validated);
 
@@ -216,6 +309,8 @@ public function updateUserAsAdmin(Request $request, $userId): array
         'data'    => $event,
     ];
 }
+
+
 
 
     public function updateEvent(Request $request, $eventId): array

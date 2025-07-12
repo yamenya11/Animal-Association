@@ -50,12 +50,8 @@ class TemporaryCareController extends Controller
 
     public function getAllRequests()
     {
-        if (!Auth::user()->isAdmin()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'غير مصرح بهذه العملية'
-            ], 403);
-        }
+        
+    
 
         return response()->json([
             'status' => true,
@@ -66,14 +62,8 @@ class TemporaryCareController extends Controller
 
      public function respondToRequest(Request $request, $requestId)
     {
-        // التحقق من صلاحيات المسؤول
-        if (!Auth::user()->isAdmin()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'غير مصرح بهذه العملية'
-            ], 403);
-        }
-
+       
+        
         $validated = $request->validate([
             'status' => 'required|in:approved,rejected'
         ]);

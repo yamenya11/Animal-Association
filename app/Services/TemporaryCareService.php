@@ -185,58 +185,67 @@ protected function calculateAge($birthDate)
 
     public function getAllRequests()
     {
-        return TemporaryCareRequest::with([
-            'user:id,name,phone',
-            'animal:id,name,type,breed,image'
-        ])->where('status', 'pending')
-          ->orderBy('created_at', 'desc')
-          ->get()
-          ->map(function($request) {
-              return $this->formatAdminRequest($request);
-          });
+         return TemporaryCareRequest::with(['user', 'animal.type'])
+        ->where('status', 'pending')
+        ->get()
+        ->map(function ($adoption) {
+            return [
+                'id' => $adoption->id,
+                'user' => [
+                    'name' => $adoption->user->name,
+                    'email' => $adoption->user->email
+                ],
+                'animal' => [
+                    'name' => $adoption->animal->name,
+                    'type' => $adoption->animal->type->name
+                ],
+                'status' => $adoption->status,
+                'created_at' => $adoption->created_at->format('Y-m-d H:i')
+            ];
+        });
     }
 
     /**
      * تغيير حالة الطلب من قبل المسؤول (قبول أو رفض)
      */
-    // public function respondToRequest(int $requestId, string $status): array
-    // {
-    //     if (!in_array($status, ['approved', 'rejected'])) {
-    //         return [
-    //             'status' => false,
-    //             'message' => 'حالة غير صالحة',
-    //             'code' => 400,
-    //         ];
-    //     }
+    public function respondToRequest(int $requestId, string $status): array
+    {
+        if (!in_array($status, ['approved', 'rejected'])) {
+            return [
+                'status' => false,
+                'message' => 'حالة غير صالحة',
+                'code' => 400,
+            ];
+        }
 
-    //     try {
-    //         DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-    //         $request = TemporaryCareRequest::with(['user', 'animal'])->findOrFail($requestId);
-    //         $request->status = $status;
-    //         $request->save();
+            $request = TemporaryCareRequest::with(['user', 'animal'])->findOrFail($requestId);
+            $request->status = $status;
+            $request->save();
 
-    //         // إشعار المستخدم
-    //         $notificationService = app(NotificationService::class);
-    //         $notificationService->sendTemporaryCareStatusNotification($request);
+            // إشعار المستخدم
+            //$notificationService = app(NotificationService::class);
+            //$notificationService->sendTemporaryCareStatusNotification($request);
 
-    //         DB::commit();
+            DB::commit();
 
-    //         return [
-    //             'status' => true,
-    //             'message' => $status === 'approved' 
-    //                 ? 'تمت الموافقة على طلب الرعاية المؤقتة.'
-    //                 : 'تم رفض طلب الرعاية المؤقتة.',
-    //             'data' => $request->fresh(),
-    //             'code' => 200
-    //         ];
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return [
-    //             'status' => false,
-    //             'message' => 'حدث خطأ أثناء المعالجة: ' . $e->getMessage(),
-    //             'code' => 500
-    //         ];
-    //     }
-    // }
+            return [
+                'status' => true,
+                'message' => $status === 'approved' 
+                    ? 'تمت الموافقة على طلب الرعاية المؤقتة.'
+                    : 'تم رفض طلب الرعاية المؤقتة.',
+                'data' => $request->fresh(),
+                'code' => 200
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'message' => 'حدث خطأ أثناء المعالجة: ' . $e->getMessage(),
+                'code' => 500
+            ];
+        }
+    }
 }

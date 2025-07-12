@@ -9,6 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use App\models\Event;
 use App\models\EventParticipant;
+use Spatie\Permission\Models\Role;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 class AdminController extends Controller
 {
@@ -19,6 +21,12 @@ class AdminController extends Controller
         $this->adminService = $adminService;
     }
 
+
+        public function changeUserRole(Request $request, User $user): JsonResponse
+    {
+        $response = $this->adminService->changeUserRole($user, $request->role);
+        return response()->json($response);
+    }
     // إدارة المستخدمين
     public function getUsers(): JsonResponse
     {
@@ -161,7 +169,9 @@ public function listActiveEvents()
 {
     $events = Event::where('status', 'active')
         ->where('end_date', '>', now())
+      //  ->with(['participants.user'])
         ->withCount('participants')
+        ->latest()
         ->get();
 
     return response()->json([
@@ -169,4 +179,5 @@ public function listActiveEvents()
         'data' => $events
     ]);
 }
+
 } 

@@ -81,8 +81,8 @@ class PostService
     $post->save();
 
     // إشعار عبر خدمة الإشعارات
-    $notificationService = app(NotificationService::class);
-    $notificationService->sendPostStatusNotification($post, $action);
+    //$notificationService = app(NotificationService::class);
+    //$notificationService->sendPostStatusNotification($post, $action);
 
     return [
         'status' => true,
