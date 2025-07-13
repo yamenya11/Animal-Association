@@ -20,7 +20,7 @@ class AppointmentController extends Controller
 
         public function request(Request $request): JsonResponse
         {
-            $appointment = $this->appointmentService->requestAppointment($request);
+            $appointment = $this->appointmentService->scheduleAppointment($request);
 
             return response()->json([
                 'status' => true,

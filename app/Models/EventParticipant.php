@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+Use App\Models\Event;
 class EventParticipant extends Model
 {
     use HasFactory;

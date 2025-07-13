@@ -110,16 +110,24 @@ class AnimalCaseService
     ];
 }
 
-    public function getAnimalCasesByUser()
-    {
-        return AnimalCase::where('user_id', Auth::id())
-                       ->orderBy('created_at', 'desc')
-                       ->get()
-                       ->map(function($case) {
-                           if ($case->image) {
-                               $case->image_url = asset('storage/' . $case->image);
-                           }
-                           return $case;
-                       });
-    }
+public function getAnimalCasesByUser()
+{
+    $userId = Auth::id();
+    
+
+
+    return AnimalCase::with('user')
+        //->where('user_id', $userId)
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function($case) {
+            return [
+                'id' => $case->id,
+                'animal_name' => $case->name_animal,
+                'case_type' => $case->case_type,
+                'image_url' => $case->image ? asset('storage/' . $case->image) : null,
+                'created_at' => $case->created_at->format('Y-m-d H:i')
+            ];
+        });
+}
 }

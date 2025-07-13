@@ -13,9 +13,9 @@ class CourseSeeder extends Seeder
     public function run(): void
     {
          $categories = [
-            ['name' => 'Medical Courses'],
-            ['name' => 'Health & Wellness'],
-            ['name' => 'Specialized Treatments']
+            ['name' => 'nursing'],
+            ['name' => 'First aid'],
+            ['name' => 'feeding']
         ];
 
         foreach ($categories as $category) {

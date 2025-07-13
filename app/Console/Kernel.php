@@ -4,7 +4,9 @@ namespace App\Console;
 use App\Model\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-
+use App\Services\VaccineService;
+use App\Models\User;
+use App\Notifications\VaccineDueNotification;
 class Kernel extends ConsoleKernel
 {
     /**
@@ -12,11 +14,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-       $schedule->call(function () {
-        \App\Models\Event::where('end_date', '<', now())
-            ->where('status', '!=', 'completed')
-            ->update(['status' => 'completed']);
-    })->daily();
+      $schedule->call(function () {
+    $vaccines = app(VaccineService::class)->dueToday();
+
+    foreach ($vaccines as $vaccine) {
+        $users = User::role('vet')->get();
+
+        foreach ($users as $user) {
+            $user->notify(new VaccineDueNotification($vaccine));
+        }
+    }
+})->everyMinute();
     }
 
     /**
@@ -28,4 +36,6 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+
+
 }

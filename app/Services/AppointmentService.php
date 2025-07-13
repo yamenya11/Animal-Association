@@ -13,51 +13,46 @@ use App\Services\NotificationService;
 class AppointmentService
 {
 
- public function requestAppointment(Request $request)
+
+public function scheduleAppointment(Request $request)
 {
-    $validated = $request->validate([
-        'animal_case_id' => 'required|exists:animal_cases,id',
-        'scheduled_at'   => ['required', 'date', 'after:' . now()->addMinutes(5)],
-        'doctor_id'      => 'nullable|exists:users,id',
+     $validated = $request->validate([
+         'animal_case_id'  => 'required|exists:animal_cases,id',
+        'scheduled_date' => 'required|date|after_or_equal:today',
+        'scheduled_time' => 'required|date_format:H:i',
+        'description'    => 'required|string|min:10'
     ]);
 
-    // التحقق من وجود موعد مفتوح أو معتمد لنفس الحالة
-    $existingAppointment = Appointment::where('animal_case_id', $validated['animal_case_id'])
-        ->whereIn('status', ['pending', 'approved'])
-        ->first();
-
-    if ($existingAppointment) {
+    // البحث عن الحالة باستخدام اسم الحيوان
+$animalCase = AnimalCase::find($validated['animal_case_id']);
+    // التحقق من عدم وجود موعد سابق
+    if ($animalCase->appointments()->where('status', 'scheduled')->exists()) {
         return response()->json([
-            'status'  => false,
-            'message' => 'لا يمكن طلب موعد جديد لهذه الحالة لأن لديها موعد قيد المعالجة أو معتمد.',
+            'status' => false,
+            'message' => 'هذه الحالة لديها موعد مجدول بالفعل'
         ], 422);
     }
 
-    $appointmentData = [
-        'user_id'        => Auth::id(),
-        'animal_case_id' => $validated['animal_case_id'],
-        'scheduled_at'   => $validated['scheduled_at'],
-        'status'         => 'pending',
-        
-    ];
-
-    // أضف doctor_id فقط إذا موجودة في الطلب (ليست null)
-    if (!empty($validated['doctor_id'])) {
-        $appointmentData['doctor_id'] = $validated['doctor_id'];
-    }
-
-    $appointment = Appointment::create($appointmentData);
-
-    // تحميل بيانات الطبيب والمستخدم (الذي طلب الموعد)
-    $appointment->load(['doctor:id,name,email', 'user:id,name,email']);
-
-    return response()->json([
-        'status'  => true,
-        'message' => 'تم إرسال طلب الموعد، في انتظار الموافقة.',
-        'data'    => $appointment,
+    $appointment = Appointment::create([
+        'user_id' => $animalCase->user_id,
+        'doctor_id' => auth()->id(), // الطبيب الحالي
+        'animal_case_id' => $animalCase->id,
+        'scheduled_date' => $validated['scheduled_date'],
+        'scheduled_time' => $validated['scheduled_time'],
+        'description' => $validated['description'],
+        'status' => 'scheduled'
     ]);
-}
 
+    // إرسال إشعار للمستخدم
+    //$animalCase->user->notify(new AppointmentScheduled($appointment));
+
+  return response()->json([
+    'status' => true,
+    'message' => 'تم جدولة الموعد بنجاح',
+    'appointment' => $appointment->load('animalCase:id,name_animal,case_type,image'),
+    'doctor' => auth()->user()->only(['id', 'name']),
+]);
+}
 public function acceptappointmentImm( $appointment, string $action): array{
    $app = Appointment::with('user')->findOrFail($appointment);
 

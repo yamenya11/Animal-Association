@@ -27,6 +27,9 @@ use App\Http\Controllers\TemporaryCareController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\PolicyPostController;
 use App\Http\Controllers\PolicyCommentController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\VaccineController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -117,9 +120,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ==== مسارات الموظفين (Employee) ====
  Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
-    Route::get('/animal-cases', [AnimalCaseController::class, 'index']); // عرض حالات الحيوانات
-    Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
-    Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
+
     //Route::post('/animal-cases/immediate-request', [AnimalCaseController::class, 'immediateRequest']);
 
 
@@ -161,7 +162,39 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 
 
+Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
+   Route::post('/doctor/courses', [CourseController::class, 'store']);
 
+    // 📚 عرض كورسات الطبيب نفسه
+    Route::get('/doctor/courses', [CourseController::class, 'indexForDoctor']);
+
+    // 🗑️ حذف كورس يخص الطبيب (أو مسؤول)
+    Route::delete('/doctor/courses/{id}', [CourseController::class, 'destroy']);
+
+    Route::post('/doctor/reports', [ReportController::class, 'store']);
+    Route::get('/doctor/reports', [ReportController::class, 'index']);
+    Route::get('/doctor/reports/{id}', [ReportController::class, 'show']);
+    Route::post('/doctor/reports/{id}', [ReportController::class, 'update']);
+    Route::delete('/doctor/reports/{id}', [ReportController::class, 'destroy']);
+    Route::patch('/reports/{id}/status', [ReportController::class, 'updateStatus']);
+      Route::get('/reports/search', [ReportController::class, 'search']);
+
+  //Route::get('/cases/doctor', [AnimalCaseController::class, 'showcases']); // عرض حالات الحيوانات
+    Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
+    Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
+
+        Route::post('/creat/vaccine', [VaccineController::class, 'store']);
+    Route::get('/show/vaccine', [VaccineController::class, 'index']);
+
+
+    Route::get('/notifications/doctor', [VaccineController::class, 'notifications']);
+    Route::get('/notifications/unread', [VaccineController::class, 'unreadNotifications']);
+    Route::post('/notifications/read-all', [VaccineController::class, 'markAllRead']);
+    Route::post('/notifications/{id}/mark-as-read', [VaccineController::class, 'markAsReadById']);
+});
+
+Route::get('/animal-cases/doctor', [AnimalCaseController::class, 'index'])
+     ->middleware(['auth:sanctum', 'role:vet']);
 
 
 

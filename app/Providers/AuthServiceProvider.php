@@ -7,6 +7,8 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Illuminate\Support\Facades\Gate;
 use App\Models\Post;
 use App\Policies\PostPolicy;
+use App\Models\Course;
+use App\Models\Comment;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -17,6 +19,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Post::class => PostPolicy::class,
+        // Course::class => CoursePolicy::class,
+         Comment::class=> CommentPolicy::class,
     ];
 
     /**

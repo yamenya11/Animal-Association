@@ -20,9 +20,10 @@ return new class extends Migration
 
     $table->foreignId('animal_case_id')->constrained('animal_cases')->onDelete('cascade'); // الحالة الحيوانية
 
-    $table->dateTime('scheduled_at');
-
-    $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+      $table->date('scheduled_date');   // حقل التاريخ فقط
+     $table->time('scheduled_time');  
+    $table->text('description')->nullable(); // وصف الحالة من الطبيب
+       $table->enum('status', ['scheduled', 'completed', 'canceled'])->default('scheduled');
 
     $table->boolean('is_immediate')->default(false); // لتحديد إذا كان موعد فوري أم لا
             $table->timestamps();

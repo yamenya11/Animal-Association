@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class CatgoryCourse extends Model
 {
+
     use HasFactory;
+     protected $table = 'catgory_courses';
     protected $fillable = ['name'];
 
-    public function courses()
+     public function courses()
     {
-        return $this->hasMany(CatgoryCourse::class);
+        return $this->hasMany(Course::class, 'category_id');
     }
 }

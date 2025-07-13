@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 
 
@@ -313,48 +313,51 @@ protected function getStatusDisplay($status)
 
 
 
-    public function updateEvent(Request $request, $eventId): array
-    {
-        try {
-            DB::beginTransaction();
+   public function updateEvent(Request $request, $eventId): array
+{
+    try {
+        DB::beginTransaction();
 
-            $event = Event::findOrFail($eventId);
+        $event = Event::findOrFail($eventId);
 
-            $validated = $request->validate([
-                'title' => 'sometimes|string|max:255',
-                'description' => 'sometimes|string',
-                'start_date' => 'sometimes|date',
-                'end_date' => 'sometimes|date|after:start_date',
-                'location' => 'sometimes|string',
-                'max_participants' => 'nullable|integer|min:1',
-                'status' => 'sometimes|in:pending,active,completed,cancelled'
-            ]);
+        $validated = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'start_date' => 'sometimes|date',
+            'end_date' => 'sometimes|date|after:start_date',
+            'location' => 'sometimes|string',
+            'max_participants' => 'nullable|integer|min:1',
+            'status' => 'sometimes|in:pending,active,completed,cancelled'
+        ]);
 
-            $event->update($validated);
-         $UserId=Auth::user();
-            DB::commit();
-          $eventp = EventParticipant->create([
+        $event->update($validated);
+        
+        $userId = Auth::id(); // Get the authenticated user's ID
+        
+        // Create event participant if needed
+        $eventParticipant = EventParticipant::create([
+            'event_id' => $event->id, // Use the event's ID
+            'user_id' => $userId,
+            'status' => 'registered', // This should be a string, not an array
+            'notes' => 'kkmo', // This should be a string, not an array
+        ]);
 
-            'event_id'=>event->$event,
-            'user_id'=>user->$UserId,
-            'status'=>['registered'],
-            'notes'=>['kkmo'],
+        DB::commit();
 
-          ]);
-            return [
-                'status' => true,
-                'message' => 'تم تحديث الفعالية بنجاح',
-                'data' => $event
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return [
-                'status' => false,
-                'message' => 'حدث خطأ أثناء تحديث الفعالية',
-                'error' => $e->getMessage()
-            ];
-        }
+        return [
+            'status' => true,
+            'message' => 'تم تحديث الفعالية بنجاح',
+            'data' => $event
+        ];
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return [
+            'status' => false,
+            'message' => 'حدث خطأ أثناء تحديث الفعالية',
+            'error' => $e->getMessage()
+        ];
     }
+}
 
     public function deleteEvent($eventId): array
     {
