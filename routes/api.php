@@ -151,6 +151,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/admin/posts/{id}/respond', [AdminPostController::class, 'respond']);
     Route::post('/admin/adopt/{id}/respond_adopt', [AdminPostController::class, 'respond_Adopt']);
     Route::get('/admin/posts', [AdminPostController::class, 'index']);
+    Route::get('/admin/posts/approve', [AdminPostController::class, 'show_post_admin']);
     Route::get('/admin/adoptions', [AdminPostController::class, 'getAllAdoptionRequests']);
     Route::get('/admin/ads/pending', [AdminAd_midiaController::class, 'index']);
     Route::post('/admin/ads/{adId}/respond', [AdminAd_midiaController::class, 'respond']);

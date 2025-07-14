@@ -56,6 +56,33 @@ class AdminPostController extends Controller
     ]);
   } 
 
+    public function show_post_admin()
+  {
+    // جلب كل المنشورات التي لم تتم الموافقة عليها بعد
+    $pendingPosts = Post::where('status', 'approved')->with('user')->latest()->get();
+
+     $posts = Post::join('users', 'posts.user_id', '=', 'users.id')
+        ->where('posts.status', 'approved')
+        ->select(
+            'posts.id',
+            'posts.title',
+            'posts.content',
+            'posts.status',
+            'posts.image',
+            'posts.created_at',
+            'users.id as user_id',
+            'users.name as user_name',
+            'users.email as user_email'
+        )
+        ->orderBy('posts.created_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'status' => true,
+        'data' => $posts
+    ]);
+  } 
+
  // للإدمن: الموافقة / الرفض
     public function respond_Adopt(Request $request, $id)
     {
