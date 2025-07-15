@@ -131,6 +131,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/animal-cases/immediate', [StafController::class, 'listImmediateCases']);
     Route::get('/doctors', [StafController::class, 'availableDoctors']);
     Route::post('/appointments/schedule/{caseId}', [StafController::class, 'scheduleImmediate']);
+    Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
 
 
     Route::get('/cases/regular', [StafController::class, 'listRegularCases']);//عرض الحالات العادية
@@ -181,9 +182,8 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
     Route::patch('/reports/{id}/status', [ReportController::class, 'updateStatus']);
       Route::get('/reports/search', [ReportController::class, 'search']);
 
-  //Route::get('/cases/doctor', [AnimalCaseController::class, 'showcases']); // عرض حالات الحيوانات
+ // Route::get('/cases/doctor', [AnimalCaseController::class, 'showcases']); // عرض حالات الحيوانات
     Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
-    Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
 
         Route::post('/creat/vaccine', [VaccineController::class, 'store']);
     Route::get('/show/vaccine', [VaccineController::class, 'index']);

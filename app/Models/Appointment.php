@@ -12,7 +12,7 @@ class Appointment extends Model
 
       protected $fillable =  [
     'user_id', 'doctor_id', 'animal_case_id', 
-    'scheduled_date', 'scheduled_time', 'description', 'status'
+    'scheduled_date', 'scheduled_time', 'description', 'status','is_immediate','employee_id'
 ];
 
      public function user()

@@ -21,6 +21,8 @@ class AnimalCase extends Model
         'emergency_phone',
         'user_id',
         'request_type'
+        ,
+        'approval_status'
     ];
 
 

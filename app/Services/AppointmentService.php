@@ -35,7 +35,7 @@ $animalCase = AnimalCase::find($validated['animal_case_id']);
 
     $appointment = Appointment::create([
         'user_id' => $animalCase->user_id,
-        'doctor_id' => auth()->id(), // الطبيب الحالي
+       // 'doctor_id' => auth()->id(), // الطبيب الحالي
         'animal_case_id' => $animalCase->id,
         'scheduled_date' => $validated['scheduled_date'],
         'scheduled_time' => $validated['scheduled_time'],
@@ -56,24 +56,19 @@ $animalCase = AnimalCase::find($validated['animal_case_id']);
 public function acceptappointmentImm( $appointment, string $action): array{
    $app = Appointment::with('user')->findOrFail($appointment);
 
-       if (!in_array($action, ['approved', 'rejected'])) {
+       if (!in_array($action, ['completed', 'canceled'])) {
         return [
             'status' => false,
             'message' => 'إجراء غير صالح.',
         ];
     }
-
     $app->status = $action;
     $app->save();
-    
-    $notificationService = app(NotificationService::class);
-    $notificationService->sendAppointmentStatusNotification($app, 'approved');
-
-
-
+   // $notificationService = app(NotificationService::class);
+    //$notificationService->sendAppointmentStatusNotification($app, 'completed');
      return [
         'status' => true,
-        'message' => $action === 'approved'
+        'message' => $action === 'completed'
             ? 'تمت الموافقة على الموعد.'
             : 'تم رفض الموعد.',
         'data' => $app,

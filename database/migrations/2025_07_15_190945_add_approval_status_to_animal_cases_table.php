@@ -12,19 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('animal_cases', function (Blueprint $table) {
-                  $table->unsignedBigInteger('user_id')->nullable()->after('id'); 
-
-       
-        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+           $table->enum('approval_status', ['pending', 'approved', 'rejected'])
+              ->nullable() // لجعلها غير مطلوبة للطلبات الطارئة
+              ->after('request_type');
+                
         });
     }
 
-
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('animal_cases', function (Blueprint $table) {
-             $table->dropForeign(['user_id']);
-        $table->dropColumn('user_id');
+      $table->dropColumn(['approval_status']);
         });
     }
 };

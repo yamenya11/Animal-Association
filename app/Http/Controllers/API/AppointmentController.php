@@ -105,7 +105,7 @@ class AppointmentController extends Controller
   public function showAppointmentMyUser()
     {
         $appointments = Appointment::where('user_id', Auth::id())
-            ->where('status', 'approved')
+            ->where('status', 'completed')
             ->select('id', 'status', 'scheduled_at', 'is_immediate')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -120,7 +120,7 @@ class AppointmentController extends Controller
   public function respond(Request $request, $app)
     {
         $request->validate([
-            'action' => 'required|in:approved,rejected',
+            'action' => 'required|in:completed,canceled',
         ]);
 
         $result = $this->appointmentService->acceptappointmentImm($app, $request->action);

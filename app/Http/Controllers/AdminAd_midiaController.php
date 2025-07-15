@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ad;
 use App\Services\AdService;
+use Illuminate\Support\Facades\DB;
 class AdminAd_midiaController extends Controller
 {
      protected $adService;
@@ -14,24 +15,37 @@ class AdminAd_midiaController extends Controller
         $this->adService = $adService;
     }
 
-    public function index()
+public function index() 
 {
-    return Ad::select([
-        'ads.id',
-        'ads.title',
-        'ads.description',
-        'ads.status',
-        'users.name as name_user',
-        'users.email as email_user',
-        'ad_media.media_path',
-        'ad_media.media_type',
-    ])
-    ->leftJoin('users', 'ads.user_id', '=', 'users.id')
-    ->leftJoin('ad_media', 'ads.id', '=', 'ad_media.ad_id') // ✅ هذا هو التعديل المهم
-    ->where('ads.status', 'pending')
-    ->get();
-}
+    $ads = Ad::with(['user:id,name,email', 'media'])
+        ->where('status', 'pending')
+        ->get()
+        ->map(function ($ad) {
+            $mediaArray = $ad->media->map(function ($media) {
+                return (object)[
+                    'path' => asset('storage/' . $media->media_path),
+                    'type' => $media->media_type
+                ];
+            })->toArray();
+            
+            return [
+                'id' => $ad->id,
+                'title' => $ad->title,
+                'description' => $ad->description,
+                'status' => $ad->status,
+                'user' => (object)[
+                    'name' => $ad->user->name,
+                    'email' => $ad->user->email
+                ],
+                'media' => $mediaArray
+            ];
+        });
 
+      return response()->json([
+        'status' => true,
+        'data' => $ads
+    ]);
+}
 
      public function respond(Request $request, $adId)
     {

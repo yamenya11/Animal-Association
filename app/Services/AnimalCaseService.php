@@ -36,13 +36,17 @@ class AnimalCaseService
         'case_type' => $validated['case_type'],
         'description' => $validated['description'],
         'image' => $imagePath,
-        'request_type' => $validated['request_type']
+        'request_type' => $validated['request_type'],
+        
     ];
 
     // إضافة حقول الطوارئ إذا كانت الحالة طارئة
     if ($validated['request_type'] === 'immediate') {
         $caseData['emergency_address'] = $validated['emergency_address'];
         $caseData['emergency_phone'] = $validated['emergency_phone'];
+    }else {
+        // إضافة approval_status فقط للطلبات العادية
+        $caseData['approval_status'] = 'pending';
     }
 
     // إنشاء الحالة
@@ -52,6 +56,8 @@ class AnimalCaseService
     if ($validated['request_type'] === 'immediate') {
         $this->handleEmergencyCase($case);
     }
+   
+
 
     // إضافة رابط الصورة للاستجابة
     $responseData = $case->toArray();
@@ -63,41 +69,39 @@ class AnimalCaseService
         'status' => true,
         'message' => 'تم إنشاء الحالة بنجاح',
         'data' => $responseData,
+        
     ];
 }
 
     protected function handleEmergencyCase(AnimalCase $case)
-    {
-        // 1. إرسال سيارة الإسعاف (تنفيذ وهمي)
-        $ambulanceResponse = $this->dispatchAmbulance(
-            $case->emergency_address,
-            $case->emergency_phone
-        );
+{
+    // 1. حساب وقت بعد 5 دقائق
+    $scheduledTime = now()->addMinutes(5);
+    
+    // 2. البحث عن موظف متاح (بنفس الطريقة الحالية)
+    $employee = User::role('employee')
+                  ->where('available', true)
+                  ->orderBy('id')
+                  ->first();
 
-        // 2. تعيين موظف متاح
-        $employee = User::role('employee')
-                      ->where('available', true)
-                      ->orderBy('id')
-                      ->first();
+    // 3. إنشاء الموعد (باستخدام الحقلين المنفصلين)
+    Appointment::create([
+        'user_id' => $case->user_id,
+        'employee_id' => $employee ? $employee->id : null,
+        'animal_case_id' => $case->id,
+        'scheduled_date' => $scheduledTime->format('Y-m-d'), // تاريخ منفصل
+        'scheduled_time' => $scheduledTime->format('H:i:s'), // وقت منفصل
+        'status' => $employee ? 'scheduled' : 'pending',
+        'is_immediate' => true,
+        'description' => 'طلب طارئ - بانتظار التأكيد'
+    ]);
 
-        if ($employee) {
-            $appointment = Appointment::create([
-                'user_id' => $case->user_id,
-                'animal_case_id' => $case->id,
-                'employee_id' => $employee->id,
-                'scheduled_at' => now()->addMinutes(5), 
-                'status' => 'pending',
-                'is_immediate' => true,
-                'emergency_data' => json_encode([
-                'address' => $case->emergency_address,
-                'phone' => $case->emergency_phone,
-                'ambulance_dispatched' => $ambulanceResponse['success']
-                ])
-            ]);
-
-            // يمكنك هنا إضافة أي إشعارات أو خدمات أخرى
-        }
-    }
+    // 4. إرسال الإسعاف (الكود الحالي)
+    $this->dispatchAmbulance(
+        $case->emergency_address,
+        $case->emergency_phone
+    );
+}
 
    protected function dispatchAmbulance(string $address, string $phone): array
 {
@@ -117,7 +121,7 @@ public function getAnimalCasesByUser()
 
 
     return AnimalCase::with('user')
-        //->where('user_id', $userId)
+        ->where('approval_status', 'pending')
         ->orderBy('created_at', 'desc')
         ->get()
         ->map(function($case) {
@@ -126,7 +130,8 @@ public function getAnimalCasesByUser()
                 'animal_name' => $case->name_animal,
                 'case_type' => $case->case_type,
                 'image_url' => $case->image ? asset('storage/' . $case->image) : null,
-                'created_at' => $case->created_at->format('Y-m-d H:i')
+                'created_at' => $case->created_at->format('Y-m-d H:i'),
+                'approval_status'=>$case->approval_status
             ];
         });
 }
