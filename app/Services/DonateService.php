@@ -31,20 +31,28 @@ class DonateService{
 }
 
 
-      public function respondToPost($donateId, bool $action)
-    {
-        $donate = Donate::findOrFail($donateId);
-        $donate->is_approved = $action; // تصحيح المتغير من $approve إلى $action
-        $donate->save();
+    public function respondToPost($donateId, Request $request)
+{
+    $request->validate([
+        'is_approved' => 'required|boolean'
+    ]);
 
-        return [
-            'status' => true,
-            'message' => $action
-                ? 'تمت الموافقة على التبرع.'
-                : 'تم رفض التبرع.',
-            'data' => $donate,
-        ];
-    }
+    $donate = Donate::findOrFail($donateId);
+    $isApproved = filter_var($request->input('is_approved'), FILTER_VALIDATE_BOOLEAN);
+
+    $donate->update([
+        'is_approved' => $isApproved,
+        'status' => $isApproved ? 'approved' : 'rejected'
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => $isApproved
+            ? 'تمت الموافقة على التبرع.'
+            : 'تم رفض التبرع.',
+        'data' => $donate,
+    ]);
+}
 
 
 

@@ -60,27 +60,27 @@ class DonateController extends Controller
     ]);
 }
 
-      public function respond($donateId, Request $request)
+ public function respond($donateId, Request $request)
 {
     $request->validate([
-        'is_approved' => 'required|in:true,false,1,0'
+        'is_approved' => 'required|boolean' // تغيير التحقق إلى boolean
     ]);
 
-    $action = $request->input('is_approved');
     $donation = Donate::findOrFail($donateId);
+    $isApproved = filter_var($request->input('is_approved'), FILTER_VALIDATE_BOOLEAN);
 
     // تحديث حالة التبرع
     $donation->update([
-        'is_approved' => $action,
-        'status' => $action ? 'approved' : 'rejected'
+        'is_approved' => $isApproved,
+        'status' => $isApproved ? 'approved' : 'rejected'
     ]);
 
-    // إرسال الإشعار
-//$this->notificationService->sendDonationStatusNotification($donation, $action ? 'approved' : 'rejected');
+    // إرسال الإشعار (إذا كان موجوداً)
+    // $this->notificationService->sendDonationStatusNotification($donation, $isApproved ? 'approved' : 'rejected');
 
     return response()->json([
         'status' => true,
-        'message' => $action 
+        'message' => $isApproved 
             ? 'تمت الموافقة على التبرع بنجاح' 
             : 'تم رفض التبرع',
         'data' => $donation

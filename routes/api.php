@@ -30,6 +30,7 @@ use App\Http\Controllers\PolicyCommentController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VaccineController;
+use App\Http\Controllers\RequestController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -248,6 +249,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::delete('/events/{eventId}', [AdminController::class, 'deleteEvent']);
         Route::get('/events/{eventId}/participants', [AdminController::class, 'getEventParticipants']);
         Route::put('/events/{eventId}/participants/{participantId}', [AdminController::class, 'updateParticipantStatus']);
+
+        Route::get('/admin/processed-requests', [RequestController::class, 'getProcessedRequests']);
 });
 
 // مسارات الموظف

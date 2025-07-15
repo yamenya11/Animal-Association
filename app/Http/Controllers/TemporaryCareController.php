@@ -60,18 +60,42 @@ class TemporaryCareController extends Controller
     }
 
 
-     public function respondToRequest(Request $request, $requestId)
-    {
-       
-        
+   public function respondToRequest(Request $request, $requestId)
+{
+    try {
         $validated = $request->validate([
             'status' => 'required|in:approved,rejected'
         ]);
 
         $response = $this->temporaryCareService->respondToRequest($requestId, $validated['status']);
-        
-        return response()->json($response, $response['code'] ?? 200);
+
+        if (!$response['status']) {
+            return response()->json([
+                'status' => false,
+                'message' => $response['message'] ?? 'فشل في معالجة الطلب',
+                'errors' => $response['errors'] ?? null,
+                'code' => $response['code'] ?? 400
+            ], $response['code'] ?? 400);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => $validated['status'] === 'approved' 
+                ? 'تمت الموافقة على الطلب بنجاح' 
+                : 'تم رفض الطلب',
+            'data' => $response['data'] ?? null,
+            'code' => 200
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'حدث خطأ غير متوقع',
+            'errors' => ['system' => $e->getMessage()],
+            'code' => 500
+        ], 500);
     }
+}
 //     public function getRequestDetails(Request $request, $id)
 // {
 //     // استرجاع تفاصيل الطلب
