@@ -31,6 +31,9 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VaccineController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\VolunteerTypeController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\AmbulanceController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -88,7 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/posts/{post}/likes-count', [LikeController::class, 'likesCount']);
     Route::get('/posts/likes-count/post', [LikeController::class, 'getAllLike']);    // التطوع
     Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
-
+   Route::get('/volunteer-types/user', [VolunteerTypeController::class, 'index']);
 
   Route::get('/appointments/client', [AppointmentController::class, 'showAppointmentMyUser']);//عرض مواعيد المستخدم
 
@@ -138,6 +141,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/cases/immediate', [StafController::class, 'listImmediateCases']); //عرض الحالات الضرورية
 
     Route::post('/user/toggle-availability', [AuthController::class, 'toggleAvailability']);
+
+
+       Route::get('/volunteer-types', [VolunteerTypeController::class, 'index']); // عرض جميع الأقسام
+    Route::post('/volunteer-types/store', [VolunteerTypeController::class, 'store']); // إنشاء قسم جديد
+    Route::get('/volunteer-types/{id}', [VolunteerTypeController::class, 'show']); // عرض قسم معين (يحتاج تعديل في الـ Controller)
+    Route::put('/volunteer-types/{id}', [VolunteerTypeController::class, 'update']); // تحديث قسم
+    Route::delete('volunteer-types/{id}', [VolunteerTypeController::class, 'destroy']); // حذف قسم
+    Route::get('/volunteer-types/with-count', [VolunteerTypeController::class, 'indexWithCount']);
+Route::get('/volunteer-types/{id}/volunteers', [VolunteerTypeController::class, 'showVolunteers']);
+
+Route::get('/events/dashboard', [EventController::class, 'dashboard']);
+
+ Route::get('/ambulances', [AmbulanceController::class, 'index']);
+    Route::post('/ambulances', [AmbulanceController::class, 'store']);
+    Route::put('/ambulances/{ambulance}', [AmbulanceController::class, 'update']);
+    Route::delete('/ambulances/{ambulance}', [AmbulanceController::class, 'destroy']);
+
 });
 
 // Route::prefix('employee')->group(function () {
@@ -187,7 +207,7 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
 
         Route::post('/creat/vaccine', [VaccineController::class, 'store']);
     Route::get('/show/vaccine', [VaccineController::class, 'index']);
-
+ Route::post('/cases/{case}/approve', [AnimalCaseController::class, 'approve']);
 
     Route::get('/notifications/doctor', [VaccineController::class, 'notifications']);
     Route::get('/notifications/unread', [VaccineController::class, 'unreadNotifications']);

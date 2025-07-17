@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\VolunteerService;
-
+use App\Models\VolunteerType;
 class VolunteerController extends Controller
 {
     protected $volService;
@@ -21,14 +21,14 @@ class VolunteerController extends Controller
         return response()->json($response, $response['status'] ? 201 : 400);
     }
 
-    public function index()
+  public function index(Request $request)
     {
+        $volunteers = $this->volService->listAll($request);
         return response()->json([
             'status' => true,
-            'data'   => $this->volService->listAll(),
+            'data' => $volunteers
         ]);
     }
-
 
    // للإدمن: الموافقة / الرفض
     public function respond(Request $request, $id)
@@ -49,5 +49,17 @@ class VolunteerController extends Controller
 
         return response()->json($resp);
     }
+    // VolunteerTypeController.php
+public function index_type()
+{
+    $types = VolunteerType::select(['id', 'name_ar', 'name_en', 'description'])
+                ->where('is_active', true)
+                ->get();
+
+    return response()->json([
+        'status' => true,
+        'data' => $types
+    ]);
+}
 
 }

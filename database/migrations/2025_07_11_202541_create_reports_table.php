@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('temperature')->nullable();
             $table->string('pluse')->nullable();
             $table->string('respiration')->nullable();
-            $table->string('general _condition')->nullable();
+            $table->string('general_condition')->nullable();
             $table->string('midical_separated')->nullable();
             
            $table->string('note');

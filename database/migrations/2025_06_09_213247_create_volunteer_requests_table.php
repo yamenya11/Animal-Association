@@ -11,25 +11,16 @@ return new class extends Migration
     {
         Schema::create('volunteer_requests', function (Blueprint $table) {
             $table->id();
-             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->string('full_name'); // مسار ملف السيرة الذاتية
-         $table->string('phone')->nullable();
-        // نوع التطوع: 6 أقسام (يمكن تعديلها حسب الحاجة)
-        $table->enum('volunteer_type', [
-            'cleaning_shelters',    // البيئة
-            'animal_care',   // رعاية الحيوانات
-            'photography_and_documentation',     // التعليم
-            'design_and_markiting',   // جمع التبرعات
-            'social_midea_administrator',// الإدارة
-            'school_awareness'          // أخرى
-        ]);
+       $table->foreignId('user_id')->constrained()->onDelete('cascade');
+        $table->string('full_name');
+        $table->string('phone')->nullable();
         
-        // وقت التوفر (يمكن استخدام حقل نصي أو حقل زمني)
-        $table->string('availability')->nullable(); 
+        // تغيير enum إلى foreignId إذا أردت جدول منفصل للأقسام
+        $table->foreignId('volunteer_type_id')->constrained('volunteer_types')->onDelete('cascade');
         
-        $table->enum('status', ['pending','approved','rejected'])->default('pending'); // حالة الطلب
-        
-        $table->text('notes')->nullable(); // ملاحظات إضافية
+        $table->string('availability')->nullable();
+        $table->enum('status', ['pending','approved','rejected'])->default('pending');
+        $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

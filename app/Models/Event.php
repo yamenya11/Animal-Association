@@ -16,13 +16,24 @@ class Event extends Model
         'location',
         'max_participants',
         'status',
-        'created_by'
+        'created_by',
+        'views'
     ];
 
     protected $casts = [
     'start_date' => 'datetime',
     'end_date' => 'datetime',
 ];
+
+  public function getTimeAttribute()
+    {
+        return $this->start_date->format('H:i');
+    }
+    
+    public function getDateAttribute()
+    {
+        return $this->start_date->format('Y-m-d');
+    }
      public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             AnimalGuideSeeder::class,
             CourseSeeder::class,
+             VolunteerTypesSeeder::class,
         ]);  
       }
 }

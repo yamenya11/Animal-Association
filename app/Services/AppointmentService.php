@@ -64,8 +64,8 @@ public function acceptappointmentImm( $appointment, string $action): array{
     }
     $app->status = $action;
     $app->save();
-   // $notificationService = app(NotificationService::class);
-    //$notificationService->sendAppointmentStatusNotification($app, 'completed');
+      // $notificationService = app(NotificationService::class);
+     //$notificationService->sendAppointmentStatusNotification($app, 'completed');
      return [
         'status' => true,
         'message' => $action === 'completed'

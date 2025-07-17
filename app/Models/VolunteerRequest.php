@@ -15,12 +15,18 @@ class VolunteerRequest extends Model
       'status',
       'notes',
       'full_name',
-      'availability'
+      'availability',
+      'volunteer_type_id'
 
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+        public function type()
+    {
+        return $this->belongsTo(VolunteerType::class, 'volunteer_type_id');
     }
 }

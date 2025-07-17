@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\AnimalCaseService;
 use Illuminate\Http\JsonResponse;
+use App\Models\AnimalCase;
 class AnimalCaseController extends Controller
 {
  protected $animalCaseService;
@@ -33,5 +34,26 @@ class AnimalCaseController extends Controller
         ]);
     }
 
+public function approve(Request $request, $caseId)
+    {
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+          
+        ]);
 
+        $case = AnimalCase::findOrFail($caseId);
+
+        $case->update([
+            'approval_status' => $request->status,
+           // 'approved_by' => Auth::id(),
+            //'approved_at' => now(),
+           // 'rejection_reason' => $request->rejection_reason
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'تم تحديث حالة الموافقة بنجاح',
+            'data' => $case
+        ]);
+    }
 }

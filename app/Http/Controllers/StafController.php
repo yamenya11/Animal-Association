@@ -36,9 +36,23 @@ class StafController extends Controller
 public function listImmediateCases()
 {
     $cases = AnimalCase::where('request_type', 'immediate')
-                ->with('appointments')
+                ->with(['appointments', 'user'])
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->map(function($case) {
+                    return [
+                        'id' => $case->id,
+                        'animal_name' => $case->name_animal,
+                        'case_type' => $case->case_type,
+                        'description' => $case->description,
+                        'emergency_phone' => $case->emergency_phone,
+                        'emergency_address' => $case->emergency_address,
+                        'created_at' => $case->created_at->diffForHumans(),
+                        'image_url' => $case->image ? asset('storage/' . $case->image) : null,
+                        'reporter' => $case->user->name,
+                        'reporter_phone' => $case->user->phone
+                    ];
+                });
 
     return response()->json([
         'status' => true,
@@ -46,7 +60,6 @@ public function listImmediateCases()
         'data' => $cases,
     ]);
 }
-
 /////عرض المواعيد
 public function getImmediateAppointments()
 {

@@ -8,7 +8,7 @@ use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-
+use App\Models\Ambulance; 
 class AnimalCaseService
 {
     public function createCase(Request $request): array
@@ -73,43 +73,55 @@ class AnimalCaseService
     ];
 }
 
-    protected function handleEmergencyCase(AnimalCase $case)
+protected function handleEmergencyCase(AnimalCase $case)
 {
-    // 1. حساب وقت بعد 5 دقائق
     $scheduledTime = now()->addMinutes(5);
     
-    // 2. البحث عن موظف متاح (بنفس الطريقة الحالية)
     $employee = User::role('employee')
                   ->where('available', true)
-                  ->orderBy('id')
                   ->first();
 
-    // 3. إنشاء الموعد (باستخدام الحقلين المنفصلين)
-    Appointment::create([
+    // الحصول على سيارة إسعاف متاحة
+    $ambulance = Ambulance::where('status', 'available')->first();
+
+    $appointment = Appointment::create([
         'user_id' => $case->user_id,
         'employee_id' => $employee ? $employee->id : null,
         'animal_case_id' => $case->id,
-        'scheduled_date' => $scheduledTime->format('Y-m-d'), // تاريخ منفصل
-        'scheduled_time' => $scheduledTime->format('H:i:s'), // وقت منفصل
-        'status' => $employee ? 'scheduled' : 'pending',
+        'scheduled_date' => $scheduledTime->format('Y-m-d'),
+        'scheduled_time' => $scheduledTime->format('H:i:s'),
+        'status' => 'scheduled',
         'is_immediate' => true,
-        'description' => 'طلب طارئ - بانتظار التأكيد'
+        'ambulance_id' => $ambulance ? $ambulance->id : null,
+        'description' => 'طلب طارئ - ' . ($ambulance ? 
+                        "سيارة إسعاف: {$ambulance->plate_number}" : 
+                        'بانتظار سيارة إسعاف')
     ]);
 
-    // 4. إرسال الإسعاف (الكود الحالي)
-    $this->dispatchAmbulance(
-        $case->emergency_address,
-        $case->emergency_phone
-    );
+    if ($ambulance) {
+        $ambulance->update(['status' => 'on_mission']);
+        $this->dispatchAmbulance(
+            $case->emergency_address,
+            $case->emergency_phone,
+            $ambulance
+        );
+    }
+
+    return $appointment;
 }
 
-   protected function dispatchAmbulance(string $address, string $phone): array
+protected function dispatchAmbulance(string $address, string $phone, Ambulance $ambulance)
 {
-    // إضافة تنفيذ حقيقي هنا لو كان لديك API للإسعاف
+    // يمكنك هنا إرسال إشعار للسائق أو الاتصال بـ API خارجي
+    
     return [
         'success' => true,
         'message' => 'تم إرسال فريق طبي إلى الموقع',
-        'dispatch_time' => now()->format('Y-m-d H:i:s'),
+        'ambulance' => [
+            'plate_number' => $ambulance->plate_number,
+            'driver_name' => $ambulance->driver_name,
+            'driver_phone' => $ambulance->driver_phone
+        ],
         'estimated_arrival' => now()->addMinutes(5)->format('H:i')
     ];
 }
@@ -135,4 +147,6 @@ public function getAnimalCasesByUser()
             ];
         });
 }
+
+
 }

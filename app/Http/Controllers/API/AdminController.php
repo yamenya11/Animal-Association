@@ -137,10 +137,20 @@ class AdminController extends Controller
         return response()->json($response, $response['status'] ? 200 : 400);
     }
 
-    public function registerForEvent(Request $request, $eventId)
+ public function registerForEvent(Request $request, $eventId)
 {
     $user = Auth::user();
 
+    // التحقق من وجود الفعالية أولاً
+    $event = Event::find($eventId);
+    if (!$event) {
+        return response()->json([
+            'status' => false,
+            'message' => 'الفعالية غير موجودة'
+        ], 404);
+    }
+
+    // التحقق من عدم التسجيل المسبق
     $alreadyRegistered = EventParticipant::where('event_id', $eventId)
         ->where('user_id', $user->id)
         ->exists();
@@ -149,9 +159,10 @@ class AdminController extends Controller
         return response()->json([
             'status' => false,
             'message' => 'أنت مسجل بالفعل في هذه الفعالية.'
-        ]);
+        ], 400);
     }
 
+    // إنشاء تسجيل جديد
     $participant = EventParticipant::create([
         'event_id' => $eventId,
         'user_id' => $user->id,
@@ -159,10 +170,16 @@ class AdminController extends Controller
         'notes' => $request->notes ?? null,
     ]);
 
+    // زيادة عدد المشاهدات (فقط إذا كان التسجيل أول مرة)
+    $event->increment('views');
+
     return response()->json([
         'status' => true,
         'message' => 'تم التسجيل بنجاح في الفعالية.',
-        'data' => $participant
+        'data' => [
+            'participant' => $participant,
+            'views_count' => $event->fresh()->views // إرجاع عدد المشاهدات المحدث
+        ]
     ]);
 }
 public function listActiveEvents()
@@ -179,5 +196,8 @@ public function listActiveEvents()
         'data' => $events
     ]);
 }
+
+
+
 
 } 
