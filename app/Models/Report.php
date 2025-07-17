@@ -17,7 +17,7 @@ class Report extends Model
         'temperature',
         'pluse',
         'respiration',
-        'general _condition',
+        'general_condition',
         'midical_separated',
         'note'
     ];

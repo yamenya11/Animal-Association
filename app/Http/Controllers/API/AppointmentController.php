@@ -128,4 +128,37 @@ class AppointmentController extends Controller
         return response()->json($result);
     }
 
+
+    public function getProcessedAppointments()
+{
+    // جلب المواعيد التي تمت الموافقة عليها أو رفضها فقط
+    $appointments = Appointment::whereIn('status', ['completed', 'canceled'])
+                              ->with(['user','animalCase', 'ambulance'])
+                              ->get();
+
+    return response()->json([
+        'status' => true,
+        'data' => $appointments
+    ]);
+}
+
+    public function getAppointmentsByStatus($status)
+{
+    if (!in_array($status, ['completed', 'canceled'])) {
+        return response()->json([
+            'status' => false,
+            'message' => 'حالة غير صالحة. يرجى استخدام "completed" أو "canceled"'
+        ], 400);
+    }
+
+    $appointments = Appointment::where('status', $status)
+                              ->with(['user', 'animalCase', 'ambulance'])
+                              ->get();
+
+    return response()->json([
+        'status' => true,
+        'data' => $appointments
+    ]);
+}
+
 }

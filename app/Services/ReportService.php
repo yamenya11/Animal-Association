@@ -25,7 +25,7 @@ class ReportService
             'temperature' => $data['temperature'] ?? null,
             'pluse' => $data['pluse'] ?? null, // تصحيح من pluse إلى pulse
             'respiration' => $data['respiration'] ?? null,
-            'general _condition' => $data['general _condition'] ?? null, // إزالة المسافة
+            'general_condition' => $data['general_condition'] ?? null, // إزالة المسافة
             'midical_separated' => $data['midical_separated'] ?? null, // تصحيح إملائي
             'note' => $data['note']
         ];

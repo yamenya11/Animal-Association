@@ -28,7 +28,7 @@ class ReportController extends Controller
             'temperature' => 'nullable|string',
             'pluse' => 'nullable|string',
             'respiration' => 'nullable|string',
-            'general _condition' => 'nullable|string',
+            'general_condition' => 'nullable|string',
             'midical_separated' => 'nullable|string',
             'note' => 'required|string'
         ]);
@@ -99,7 +99,7 @@ class ReportController extends Controller
             'temperature' => 'nullable|string',
             'pluse' => 'nullable|string',
             'respiration' => 'nullable|string',
-            'general _condition' => 'nullable|string',
+            'general_condition' => 'nullable|string',
             'midical_separated' => 'nullable|string',
             'note' => 'sometimes|string'
         ]);
@@ -121,9 +121,7 @@ class ReportController extends Controller
         }
     }
 
-    /**
-     * حذف التقرير
-     */
+  
     public function destroy($id)
     {
         try {

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\AnimalCase;
 use App\Models\User;
+use App\Models\Ambulance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\sendAppointmentStatusNotification;
@@ -53,27 +54,61 @@ $animalCase = AnimalCase::find($validated['animal_case_id']);
     'doctor' => auth()->user()->only(['id', 'name']),
 ]);
 }
-public function acceptappointmentImm( $appointment, string $action): array{
-   $app = Appointment::with('user')->findOrFail($appointment);
+public function acceptappointmentImm($appointment, string $action): array
+{
+    $app = Appointment::with('user', 'animalCase')->findOrFail($appointment);
 
-       if (!in_array($action, ['completed', 'canceled'])) {
+    if (!in_array($action, ['completed', 'canceled'])) {
         return [
             'status' => false,
             'message' => 'إجراء غير صالح.',
         ];
     }
-    $app->status = $action;
-    $app->save();
-      // $notificationService = app(NotificationService::class);
-     //$notificationService->sendAppointmentStatusNotification($app, 'completed');
-     return [
+
+    if ($action === 'completed') {
+        // 1. تحقق مما إذا كان هناك سيارة إسعاف مرتبطة بالفعل
+        if (!$app->ambulance_id) {
+            // 2. إذا لم يكن هناك سيارة إسعاف، إنشاء واحدة وهمية أو استخدام واحدة متاحة
+            $ambulance = Ambulance::where('status', 'available')->first();
+
+            // 3. إذا لم توجد سيارات إسعاف متاحة، إنشاء واحدة وهمية
+            if (!$ambulance) {
+                $ambulance = Ambulance::create([
+                   
+                    'driver_name' => 'سائق افتراضي',
+                    'driver_phone' => '0599' . rand(1000000, 9999999), // رقم وهمي
+                    'status' => 'on_mission',
+                ]);
+            } else {
+                $ambulance->update(['status' => 'on_mission']);
+            }
+
+            // 4. ربط سيارة الإسعاف بالموعد
+            $app->ambulance_id = $ambulance->id;
+            $app->description = 'طلب طارئ - سيارة إسعاف: ' . $ambulance->plate_number;
+        }
+
+        $app->status = 'completed';
+        $app->save();
+
+        // (اختياري) إرسال إشعار وهمي
+        // $this->dispatchAmbulance(
+        //     $app->animalCase->emergency_address,
+        //     $app->animalCase->emergency_phone,
+        //     $ambulance
+        // );
+    } else {
+        $app->status = 'canceled';
+        $app->save();
+    }
+
+    return [
         'status' => true,
         'message' => $action === 'completed'
-            ? 'تمت الموافقة على الموعد.'
+            ? 'تمت الموافقة على الموعد وربط سيارة إسعاف.'
             : 'تم رفض الموعد.',
-        'data' => $app,
+        'data' => $app->load('ambulance'), // تضمين بيانات سيارة الإسعاف في الاستجابة
     ];
-
 }
 
 }

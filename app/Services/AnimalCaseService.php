@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Ambulance; 
 class AnimalCaseService
 {
+    
     public function createCase(Request $request): array
 {
     $validated = $request->validate([

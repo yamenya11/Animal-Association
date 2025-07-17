@@ -135,7 +135,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/doctors', [StafController::class, 'availableDoctors']);
     Route::post('/appointments/schedule/{caseId}', [StafController::class, 'scheduleImmediate']);
     Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
-
+Route::get('appointments/processed', [AppointmentController::class, 'getProcessedAppointments']);
+Route::get('appointments/status/{status}', [AppointmentController::class, 'getAppointmentsByStatus']);
 
     Route::get('/cases/regular', [StafController::class, 'listRegularCases']);//عرض الحالات العادية
     Route::get('/cases/immediate', [StafController::class, 'listImmediateCases']); //عرض الحالات الضرورية
