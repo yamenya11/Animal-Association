@@ -214,6 +214,7 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
     Route::get('/notifications/unread', [VaccineController::class, 'unreadNotifications']);
     Route::post('/notifications/read-all', [VaccineController::class, 'markAllRead']);
     Route::post('/notifications/{id}/mark-as-read', [VaccineController::class, 'markAsReadById']);
+    Route::get('doctor/my-profile', [AuthController::class, 'showCurrentDoctorProfile']);
 });
 
 Route::get('/animal-cases/doctor', [AnimalCaseController::class, 'index'])

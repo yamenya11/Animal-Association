@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\AuthService;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\Report;
+use App\Models\AnimalCase;
 class AuthController extends Controller
 {
 
@@ -54,6 +55,37 @@ class AuthController extends Controller
         'available' => $user->available
     ]);
 }
+ public function showCurrentDoctorProfile()
+    {
+        // الحصول على المستخدم الحالي (الطبيب المسجل)
+        $doctor = Auth::user();
+        
+    
+
+        // حساب الإحصائيات
+        $stats = [
+            'total_reports' => $doctor->reports()->count(),
+            'total_cases' => $doctor->animal_cases()->count(),
+            'completed_reports' => $doctor->reports()->where('status', 'Completed')->count(),
+           // 'pending_cases' => $doctor->animal_cases()->where('status', 'approved')->count()
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'profile' => [
+                    'id' => $doctor->id,
+                    'name' => $doctor->name,
+                    'email' => $doctor->email,
+                    'specialization' => $doctor->specialization,
+                    'profile_image' => $doctor->profile_image_url,
+                    'phone' => $doctor->phone,
+                    'joined_at' => $doctor->created_at->format('Y-m-d')
+                ],
+                'stats' => $stats
+            ]
+        ]);
+    }
 
 
 }

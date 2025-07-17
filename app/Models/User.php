@@ -19,7 +19,7 @@ use Stephenjude\Wallet\Traits\HasWallet;
 use Stephenjude\Wallet\Interfaces\Wallet;
 use Stephenjude\Wallet\Exceptions\InsufficientFundException;
 use Illuminate\Notifications\DatabaseNotification;
-
+use App\Models\Report;
 use App\Models\TemporaryCareRequest;
 
 class User extends Authenticatable implements Wallet
@@ -46,6 +46,11 @@ public function notifications()
     return $this->morphMany(DatabaseNotification::class, 'notifiable')
                ->orderBy('created_at', 'desc');
 }
+
+ public function reports()
+    {
+        return $this->hasMany(Report::class, 'doctor_id');
+    }
     public function adoptions()
    {
     return $this->hasMany(Adoption::class);

@@ -61,53 +61,47 @@ public function acceptappointmentImm($appointment, string $action): array
     if (!in_array($action, ['completed', 'canceled'])) {
         return [
             'status' => false,
-            'message' => 'إجراء غير صالح.',
+            'message' => 'إجراء غير صالح. يجب أن يكون "completed" أو "canceled"',
         ];
     }
 
+    $app->status = $action;
+
     if ($action === 'completed') {
-        // 1. تحقق مما إذا كان هناك سيارة إسعاف مرتبطة بالفعل
-        if (!$app->ambulance_id) {
-            // 2. إذا لم يكن هناك سيارة إسعاف، إنشاء واحدة وهمية أو استخدام واحدة متاحة
-            $ambulance = Ambulance::where('status', 'available')->first();
-
-            // 3. إذا لم توجد سيارات إسعاف متاحة، إنشاء واحدة وهمية
-            if (!$ambulance) {
-                $ambulance = Ambulance::create([
-                   
+        // معالجة المواعيد الطارئة
+        if ($app->is_immediate && !$app->ambulance_id) {
+            $ambulance = Ambulance::firstOrCreate(
+                ['status' => 'available'],
+                [
                     'driver_name' => 'سائق افتراضي',
-                    'driver_phone' => '0599' . rand(1000000, 9999999), // رقم وهمي
-                    'status' => 'on_mission',
-                ]);
-            } else {
-                $ambulance->update(['status' => 'on_mission']);
-            }
-
-            // 4. ربط سيارة الإسعاف بالموعد
+                    'driver_phone' => '0599' . rand(1000000, 9999999),
+                    'status' => 'on_mission'
+                ]
+            );
             $app->ambulance_id = $ambulance->id;
-            $app->description = 'طلب طارئ - سيارة إسعاف: ' . $ambulance->plate_number;
         }
+        
+        // تحديث وصف الموعد
+        $app->description = $app->is_immediate 
+            ? 'تم إكمال الموعد الطارئ'
+            : 'تمت الموافقة وإكمال الموعد';
+    }
 
-        $app->status = 'completed';
-        $app->save();
+    $app->save();
 
-        // (اختياري) إرسال إشعار وهمي
-        // $this->dispatchAmbulance(
-        //     $app->animalCase->emergency_address,
-        //     $app->animalCase->emergency_phone,
-        //     $ambulance
-        // );
-    } else {
-        $app->status = 'canceled';
-        $app->save();
+    // تحديث حالة الحالة الحيوانية المرتبطة
+    if ($app->animalCase) {
+        $app->animalCase->update([
+            'approval_status' => $action === 'completed' ? 'approved' : 'rejected'
+        ]);
     }
 
     return [
         'status' => true,
-        'message' => $action === 'completed'
-            ? 'تمت الموافقة على الموعد وربط سيارة إسعاف.'
-            : 'تم رفض الموعد.',
-        'data' => $app->load('ambulance'), // تضمين بيانات سيارة الإسعاف في الاستجابة
+        'message' => $action === 'completed' 
+            ? 'تمت الموافقة وإكمال الموعد بنجاح'
+            : 'تم إلغاء الموعد',
+        'data' => $app->load(['ambulance', 'animalCase'])
     ];
 }
 

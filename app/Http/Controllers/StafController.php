@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\AnimalCase;
+use App\Models\Appointment;
 use App\Models\User;
 use App\Services\AppointmentService;
 class StafController extends Controller
@@ -31,34 +32,47 @@ class StafController extends Controller
     ]);
 }
 
-
-//عرض الحالات الفورية
 public function listImmediateCases()
 {
-    $cases = AnimalCase::where('request_type', 'immediate')
-                ->with(['appointments', 'user'])
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function($case) {
-                    return [
-                        'id' => $case->id,
-                        'animal_name' => $case->name_animal,
-                        'case_type' => $case->case_type,
-                        'description' => $case->description,
-                        'emergency_phone' => $case->emergency_phone,
-                        'emergency_address' => $case->emergency_address,
-                        'created_at' => $case->created_at->diffForHumans(),
-                        'image_url' => $case->image ? asset('storage/' . $case->image) : null,
-                        'reporter' => $case->user->name,
-                        'reporter_phone' => $case->user->phone
-                    ];
-                });
+    $appointments = Appointment::where('is_immediate', true)
+        ->with(['animalCase.user']) // نحمل فقط بيانات الحالة والمستخدم
+        ->where('status', 'scheduled')
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function($appointment) {
+            $case = $appointment->animalCase;
+            $user = $case->user;
+            
+            return [
+                'appointment_id' => $appointment->id,
+                'animal_info' => [
+                    'name' => $case->name_animal,
+                    'case_type' => $case->case_type,
+                    'description' => $case->description,
+                    'image_url' => $case->image ? asset('storage/' . $case->image) : null,
+                ],
+                'emergency_contact' => [
+                    'phone' => $case->emergency_phone,
+                    'address' => $case->emergency_address
+                ],
+                'reporter' => [
+                    'name' => $user->name,
+                    'phone' => $user->phone ?? $case->emergency_phone
+                ],
+                'appointment_details' => [
+                    'created_at' => $appointment->created_at->diffForHumans(),
+                    'scheduled_time' => $appointment->scheduled_time,
+                    'status' => $appointment->status
+                ]
+            ];
+        });
 
-    return response()->json([
+    return [
         'status' => true,
-        'message' => 'قائمة الحالات الفورية',
-        'data' => $cases,
-    ]);
+        'message' => 'قائمة المواعيد الفورية المعلقة',
+        'data' => $appointments,
+    ];
+
 }
 /////عرض المواعيد
 public function getImmediateAppointments()

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Report extends Model
 {
     use HasFactory;
@@ -19,11 +20,18 @@ class Report extends Model
         'respiration',
         'general_condition',
         'midical_separated',
-        'note'
+        'note',
+        'doctor_id'
     ];
 
       public function getImageUrlAttribute()
     {
         return $this->image ? Storage::url($this->image) : null;
     }
+    
+public function doctor(): BelongsTo
+{
+    // افترض أن لديك حقل doctor_id في جدول reports
+    return $this->belongsTo(User::class, 'doctor_id');
+}
 }
