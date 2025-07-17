@@ -33,6 +33,7 @@ class ReportController extends Controller
             'note' => 'required|string'
         ]);
 
+        $validatedData['doctor_id'] = auth()->id();
         try {
             $report = $this->reportService->createReport($validatedData);
 

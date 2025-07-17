@@ -81,15 +81,13 @@ class VolunteerTypeController extends Controller
 
 public function indexWithCount()
 {
-    $types = $this->typeService->getTypesWithVolunteersCount();
+    $result = $this->typeService->getTypesWithVolunteersCount();
     
     return response()->json([
-        'status' => true,
-        'message' => $types->isEmpty() ? 
-            'No volunteer types found' : 
-            'Volunteer types retrieved successfully',
-        'data' => $types
-    ]);
+        'status' => $result['success'],
+        'message' => $result['message'],
+        'data' => $result['data']
+    ], $result['success'] ? 200 : 404);
 }
 
 public function showVolunteers($typeId)

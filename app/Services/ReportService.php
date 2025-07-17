@@ -27,8 +27,13 @@ class ReportService
             'respiration' => $data['respiration'] ?? null,
             'general_condition' => $data['general_condition'] ?? null, // إزالة المسافة
             'midical_separated' => $data['midical_separated'] ?? null, // تصحيح إملائي
-            'note' => $data['note']
+            'note' => $data['note'],
+            'doctor_id' => $data['doctor_id'] 
         ];
+
+          if (!isset($correctedData['doctor_id'])) {
+        throw new \Exception('لم يتم تحديد الطبيب المعالج');
+    }
 
         return Report::create($correctedData);
     }

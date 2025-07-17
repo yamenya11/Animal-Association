@@ -55,37 +55,35 @@ class AuthController extends Controller
         'available' => $user->available
     ]);
 }
- public function showCurrentDoctorProfile()
-    {
-        // الحصول على المستخدم الحالي (الطبيب المسجل)
-        $doctor = Auth::user();
-        
-    
+public function showCurrentDoctorProfile()
+{
+    $doctor = Auth::user()->loadCount([
+        'reports',
+        'animal_cases',
+        'reports as completed_reports_count' => function($query) {
+            $query->where('status', 'Completed');
+        }
+    ]);
 
-        // حساب الإحصائيات
-        $stats = [
-            'total_reports' => $doctor->reports()->count(),
-            'total_cases' => $doctor->animal_cases()->count(),
-            'completed_reports' => $doctor->reports()->where('status', 'Completed')->count(),
-           // 'pending_cases' => $doctor->animal_cases()->where('status', 'approved')->count()
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'profile' => [
-                    'id' => $doctor->id,
-                    'name' => $doctor->name,
-                    'email' => $doctor->email,
-                    'specialization' => $doctor->specialization,
-                    'profile_image' => $doctor->profile_image_url,
-                    'phone' => $doctor->phone,
-                    'joined_at' => $doctor->created_at->format('Y-m-d')
-                ],
-                'stats' => $stats
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'profile' => [
+                'id' => $doctor->id,
+                'name' => $doctor->name,
+                'email' => $doctor->email,
+                'specialization' => $doctor->specialization,
+                'profile_image' => $doctor->profile_image_url,
+                'phone' => $doctor->phone,
+                'joined_at' => $doctor->created_at->format('Y-m-d')
+            ],
+            'stats' => [
+                'total_reports' => $doctor->reports_count,
+                'total_cases' => $doctor->animal_cases_count,
+                'completed_reports' => $doctor->completed_reports_count
             ]
-        ]);
-    }
-
+        ]
+    ]);
+}
 
 }
