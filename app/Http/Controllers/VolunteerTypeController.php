@@ -92,11 +92,12 @@ public function indexWithCount()
 
 public function showVolunteers($typeId)
 {
-    $volunteers = $this->typeService->getVolunteersByType($typeId);
-    
+    $volunteerData = $this->typeService->getVolunteersByType($typeId);
+
     return response()->json([
         'status' => true,
-        'data' => $volunteers
+        'data' => $volunteerData
     ]);
 }
+
 }

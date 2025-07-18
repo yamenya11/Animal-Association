@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\VolunteerType;
 use App\Models\User;
 use App\Models\VolunteerRequest;
+use Illuminate\Support\Facades\DB;
 class VolunteerTypeService
 {
     public function getAllTypes()
@@ -38,18 +39,20 @@ class VolunteerTypeService
 public function getTypesWithVolunteersCount()
 {
     try {
-        
-        // استعلام بديل يعمل في جميع الحالات
-        $types =VolunteerType ::table('volunteer_types')
-            ->leftJoin('volunteer_requests', 'volunteer_types.id', '=', 'volunteer_requests.volunteer_type_id')
+        $types = VolunteerType::leftJoin('volunteer_requests', 'volunteer_types.id', '=', 'volunteer_requests.volunteer_type_id')
             ->select(
                 'volunteer_types.id',
                 'volunteer_types.name_en',
                 'volunteer_types.slug',
                 'volunteer_types.is_active',
-                VolunteerType::raw('COUNT(volunteer_requests.id) as volunteers_count')
+                DB::raw('COUNT(volunteer_requests.id) as volunteers_count')
             )
-            ->groupBy('volunteer_types.id', 'volunteer_types.name_en', 'volunteer_types.slug', 'volunteer_types.is_active')
+            ->groupBy(
+                'volunteer_types.id',
+                'volunteer_types.name_en',
+                'volunteer_types.slug',
+                'volunteer_types.is_active'
+            )
             ->get();
 
         return [
@@ -65,12 +68,24 @@ public function getTypesWithVolunteersCount()
             'message' => 'حدث خطأ تقني: '.$e->getMessage(),
             'data' => []
         ];
-    }
-}
+    }}
 public function getVolunteersByType($typeId)
 {
-    return VolunteerRequest::where('volunteer_type_id', $typeId)
-                         ->with('user')
-                         ->get();
+    $volunteers = VolunteerRequest::where('volunteer_type_id', $typeId)
+        ->with('user:id,name,email,phone')
+        ->get();
+
+    return [
+        'type_id' => $typeId,
+        'volunteers_count' => $volunteers->count(),
+        'volunteers' => $volunteers->map(function ($volunteer) {
+            return [
+                'name' => $volunteer->user->name ?? 'غير متوفر',
+                'email' => $volunteer->user->email ?? 'غير متوفر',
+                'phone' => $volunteer->user->phone ?? 'غير متوفر',
+            ];
+        }),
+    ];
 }
+
 }

@@ -149,7 +149,7 @@ Route::get('appointments/status/{status}', [AppointmentController::class, 'getAp
     Route::get('/volunteer-types/{id}', [VolunteerTypeController::class, 'show']); // عرض قسم معين (يحتاج تعديل في الـ Controller)
     Route::put('/volunteer-types/{id}', [VolunteerTypeController::class, 'update']); // تحديث قسم
     Route::delete('volunteer-types/{id}', [VolunteerTypeController::class, 'destroy']); // حذف قسم
-    Route::get('/volunteer-types/with-count', [VolunteerTypeController::class, 'indexWithCount']);
+    Route::get('/volunteer/with-count', [VolunteerTypeController::class, 'indexWithCount']);
 Route::get('/volunteer-types/{id}/volunteers', [VolunteerTypeController::class, 'showVolunteers']);
 
 Route::get('/events/dashboard', [EventController::class, 'dashboard']);
@@ -301,12 +301,22 @@ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
 
 // مسارات إدارة الحيوانات
 Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
-     Route::get('/animals', [EmployeeController::class, 'index']);           // عرض كل الحيوانات
+    // Animal Management
+    Route::get('/animals', [EmployeeController::class, 'index']);           // عرض كل الحيوانات
     Route::get('/animals/{id}', [EmployeeController::class, 'show']);       // عرض حيوان محدد
+    Route::get('/animals/available', [EmployeeController::class, 'getAvailableAnimals']); // الحيوانات المتاحة
     Route::post('/animals', [EmployeeController::class, 'store']);          // إضافة حيوان
-    Route::put('/animals/{id}', [EmployeeController::class, 'update']);     // تعديل حيوان
+Route::post('/animals/{animal}/update', [EmployeeController::class, 'update']);   
+ //Route::patch('/animals/{id}/availability', [EmployeeController::class, 'updateAvailability']); // تحديث حالة التوفر
     Route::delete('/animals/{id}', [EmployeeController::class, 'destroy']); // حذف حيوان
     Route::post('/animals/upload-image', [EmployeeController::class, 'uploadImage']);
+    Route::patch('/animals/{id}/update-purpose', [EmployeeController::class, 'updatePurpose']);
+    Route::patch('/animals/{animal}/status', [EmployeeController::class, 'updatestatusavail']);
+    Route::get('/animals/adoptions/filter', [EmployeeController::class, 'adoptions']);
+    Route::get('/animals/temporary/filter', [EmployeeController::class, 'temporaryCare']);
+    Route::get('/animal/filter/purpos', [EmployeeController::class, 'filte_index']);
+    // Animal Types Management
+    Route::get('/animal-types', [EmployeeController::class, 'getAllTypes']); // الحصول على كل الأنواع
 });
 
 

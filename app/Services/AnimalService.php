@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\AnimalType;
+use Illuminate\Http\JsonResponse;
+
 class AnimalService
 {
 public function getAvailableAnimals()
@@ -82,44 +84,101 @@ $userId = Auth::id();
     ];
 }
 
+// app/Services/AnimalService.php
 
 
-public function update(Request $request, Animal $animal): Animal
+
+
+
+
+    public function update(Request $request, Animal $animal): array
     {
-        $data = $request->validate([
-            'name'        => 'sometimes|required|string|max:255',
-            'type'        => 'sometimes|required|string|max:50',
-            'breed'       => 'nullable|string|max:100',
-            'birth_date'  => 'nullable|date',
-            'health_info' => 'nullable|string',
-            'image'       => 'nullable|image|max:2048',
-        ]);
+        try {
+            // التحقق من البيانات
+            $data = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'type' => 'sometimes|required|string|max:50',
+                'breed' => 'nullable|string|max:100',
+                'birth_date' => 'nullable|date',
+                'health_info' => 'nullable|string',
+                'describtion' => 'nullable|string|max:255',
+                'purpose' => 'sometimes|required|in:adoption,temporary_care',
+                'image' => 'nullable|image|max:2048',
+            ]);
 
-        if ($request->hasFile('image')) {
-            // حذف الصورة القديمة
-            if ($animal->image) {
-                Storage::disk('public')->delete($animal->image);
+            // إذا تم إرسال نوع جديد
+            if ($request->has('type')) {
+                $animalType = AnimalType::firstOrCreate(['name' => $request->type]);
+                $data['type_id'] = $animalType->id;
+                unset($data['type']);
             }
 
-            $filename = uniqid() . '.' . $request->image->getClientOriginalExtension();
-            $path = $request->image->storeAs('animal_images', $filename, 'public');
-            $data['image'] = $path;
+            // تحديث حقل available_for_care تلقائيًا حسب purpose
+            if (isset($data['purpose'])) {
+                $data['available_for_care'] = $data['purpose'] === 'temporary_care';
+            }
+
+            // تحديث الصورة إن وجدت
+            if ($request->hasFile('image')) {
+                if ($animal->image) {
+                    Storage::disk('public')->delete($animal->image);
+                }
+                $data['image'] = $request->image->store('animal_images', 'public');
+            }
+
+            if (empty($data)) {
+                return [
+                    'status' => false,
+                    'message' => 'لا توجد بيانات لتحديثها',
+                    'data' => null
+                ];
+            }
+
+            $updated = $animal->update($data);
+
+            if (!$updated) {
+                return [
+                    'status' => false,
+                    'message' => 'فشل في تحديث بيانات الحيوان',
+                    'data' => null
+                ];
+            }
+
+            $animal->refresh()->load('type');
+
+            return [
+                'status' => true,
+                'message' => 'تم تحديث بيانات الحيوان بنجاح',
+                'data' => $animal
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Animal update error: ' . $e->getMessage());
+            return [
+                'status' => false,
+                'message' => 'حدث خطأ: ' . $e->getMessage(),
+                'data' => null
+            ];
         }
-
-        $animal->update($data);
-
-        return $animal;
     }
 
-     public function delete(Animal $animal): bool
-    {
-        // حذف الصورة إذا وُجدت
-        if ($animal->image) {
-            Storage::disk('public')->delete($animal->image);
-        }
 
-        return $animal->delete();
+
+  public function delete(int $animalId): bool
+{
+    $animal = Animal::find($animalId);
+    
+    if (!$animal) {
+        return false;
     }
+
+    // حذف الصورة إذا وُجدت
+    if ($animal->image) {
+        Storage::disk('public')->delete($animal->image);
+    }
+
+    return $animal->delete();
+}
 
 }
    
