@@ -97,7 +97,26 @@ public function uploadProfileImage(Request $request): array
         'profile_image_url' => asset('storage/' . $path)
     ];
 }
+public function deleteProfileImage(User $user): array
+    {
+        if (empty($user->profile_image)) {
+            throw new \Exception('لا توجد صورة ملخصة للحذف');
+        }
 
+        $storagePath = str_replace('storage/', '', $user->profile_image);
+        
+        if (Storage::disk('public')->exists($storagePath)) {
+            Storage::disk('public')->delete($storagePath);
+        }
+
+        $user->profile_image = null;
+        $user->save();
+
+        return [
+            'deleted' => true,
+            'image_path' => null
+        ];
+    }
 
 
 public function updateProfile(Request $request)

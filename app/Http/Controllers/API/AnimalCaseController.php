@@ -33,7 +33,16 @@ class AnimalCaseController extends Controller
             'data' => $cases,
         ]);
     }
-
+//عرض الحالات العادية بعد الموافقة
+    public function getApprovedCases(): JsonResponse
+{
+    $approvedCases = $this->animalCaseService->getApprovedCases();
+    
+    return response()->json([
+        'status' => true,
+        'data' => $approvedCases
+    ]);
+}
 public function approve(Request $request, $caseId)
     {
         $request->validate([

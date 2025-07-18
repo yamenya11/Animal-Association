@@ -25,7 +25,7 @@ class LikeController extends Controller
  public function likesCount($postId):  JsonResponse
     {
         try {
-            $count = $this->likeService->getLikesCount($postId);
+            $count = $this->likeservice->getLikesCount($postId);
             
             return response()->json([
                 'success' => true,

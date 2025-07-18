@@ -36,4 +36,23 @@ public function update(Request $request): JsonResponse
     return $this->profileService->uploadProfileImage($request);
 }
 
+ public function deleteProfileImage(): JsonResponse
+    {
+        try {
+            $result = $this->profileService->deleteProfileImage(Auth::user());
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'تم حذف الصورة بنجاح',
+                'data' => $result
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
 }

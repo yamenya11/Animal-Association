@@ -40,6 +40,13 @@ class TemporaryCareController extends Controller
         ]);
     }
 
+    public function processedRequests()
+{
+    return response()->json([
+        'status' => true,
+        'data' => $this->temporaryCareService->getProcessedRequests()
+    ]);
+}
     public function getAvailableAnimals()
     {
         return response()->json([

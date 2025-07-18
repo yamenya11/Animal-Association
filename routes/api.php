@@ -44,7 +44,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // ==== المسارات العامة (بدون مصادقة) ====
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/animals/available', [AnimalController::class, 'available']); // عرض الحيوانات للتبني (للعامة)
+Route::get('/animals/available/user', [AnimalController::class, 'available']); // عرض الحيوانات للتبني (للعامة)
 Route::get('/posts/get', [PostController::class, 'show_all_post']); // عرض البوستات (للعامة)
 
 // ==== المسارات التي تتطلب مصادقة (لجميع المستخدمين المسجلين) ====
@@ -54,7 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'profile']);
     Route::post('/profile/update', [ProfileController::class, 'update']);
     Route::post('/profile/image', [ProfileController::class, 'uploadImage']);
-
+Route::delete('/profile/image', [ProfileController::class, 'deleteProfileImage']);
     // المحفظة
     Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
     Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
@@ -65,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);
      Route::get('/ads/{id}/publisher', [AdController::class, 'show']);
     // التبني
-    Route::post('/adoptions/request', [AdoptionController::class, 'requestAdoption']);
+    Route::post('/adoptions/store/re', [AdoptionController::class, 'requestAdoption']);
     Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
 
 
@@ -75,7 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // الحصول على طلبات الرعاية للمستخدم الحالي
     Route::get('/temporary-care/my-requests', [TemporaryCareController::class, 'getUserRequests']);
-    
+    Route::get('/temporary-care/processed/user', [TemporaryCareController::class, 'processedRequests']);
     // الحصول على الحيوانات المتاحة للرعاية
     Route::get('/temporary-care/available-animals', [TemporaryCareController::class, 'getAvailableAnimals']);
     // البوستات
@@ -203,12 +203,12 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
     Route::patch('/reports/{id}/status', [ReportController::class, 'updateStatus']);
       Route::get('/reports/search', [ReportController::class, 'search']);
 
- // Route::get('/cases/doctor', [AnimalCaseController::class, 'showcases']); // عرض حالات الحيوانات
+ Route::get('/animal-cases/approved', [AnimalCaseController::class, 'getApprovedCases']); // عرض حالات الحيوانات
     Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
 
-        Route::post('/creat/vaccine', [VaccineController::class, 'store']);
+    Route::post('/creat/vaccine', [VaccineController::class, 'store']);
     Route::get('/show/vaccine', [VaccineController::class, 'index']);
- Route::post('/cases/{case}/approve', [AnimalCaseController::class, 'approve']);
+    Route::post('/cases/{case}/approve', [AnimalCaseController::class, 'approve']);
 
     Route::get('/notifications/doctor', [VaccineController::class, 'notifications']);
     Route::get('/notifications/unread', [VaccineController::class, 'unreadNotifications']);

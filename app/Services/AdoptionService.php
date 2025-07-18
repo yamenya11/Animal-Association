@@ -17,50 +17,59 @@ public function createAdoption(Request $request, $userId): array
 {
     $validated = $request->validate([
         'animal_name' => 'required|string|max:50',
-        'animal_type' => 'required|string|max:50', // تغيير من animal_type_id إلى animal_type
-        'address' => 'nullable|string|max:255',
-        'phone' => 'nullable|string|max:10',
-        'reason' => 'nullable|string|max:50',
+        'animal_type' => 'required|string|max:50',
+        'address' => 'required|string|max:255',
+        'phone' => 'required|string|max:20',
+        'reason' => 'required|string|max:500',
     ]);
 
-    // البحث عن النوع أولاً
-    $animalType = \App\Models\AnimalType::where('name', $validated['animal_type'])->first();
+    DB::beginTransaction();
+    try {
+        // البحث أو إنشاء نوع الحيوان
+        $animalType = AnimalType::firstOrCreate(
+            ['name' => $validated['animal_type']],
+            ['name' => $validated['animal_type']]
+        );
 
-    if (!$animalType) {
+        // البحث عن الحيوان
+        $animal = Animal::where('name', $validated['animal_name'])
+                      ->where('type_id', $animalType->id)
+                      ->where('is_adopted', false)
+                      ->firstOrFail();
+
+        // إنشاء طلب التبني
+        $adoption = Adoption::create([
+            'user_id' => $userId,
+            'animal_id' => $animal->id,
+            'type_id' => $animalType->id, // استخدام ID نوع الحيوان
+            'address' => $validated['address'],
+            'phone' => $validated['phone'],
+            'reason' => $validated['reason'],
+            'status' => 'pending',
+        ]);
+
+        DB::commit();
+
+        return [
+            'status' => true,
+            'message' => 'تم إنشاء طلب التبني بنجاح',
+            'data' => $this->formatAdoptionRequest($adoption),
+        ];
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        DB::rollBack();
         return [
             'status' => false,
-            'message' => 'نوع الحيوان غير مسجل',
+            'message' => 'الحيوان غير موجود أو تم تبنيه بالفعل'
         ];
-    }
-
-    $animal = Animal::where('name', $validated['animal_name'])
-                  ->where('type_id', $animalType->id)
-                  ->where('is_adopted', false)
-                  ->first();
-
-    if (!$animal) {
+    } catch (\Exception $e) {
+        DB::rollBack();
+      //  Log::error('Adoption creation error: ' . $e->getMessage());
         return [
             'status' => false,
-            'message' => 'الحيوان غير موجود أو تم تبنيه بالفعل',
+            'message' => 'حدث خطأ أثناء إنشاء الطلب'
         ];
     }
-
-    $adoption = Adoption::create([
-        'user_id' => $userId,
-        'animal_id' => $animal->id,
-        'type_id' => $animalType->id,
-        'address' => $validated['address'] ?? 'غير محدد',
-        'birth_date' => $animal->birth_date,
-        'phone' => $validated['phone'],
-        'reason' => $validated['reason'] ?? null,
-        'status' => 'pending',
-    ]);
-
-    return [
-        'status' => true,
-        'message' => 'تم إنشاء طلب التبني بنجاح',
-        'data' => $this->formatAdoptionRequest($adoption),
-    ];
 }
 
         protected function formatAdoptionRequest(Adoption $adoption): array
@@ -96,28 +105,40 @@ public function createAdoption(Request $request, $userId): array
             };
         }
 
-   public function getUserAdoptions()
+ public function getUserAdoptions()
 {
     $userId = Auth::id();
     
-    return Adoption::with(['animal.type', 'animal.images'])
+    $adoptions = Adoption::with(['animal.type']) // إزالة animal.images
         ->where('user_id', $userId)
-        ->where('status', 'approved')
+        ->whereIn('status', ['approved', 'rejected'])
+        ->latest()
         ->get()
-        ->map(function ($adoption) {
-            return [
-                'id' => $adoption->id,
-                'animal' => [
-                    'name' => $adoption->animal->name,
-                    'type' => $adoption->animal->type->name,
-                    'image' => $adoption->animal->image_url
-                ],
-                'status' => $adoption->status,
-                'created_at' => $adoption->created_at->format('Y-m-d')
-            ];
-        });
-}
+        ->groupBy('status');
 
+    return [
+        'approved' => $adoptions->get('approved', collect())->map(function ($adoption) {
+            return $this->formatAdoption($adoption);
+        }),
+        'rejected' => $adoptions->get('rejected', collect())->map(function ($adoption) {
+            return $this->formatAdoption($adoption);
+        })
+    ];
+}
+protected function formatAdoption($adoption)
+{
+    return [
+        'id' => $adoption->id,
+        'animal' => [
+            'name' => $adoption->animal->name,
+            'type' => $adoption->animal->type->name,
+            'image' => $adoption->animal->image ? asset('storage/' . $adoption->animal->image) : null
+        ],
+        'status' => $adoption->status,
+        'created_at' => $adoption->created_at->format('Y-m-d H:i'),
+        'processed_at' => $adoption->updated_at->format('Y-m-d H:i')
+    ];
+}
  public function getAllAdoptions()
 {
     return Adoption::with(['user', 'animal.type'])

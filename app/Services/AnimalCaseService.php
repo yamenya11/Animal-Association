@@ -127,12 +127,16 @@ protected function dispatchAmbulance(string $address, string $phone, Ambulance $
     ];
 }
 
+public function getApprovedCases()
+{
+    return AnimalCase::where('approval_status', 'approved')
+        ->with(['user', 'animal']) // تحميل العلاقات إذا لزم الأمر
+        ->orderBy('updated_at', 'desc')
+        ->get();
+}
 public function getAnimalCasesByUser()
 {
     $userId = Auth::id();
-    
-
-
     return AnimalCase::with('user')
         ->where('approval_status', 'pending')
         ->orderBy('created_at', 'desc')

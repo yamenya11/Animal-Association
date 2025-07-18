@@ -128,6 +128,25 @@ protected function getStatusDisplay(string $status): string
         });
     }
 
+    public function getProcessedRequests()
+{
+    $requests = TemporaryCareRequest::with(['user:id,name', 'animal'])
+        ->where('user_id', Auth::id())
+        ->whereIn('status', ['approved', 'rejected'])
+        ->latest()
+        ->get()
+        ->groupBy('status');
+
+    return [
+        'approved' => $requests->get('approved', collect())->map(function($request) {
+            return $this->formatRequest($request);
+        })->values(),
+        'rejected' => $requests->get('rejected', collect())->map(function($request) {
+            return $this->formatRequest($request);
+        })->values()
+    ];
+}
+
 public function getAvailableAnimals()
 {
     try {
