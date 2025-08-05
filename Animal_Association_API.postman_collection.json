@@ -1,0 +1,896 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890",
+		"name": "Animal Association API",
+		"description": "مجموعة نقاط API لجمعية الحيوانات",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "المصادقة",
+			"item": [
+				{
+					"name": "تسجيل مستخدم جديد",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "register"]
+						}
+					}
+				},
+				{
+					"name": "تسجيل الدخول",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "login"]
+						}
+					}
+				},
+				{
+					"name": "تسجيل الخروج",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "logout"]
+						}
+					}
+				},
+				{
+					"name": "عرض الملف الشخصي",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "الحيوانات",
+			"item": [
+				{
+					"name": "عرض جميع الحيوانات",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/animals",
+							"host": ["{{base_url}}"],
+							"path": ["api", "animals"]
+						}
+					}
+				},
+				{
+					"name": "عرض حيوان محدد",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/animals/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "animals", "1"]
+						}
+					}
+				},
+				{
+					"name": "إضافة حيوان جديد",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"بسبس\",\n    \"type\": \"قط\",\n    \"age\": 2,\n    \"health_info\": \"قط صحي ونشط\",\n    \"image\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/animals",
+							"host": ["{{base_url}}"],
+							"path": ["api", "animals"]
+						}
+					}
+				},
+				{
+					"name": "تحديث معلومات حيوان",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"بسبس الجديد\",\n    \"age\": 3,\n    \"health_info\": \"قط صحي ونشط وتم تطعيمه\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/animals/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "animals", "1"]
+						}
+					}
+				},
+				{
+					"name": "حذف حيوان",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/animals/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "animals", "1"]
+						}
+					}
+				},
+				{
+					"name": "رفع صورة حيوان",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/path/to/your/image.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/animals/upload-image",
+							"host": ["{{base_url}}"],
+							"path": ["api", "animals", "upload-image"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "التبني",
+			"item": [
+				{
+					"name": "طلب تبني حيوان",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"animal_id\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/adoptions/request",
+							"host": ["{{base_url}}"],
+							"path": ["api", "adoptions", "request"]
+						}
+					}
+				},
+				{
+					"name": "عرض طلبات التبني الخاصة بي",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/adoptions/my",
+							"host": ["{{base_url}}"],
+							"path": ["api", "adoptions", "my"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "المنشورات",
+			"item": [
+				{
+					"name": "إنشاء منشور جديد",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"عنوان المنشور\",\n    \"content\": \"محتوى المنشور\",\n    \"image\": \"رابط الصورة\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/posts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "posts"]
+						}
+					}
+				},
+				{
+					"name": "إضافة تعليق",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"محتوى التعليق\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/posts/1/comment",
+							"host": ["{{base_url}}"],
+							"path": ["api", "posts", "1", "comment"]
+						}
+					}
+				},
+				{
+					"name": "حذف تعليق",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/comments/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "comments", "1"]
+						}
+					}
+				},
+				{
+					"name": "إعجاب/إلغاء إعجاب",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/posts/1/like",
+							"host": ["{{base_url}}"],
+							"path": ["api", "posts", "1", "like"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "المواعيد",
+			"item": [
+				{
+					"name": "طلب موعد",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"service_id\": 1,\n    \"date\": \"2024-03-25\",\n    \"time\": \"14:00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/appointments/request",
+							"host": ["{{base_url}}"],
+							"path": ["api", "appointments", "request"]
+						}
+					}
+				},
+				{
+					"name": "عرض المواعيد المعلقة",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/appointments/pending",
+							"host": ["{{base_url}}"],
+							"path": ["api", "appointments", "pending"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "التطوع",
+			"item": [
+				{
+					"name": "تقديم طلب تطوع",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "cv",
+									"type": "file",
+									"src": "/path/to/cv.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/volunteer/apply",
+							"host": ["{{base_url}}"],
+							"path": ["api", "volunteer", "apply"]
+						}
+					}
+				},
+				{
+					"name": "عرض طلبات التطوع",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/volunteer/requests",
+							"host": ["{{base_url}}"],
+							"path": ["api", "volunteer", "requests"]
+						}
+					}
+				},
+				{
+					"name": "الرد على طلب تطوع",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"approved\",\n    \"notes\": \"ملاحظات إضافية\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/volunteer/requests/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "volunteer", "requests", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "المدير",
+			"item": [
+				{
+					"name": "إدارة المستخدمين",
+					"item": [
+						{
+							"name": "عرض جميع المستخدمين",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/users",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "users"]
+								}
+							}
+						},
+						{
+							"name": "تحديث مستخدم",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"الاسم الجديد\",\n    \"email\": \"new@example.com\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/users/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "users", "1"]
+								}
+							}
+						},
+						{
+							"name": "حذف مستخدم",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/users/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "users", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "إدارة الخدمات",
+					"item": [
+						{
+							"name": "عرض جميع الخدمات",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/services",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "services"]
+								}
+							}
+						},
+						{
+							"name": "إضافة خدمة جديدة",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"خدمة جديدة\",\n    \"description\": \"وصف الخدمة\",\n    \"price\": 100,\n    \"duration\": 60\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/services",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "services"]
+								}
+							}
+						},
+						{
+							"name": "تحديث خدمة",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"اسم الخدمة المحدث\",\n    \"description\": \"وصف الخدمة المحدث\",\n    \"price\": 150,\n    \"duration\": 90\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/services/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "services", "1"]
+								}
+							}
+						},
+						{
+							"name": "حذف خدمة",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/services/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "services", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "التقارير",
+					"item": [
+						{
+							"name": "تقرير الأداء",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/reports/performance",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "reports", "performance"]
+								}
+							}
+						},
+						{
+							"name": "التقرير اليومي",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/reports/daily",
+									"host": ["{{base_url}}"],
+									"path": ["api", "admin", "reports", "daily"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "الموظف",
+			"item": [
+				{
+					"name": "إدارة المحتوى",
+					"item": [
+						{
+							"name": "عرض المحتوى المعلق",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{employee_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/employee/content/pending",
+									"host": ["{{base_url}}"],
+									"path": ["api", "employee", "content", "pending"]
+								}
+							}
+						},
+						{
+							"name": "الموافقة على محتوى",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{employee_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"notes\": \"ملاحظات إضافية\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/employee/content/1/approve",
+									"host": ["{{base_url}}"],
+									"path": ["api", "employee", "content", "1", "approve"]
+								}
+							}
+						},
+						{
+							"name": "رفض محتوى",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{employee_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"notes\": \"سبب الرفض\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/employee/content/1/reject",
+									"host": ["{{base_url}}"],
+									"path": ["api", "employee", "content", "1", "reject"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "التواصل مع المتطوعين",
+					"item": [
+						{
+							"name": "عرض المتطوعين النشطين",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{employee_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/employee/volunteers",
+									"host": ["{{base_url}}"],
+									"path": ["api", "employee", "volunteers"]
+								}
+							}
+						},
+						{
+							"name": "إرسال رسالة لمتطوع",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{employee_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"message\": \"محتوى الرسالة\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/employee/volunteers/1/message",
+									"host": ["{{base_url}}"],
+									"path": ["api", "employee", "volunteers", "1", "message"]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your_token_here",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "your_admin_token_here",
+			"type": "string"
+		},
+		{
+			"key": "employee_token",
+			"value": "your_employee_token_here",
+			"type": "string"
+		}
+	]
+} 
