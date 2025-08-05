@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\AnimalCaseService;
 use Illuminate\Http\JsonResponse;
 use App\Models\AnimalCase;
+use Illuminate\Support\Facades\Auth;
 class AnimalCaseController extends Controller
 {
  protected $animalCaseService;
@@ -54,6 +55,7 @@ public function approve(Request $request, $caseId)
 
         $case->update([
             'approval_status' => $request->status,
+            'doctor_id' => Auth::id()
            // 'approved_by' => Auth::id(),
             //'approved_at' => now(),
            // 'rejection_reason' => $request->rejection_reason

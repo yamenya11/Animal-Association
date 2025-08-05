@@ -22,7 +22,8 @@ class AnimalCase extends Model
         'user_id',
         'request_type'
         ,
-        'approval_status'
+        'approval_status',
+           'doctor_id'
     ];
 
 
@@ -42,5 +43,10 @@ class AnimalCase extends Model
    public function user()
 {
     return $this->belongsTo(User::class);
+}
+
+public function doctor()
+{
+    return $this->belongsTo(User::class, 'doctor_id');
 }
 }

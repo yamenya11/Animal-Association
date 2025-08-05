@@ -75,30 +75,37 @@ class AuthController extends Controller
     }
 
     // عرض الملف الشخصي للطبيب الحالي (معدل)
-    public function showCurrentDoctorProfile()
-    {
-        $doctor = Auth::user()->loadCount([
-            'reports',
-            'animal_cases as approved_cases_count' => function($query) {
-                $query->where('approval_status', 'approved');
-            },
-            'reports as completed_reports_count' => function($query) {
-                $query->where('status', 'completed');
-            }
-        ]);
+ public function showCurrentDoctorProfile()
+{
+    $doctor = Auth::user()->loadCount([
+        'reports',
+        'doctorCases as approved_cases_count' => function($query) {
+            $query->where('approval_status', 'approved');
+        },
+        'reports as completed_reports_count' => function($query) {
+            $query->where('status', 'completed');
+        }
+    ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'profile' => $this->formatDoctorData($doctor),
-                'stats' => [
-                    'total_reports' => $doctor->reports_count,
-                    'approved_cases' => $doctor->approved_cases_count,
-                    'completed_reports' => $doctor->completed_reports_count
-                ]
-            ]
-        ]);
-    }
+    // جلب الحالات المعتمدة مع تفاصيلها
+    $approvedCases = Auth::user()->doctorCases()
+                        ->where('approval_status', 'approved')
+                        ->with(['user', 'animal']) // إذا كنت تحتاج هذه العلاقات
+                        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'profile' => $this->formatDoctorData($doctor),
+            'stats' => [
+                'total_reports' => $doctor->reports_count,
+                'approved_cases' => $doctor->approved_cases_count,
+                'completed_reports' => $doctor->completed_reports_count
+            ],
+            //'approved_cases' => $approvedCases // قائمة الحالات المعتمدة
+        ]
+    ]);
+}
     // تحديث الملف الشخصي للطبيب
     public function updateDoctorProfile(Request $request)
     {

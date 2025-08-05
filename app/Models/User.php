@@ -161,6 +161,10 @@ public function depositFloat(float $amount, array $meta = [])
         'ad_id' => $meta['ad_id'] ?? null
     ]);
 }
+public function doctorCases()
+{
+    return $this->hasMany(AnimalCase::class, 'doctor_id');
+}
 
     /**
      * The attributes that should be hidden for serialization.
