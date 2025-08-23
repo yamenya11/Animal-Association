@@ -71,6 +71,7 @@ Route::post('/conversations/{conversation}/participants/{userId}/role',
 Route::patch('/conversations/{conversation}/messages/{message}/read', 
     [ChatController::class, 'markAsRead']
 );
+//عرض اعضاء الغروب
 Route::get('/conversations/{conversation}/participants', [ChatController::class, 'getParticipants']);
 
 
@@ -129,7 +130,7 @@ Route::delete('/profile/image', [ProfileController::class, 'deleteProfileImage']
     Route::get('/posts/likes-count/post', [LikeController::class, 'getAllLike']);    // التطوع
     Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
     Route::get('/volunteer-types/user', [VolunteerTypeController::class, 'index']);
-    Route::get('/appointments/client', [AppointmentController::class, 'showAppointmentMyUser']);//عرض مواعيد المستخدم
+    Route::get('/appointments/client', [AppointmentController::class, 'getProcessedAppointments']);//عرض مواعيد المستخدم
  
 //COURSE
     Route::get('/courses/show/client', [CourseController::class, 'indexForUsers']);

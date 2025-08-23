@@ -132,7 +132,7 @@ class AppointmentController extends Controller
     public function getProcessedAppointments()
 {
     // جلب المواعيد التي تمت الموافقة عليها أو رفضها فقط
-    $appointments = Appointment::whereIn('status', ['completed', 'canceled'])
+    $appointments = Appointment::whereIn('status', ['scheduled', 'canceled'])
                               ->with(['user','animalCase', 'ambulance'])
                               ->get();
 
