@@ -12,12 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('participants', function (Blueprint $table) {
-            $table->id();
-              $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
-        $table->timestamp('joined_at')->useCurrent();
-        $table->enum('role', ['admin', 'member'])->default('member');
-            $table->timestamps();
+        $table->id();
+        $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
+            $table->timestamp('joined_at')->useCurrent();
+            $table->enum('role', ['admin', 'member'])->default('member');
+            $table->unsignedBigInteger('last_read_message_id')->nullable();
+           $table->timestamps();
+
+    // لا يتكرر نفس العضو في نفس المحادثة
+    $table->unique(['user_id', 'conversation_id']);
         });
     }
 

@@ -34,12 +34,47 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\VolunteerTypeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AmbulanceController;
-
+use App\Http\Controllers\ChatController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+Route::middleware('auth:sanctum')->group(function () {
 
+    // عرض المحادثات
+    Route::get('conversations', [ChatController::class, 'indexConversations']);
+
+    // إنشاء غروب (الموظف فقط)
+    Route::post('conversations', [ChatController::class, 'createConversation']);
+
+    // عرض الرسائل في محادثة
+    Route::get('conversations/{conversation}/messages', [ChatController::class, 'messages']);
+
+    // إرسال رسالة
+    Route::post('conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
+
+    // حذف رسالة من نسخة المستخدم فقط
+    Route::delete('messages/{message}', [ChatController::class, 'deleteMessage']);
+    //اضافة متطوعين
+     Route::post('conversations/{conversation}/participants', [ChatController::class, 'addParticipant']);
+//عرض المتطوعين لاضافتهم للغروب
+     Route::get('volunteers/type/{volunteerTypeId}', [ChatController::class, 'getVolunteersByType']);
+//ازالة مشارك
+Route::delete('/conversations/{conversation}/participants/{user}', [ChatController::class, 'removeParticipant']);
+    // حذف الغروب
+Route::delete('/conversations/{id}', [ChatController::class, 'deleteConversation']);
+// تغيير دور عضو 
+Route::post('/conversations/{conversation}/participants/{userId}/role', 
+    [ChatController::class, 'changeUserRole']
+);
+// تعليم الرسالة كمقروءة
+Route::patch('/conversations/{conversation}/messages/{message}/read', 
+    [ChatController::class, 'markAsRead']
+);
+Route::get('/conversations/{conversation}/participants', [ChatController::class, 'getParticipants']);
+
+
+});
 
 //Route::post('/user/toggle-availability', [AuthController::class, 'toggleAvailability'])->middleware('auth');
 

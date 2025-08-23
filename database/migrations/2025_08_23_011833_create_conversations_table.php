@@ -12,13 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('conversations', function (Blueprint $table) {
-            $table->id();
-            $table->id();
-        $table->string('title')->nullable();
-        $table->enum('type', ['private', 'group'])->default('private');
-        $table->foreignId('last_message_id')->nullable()->constrained('messages')->onDelete('set null');
-        $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
+    $table->id();
+ $table->string('title')->nullable();
+            $table->enum('type', ['private', 'group'])->default('private');
+            $table->foreignId('last_message_id')->nullable();
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+        $table->timestamps();
         });
     }
 

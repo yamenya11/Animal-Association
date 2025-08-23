@@ -4,26 +4,35 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Message extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'from_user_id', // معرف المستخدم المرسل
-        'to_user_id',   // معرف المستخدم المستقبل
-        'message'       // محتوى الرسالة
+      protected $fillable = [
+        'body',
+        'user_id',
+        'conversation_id',
+        'type',
+        'media_path',
+        'media_original_name',
+        'media_size',
+        'media_mime_type',
     ];
-
-    // العلاقة مع المستخدم المرسل
-    public function fromUser()
+    public function conversation(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'from_user_id');
+        return $this->belongsTo(Conversation::class);
     }
 
-    // العلاقة مع المستخدم المستقبل
-    public function toUser()
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'to_user_id');
+        return $this->belongsTo(User::class);
     }
-} 
+
+    public function recipients(): HasMany
+    {
+        return $this->hasMany(Recipient::class);
+    }
+}

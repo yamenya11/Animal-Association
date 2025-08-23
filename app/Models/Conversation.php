@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Conversation extends Model
 {
     use HasFactory;
-     protected $fillable = ['title', 'type', 'last_message_id', 'created_by'];
+
+    protected $fillable = ['title', 'type', 'last_message_id', 'created_by'];
 
     public function participants(): HasMany
     {
@@ -29,5 +31,11 @@ class Conversation extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+     public function users()
+    {
+        return $this->belongsToMany(User::class, 'participants', 'conversation_id', 'user_id')
+                    ->withPivot('role')
+                    ->withTimestamps();
     }
 }
