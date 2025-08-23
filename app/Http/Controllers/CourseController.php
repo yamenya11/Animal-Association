@@ -70,11 +70,17 @@ public function store(Request $request)
     }
 
     // عرض الكورسات حسب التصنيفات (للمستخدمين)
-    public function getByCategories()
-    {
-        $courses = $this->courseService->getCoursesByCategoriesForUsers();
-        return response()->json($courses);
-    }
+  public function getByCategories(Request $request)
+{
+    $categoryName = $request->input('category'); // أو يمكن استخدام route parameter
+    
+    $courses = $this->courseService->getCoursesByCategoriesForUsers($categoryName);
+    
+    return response()->json([
+        'success' => true,
+        'data' => $courses
+    ]);
+}
 
     // عرض كورسات الطبيب (للطبيب نفسه)
 public function indexForDoctor()

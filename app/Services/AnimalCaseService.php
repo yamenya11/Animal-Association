@@ -60,11 +60,12 @@ class AnimalCaseService
    
 
 
-    // إضافة رابط الصورة للاستجابة
-    $responseData = $case->toArray();
+  
+      $responseData = $case->toArray();
     if ($case->image) {
-        $responseData['image_url'] = asset('storage/' . $case->image);
+        $responseData['image_url'] = config('app.url') . '/storage/' . $case->image;
     }
+
 
     return [
         'status' => true,
@@ -130,9 +131,16 @@ protected function dispatchAmbulance(string $address, string $phone, Ambulance $
 public function getApprovedCases()
 {
     return AnimalCase::where('approval_status', 'approved')
-        ->with(['user', 'animal']) // تحميل العلاقات إذا لزم الأمر
+        ->with(['user', 'animal'])
         ->orderBy('updated_at', 'desc')
-        ->get();
+        ->get()
+        ->map(function($case) {
+            $caseData = $case->toArray();
+            if ($case->image) {
+                $caseData['image_url'] = config('app.url') . '/storage/' . $case->image;
+            }
+            return $caseData;
+        });
 }
 public function getAnimalCasesByUser()
 {
@@ -146,9 +154,9 @@ public function getAnimalCasesByUser()
                 'id' => $case->id,
                 'animal_name' => $case->name_animal,
                 'case_type' => $case->case_type,
-                'image_url' => $case->image ? asset('storage/' . $case->image) : null,
+                'image_url' => $case->image ? config('app.url') . '/storage/' . $case->image : null,
                 'created_at' => $case->created_at->format('Y-m-d H:i'),
-                'approval_status'=>$case->approval_status
+                'approval_status' => $case->approval_status
             ];
         });
 }

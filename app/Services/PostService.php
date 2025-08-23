@@ -11,7 +11,7 @@ use App\Services\NotificationService;
 class PostService
 {
 
- public function createPost(Request $request): array
+public function createPost(Request $request): array
 {
     $validated = $request->validate([
         'type_post' => 'required|in:adoption,opinion,temporary_care',
@@ -37,7 +37,7 @@ class PostService
     // إضافة رابط الصورة للاستجابة
     $responseData = $post->toArray();
     if ($post->image) {
-        $responseData['image_url'] = asset('storage/' . $post->image);
+        $responseData['image_url'] = config('app.url') . '/storage/' . $post->image;
     }
 
     return [
@@ -47,15 +47,14 @@ class PostService
     ];
 }
 
-
-   public function show_post()
+public function show_post()
 {
     return Post::join('users', 'posts.user_id', '=', 'users.id')
         ->select(
             'posts.id as post_id',
             'posts.content',
             'posts.title',
-            'posts.type_post', // أضفنا هذا الحقل
+            'posts.type_post',
             'posts.image',
             'users.id as user_id',
             'users.name',
@@ -63,9 +62,15 @@ class PostService
             'posts.status'
         )
         ->where('posts.status', '!=', 'pending')
-        ->get();
+        ->get()
+        ->map(function($post) {
+            $postData = (array)$post;
+            if ($post->image) {
+                $postData['image_url'] = config('app.url') . '/storage/' . $post->image;
+            }
+            return $postData;
+        });
 }
- 
   public function respondToPost($postId, string $action): array
 {
     $post = Post::with('user')->findOrFail($postId);
@@ -83,13 +88,16 @@ class PostService
     // إشعار عبر خدمة الإشعارات
     //$notificationService = app(NotificationService::class);
     //$notificationService->sendPostStatusNotification($post, $action);
-
-    return [
+  $postData = $post->toArray();
+    if ($post->image) {
+        $postData['image_url'] = config('app.url') . '/storage/' . $post->image;
+    }
+     return [
         'status' => true,
         'message' => $action === 'approved'
             ? 'تمت الموافقة على المنشور.'
             : 'تم رفض المنشور.',
-        'data' => $post,
+        'data' => $postData,
     ];
 }
 }

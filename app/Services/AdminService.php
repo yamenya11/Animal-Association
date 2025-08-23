@@ -44,7 +44,7 @@ public function changeUserRole(User $user, string $role): array
     ];
 }
     // إدارة المستخدمين
-  public function getAllUsers()
+public function getAllUsers()
 {
     return User::with(['roles:id,name', 'volunteerRequest'])
         ->select([
@@ -68,7 +68,7 @@ public function changeUserRole(User $user, string $role): array
                 'wallet_balance' => $user->wallet_balance,
                 'level' => $user->level,
                 'address' => $user->address,
-                'profile_image' => $user->profile_image,
+                'profile_image' => $user->profile_image ? config('app.url') . '/storage/' . $user->profile_image : null,
                 'phone' => $user->phone,
                 'roles' => $user->roles->pluck('name'),
                 'volunteer_specialization' => $user->volunteerRequest ? $this->getVolunteerTypeName($user->volunteerRequest->volunteer_type) : null,

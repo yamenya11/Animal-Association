@@ -1,52 +1,67 @@
 <?php
-// app/Services/VaccineService.php
 namespace App\Services;
 
 use App\Models\Vaccine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+
 class VaccineService
 {
-
-
-public function create(array $validatedData): array
-{
-    // التحقق من وجود صورة وصحتها
-    if (isset($validatedData['image'])) {
-        if (!$validatedData['image']->isValid()) {
-            throw new \Exception('ملف الصورة غير صالح');
+    public function create(array $validatedData): array
+    {
+        // التحقق من وجود صورة وصحتها
+        if (isset($validatedData['image'])) {
+            if (!$validatedData['image']->isValid()) {
+                throw new \Exception('ملف الصورة غير صالح');
+            }
+            $validatedData['image'] = $validatedData['image']->store('vaccine_images', 'public');
         }
-        $validatedData['image'] = $validatedData['image']->store('vaccine_images', 'public');
+
+        $vaccine = Vaccine::create($validatedData);
+        
+        return [
+            'status' => true,
+            'message' => 'تمت إضافة اللقاح بنجاح',
+            'data' => [
+                'animal_name' => $vaccine->animal_name,
+                'gender' => $vaccine->gender,
+                'type' => $vaccine->type,
+                'image_url' => $vaccine->image ? config('app.url') . '/storage/' . $vaccine->image : null,
+                'due_date' => $vaccine->due_date,
+                'id' => $vaccine->id,
+                'created_at' => $vaccine->created_at,
+                'updated_at' => $vaccine->updated_at
+            ]
+        ];
     }
 
-    $vaccine = Vaccine::create($validatedData);
-    
-    return [
-        'status' => true,
-        'message' => 'تمت إضافة اللقاح بنجاح',
-        'data' => [
-            'animal_name' => $vaccine->animal_name,
-            'gender' => $vaccine->gender,
-            'type' => $vaccine->type,
-            'image_url' => Storage::disk('public')->url($vaccine->image),
-            'due_date' => $vaccine->due_date,
-            'id' => $vaccine->id,
-            'created_at' => $vaccine->created_at,
-            'updated_at' => $vaccine->updated_at
-        ]
-    ];
-}
     public function list()
     {
-         return Vaccine::orderBy('due_date', 'asc')->get();
+        return Vaccine::orderBy('due_date', 'asc')
+            ->get()
+            ->map(function($vaccine) {
+                $vaccineData = $vaccine->toArray();
+                if ($vaccine->image) {
+                    $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
+                }
+                return $vaccineData;
+            });
     }
 
     public function dueToday()
     {
-        return Vaccine::whereDate('due_date', now()->toDateString())->get();
+        return Vaccine::whereDate('due_date', now()->toDateString())
+            ->get()
+            ->map(function($vaccine) {
+                $vaccineData = $vaccine->toArray();
+                if ($vaccine->image) {
+                    $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
+                }
+                return $vaccineData;
+            });
     }
 
-     public function updateImage(Request $request, $vaccineId)
+    public function updateImage(Request $request, $vaccineId): array
     {
         $vaccine = Vaccine::findOrFail($vaccineId);
         
@@ -60,10 +75,16 @@ public function create(array $validatedData): array
             $vaccine->save();
         }
         
-        return $vaccine;
+        // إضافة رابط الصورة للاستجابة
+        $vaccineData = $vaccine->toArray();
+        if ($vaccine->image) {
+            $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
+        }
+        
+        return $vaccineData;
     }
 
-     public function update(array $validatedData, $vaccineId): Vaccine
+    public function update(array $validatedData, $vaccineId): array
     {
         $vaccine = Vaccine::findOrFail($vaccineId);
 
@@ -80,7 +101,14 @@ public function create(array $validatedData): array
         }
 
         $vaccine->update($validatedData);
-        return $vaccine->fresh();
+        
+        // إضافة رابط الصورة للاستجابة
+        $vaccineData = $vaccine->fresh()->toArray();
+        if ($vaccine->image) {
+            $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
+        }
+        
+        return $vaccineData;
     }
 
     public function delete($vaccineId): bool
@@ -95,8 +123,15 @@ public function create(array $validatedData): array
         return $vaccine->delete();
     }
 
-    public function show($vaccineId): Vaccine
+    public function show($vaccineId): array
     {
-        return Vaccine::findOrFail($vaccineId);
+        $vaccine = Vaccine::findOrFail($vaccineId);
+        
+        $vaccineData = $vaccine->toArray();
+        if ($vaccine->image) {
+            $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
+        }
+        
+        return $vaccineData;
     }
 }

@@ -11,27 +11,37 @@ use Illuminate\Http\JsonResponse;
 
 class AnimalService
 {
-public function getAvailableAnimals()
-{
-    return Animal::select(
-        'animals.id',
-        'animals.name',
-        'animal_types.name as type', 
-        'animals.breed',
-        'animals.birth_date',
-        'animals.health_info',
-        'animals.image',
-        'animals.is_adopted'
-    )
-    ->join('animal_types', 'animals.type_id', '=', 'animal_types.id')
-    ->where('is_adopted', false)
-    ->where('purpose', 'adoption')
-    ->get();
-}
+    public function getAvailableAnimals()
+    {
+        $animals = Animal::select(
+            'animals.id',
+            'animals.name',
+            'animal_types.name as type', 
+            'animals.breed',
+            'animals.birth_date',
+            'animals.health_info',
+            'animals.image',
+            'animals.is_adopted'
+        )
+        ->join('animal_types', 'animals.type_id', '=', 'animal_types.id')
+        ->where('is_adopted', false)
+        ->where('purpose', 'adoption')
+        ->get();
+
+        // إضافة رابط الصورة الكامل لكل حيوان
+        $animals->transform(function ($animal) {
+            if ($animal->image) {
+                $animal->image_url = config('app.url') . '/storage/' . $animal->image;
+            }
+            return $animal;
+        });
+
+        return $animals;
+    }
 public function create(Request $request,$userId): array
 {
  
- $userId = Auth::id(); // <-- احصل على المستخدم الحالي
+ $userId = Auth::id(); 
 
     if (!$userId) {
         return [
@@ -76,11 +86,15 @@ $userId = Auth::id();
         'image'       => $validated['image'] ?? null,
         'describtion'       => $validated['describtion'] ?? null,
     ]);
+    $animalData = $animal->toArray();
+    if ($animal->image) {
+        $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+    }
 
     return [
         'status'  => true,
         'message' => 'تمت إضافة الحيوان بنجاح.',
-        'data'    => $animal,
+        'data'    => $animalData,
     ];
 }
 
@@ -146,11 +160,17 @@ $userId = Auth::id();
 
             $animal->refresh()->load('type');
 
-            return [
-                'status' => true,
-                'message' => 'تم تحديث بيانات الحيوان بنجاح',
-                'data' => $animal
-            ];
+             $animalData = $animal->toArray();
+        if ($animal->image) {
+            $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+        }
+
+
+              return [
+            'status' => true,
+            'message' => 'تم تحديث بيانات الحيوان بنجاح',
+            'data' => $animalData
+        ];
 
         } catch (\Exception $e) {
             Log::error('Animal update error: ' . $e->getMessage());

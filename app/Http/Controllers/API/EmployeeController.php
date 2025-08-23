@@ -24,60 +24,95 @@ class EmployeeController extends Controller
         $this->animalService = $animalService;
     }
 
-    public function filte_index(Request $request): JsonResponse
-{
-    $query = Animal::with(['type', 'user']);
+        public function filte_index(Request $request): JsonResponse
+        {
+            $query = Animal::with(['type', 'user']);
 
-    // تطبيق الفلتر حسب الغرض إن وجد
-    if ($request->has('purpose') && in_array($request->purpose, ['adoption', 'temporary_care'])) {
-        $query->where('purpose', $request->purpose);
-    }
+            if ($request->has('purpose') && in_array($request->purpose, ['adoption', 'temporary_care'])) {
+                $query->where('purpose', $request->purpose);
+            }
 
-    $animals = $query->get();
+            $animals = $query->get()->map(function($animal) {
+                $animalData = $animal->toArray();
+                if ($animal->image) {
+                    $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+                }
+                return $animalData;
+            });
 
-    return response()->json([
-        'status' => true,
-        'data' => $animals
-    ]);
-}
-public function adoptions(): JsonResponse
-{
-    $animals = Animal::with(['type', 'user'])
-        ->where('purpose', 'adoption')
-        ->where('is_adopted', false)
-        ->get();
+            return response()->json([
+                'status' => true,
+                'data' => $animals
+            ]);
+        }
 
-    return response()->json([
-        'status' => true,
-        'data' => $animals
-    ]);
-}
+        public function adoptions(): JsonResponse
+        {
+            $animals = Animal::with(['type', 'user'])
+                ->where('purpose', 'adoption')
+                ->where('is_adopted', false)
+                ->get()
+                ->map(function($animal) {
+                    $animalData = $animal->toArray();
+                    if ($animal->image) {
+                        $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+                    }
+                    return $animalData;
+                });
 
-public function temporaryCare(): JsonResponse
-{
-    $animals = Animal::with(['type', 'user'])
-        ->where('purpose', 'temporary_care')
-        ->where('available_for_care', true)
-        ->where('is_adopted', false)
-        ->get();
+            return response()->json([
+                'status' => true,
+                'data' => $animals
+            ]);
+        }
 
-    return response()->json([
-        'status' => true,
-        'data' => $animals
-    ]);
-}
+        public function temporaryCare(): JsonResponse
+        {
+            $animals = Animal::with(['type', 'user'])
+                ->where('purpose', 'temporary_care')
+                ->where('available_for_care', true)
+                ->where('is_adopted', false)
+                ->get()
+                ->map(function($animal) {
+                    $animalData = $animal->toArray();
+                    if ($animal->image) {
+                        $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+                    }
+                    return $animalData;
+                });
 
-      public function index(): JsonResponse
-    {
-        $animals = Animal::with(['type', 'user'])->get();
-        return response()->json(['status' => true, 'data' => $animals]);
-    }
+            return response()->json([
+                'status' => true,
+                'data' => $animals
+            ]);
+        }
 
-      public function show($id): JsonResponse
-    {
-        $animal = Animal::with(['type', 'user'])->findOrFail($id);
-        return response()->json(['status' => true, 'data' => $animal]);
-    }
+            public function index(): JsonResponse
+        {
+            $animals = Animal::with(['type', 'user'])
+                ->get()
+                ->map(function($animal) {
+                    $animalData = $animal->toArray();
+                    if ($animal->image) {
+                        $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+                    }
+                    return $animalData;
+                });
+                
+            return response()->json(['status' => true, 'data' => $animals]);
+        }
+
+            public function show($id): JsonResponse
+        {
+            $animal = Animal::with(['type', 'user'])->findOrFail($id);
+            
+            $animalData = $animal->toArray();
+            if ($animal->image) {
+                $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+            }
+            
+            return response()->json(['status' => true, 'data' => $animalData]);
+        }
 
      public function getAvailableAnimals(): JsonResponse
     {
@@ -130,29 +165,29 @@ public function destroy(int $animalId)
 
 
 
- public function uploadImage(Request $request): JsonResponse
-    {
-        $request->validate([
-            'image' => 'required|image|max:2048',
-        ]);
+public function uploadImage(Request $request): JsonResponse
+{
+    $request->validate([
+        'image' => 'required|image|max:2048',
+    ]);
 
-        if ($request->hasFile('image')) {
-            $filename = uniqid() . '.' . $request->image->getClientOriginalExtension();
-            $path = $request->image->storeAs('animal_images', $filename, 'public');
-            
-            return response()->json([
-                'status' => true,
-                'message' => 'تم رفع الصورة بنجاح',
-                'path' => $path
-            ]);
-        }
-
+    if ($request->hasFile('image')) {
+        $filename = uniqid() . '.' . $request->image->getClientOriginalExtension();
+        $path = $request->image->storeAs('animal_images', $filename, 'public');
+        
         return response()->json([
-            'status' => false,
-            'message' => 'فشل في رفع الصورة'
-        ], 400);
+            'status' => true,
+            'message' => 'تم رفع الصورة بنجاح',
+            'path' => $path,
+            'url' => config('app.url') . '/storage/' . $path
+        ]);
     }
 
+    return response()->json([
+        'status' => false,
+        'message' => 'فشل في رفع الصورة'
+    ], 400);
+}
 
 public function updatePurpose(Request $request, $animalId)
 {

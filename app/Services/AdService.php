@@ -27,43 +27,49 @@ public function __construct(NotificationService $notificationService = null, Wal
     $this->walletService = $walletService;
 }
 
-    public function createAdWithMedia($request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240',
-        ]);
+public function createAdWithMedia($request)
+{
+    $validated = $request->validate([
+        'title' => 'required|string',
+        'description' => 'required|string',
+        'price' => 'required|numeric',
+        'media.*' => 'nullable|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240',
+    ]);
 
-        $ad = Ad::create([
-            'user_id' => Auth::id(),
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'price' => $validated['price'],
-            'status' => 'pending' // إضافة حالة افتراضية
-        ]);
+    $ad = Ad::create([
+        'user_id' => Auth::id(),
+        'title' => $validated['title'],
+        'description' => $validated['description'],
+        'price' => $validated['price'],
+        'status' => 'pending'
+    ]);
 
-        if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                $path = $file->store('ads_media', 'public');
-                
-                AdMedia::create([
-                    'ad_id' => $ad->id,
-                    'media_path' => $path,
-                    'media_type' => Str::startsWith($file->getMimeType(), 'image') ? 'image' : 'video'
-                ]);
-            }
+    if ($request->hasFile('media')) {
+        foreach ($request->file('media') as $file) {
+            $path = $file->store('ads_media', 'public');
+            
+            AdMedia::create([
+                'ad_id' => $ad->id,
+                'media_path' => $path,
+                'media_type' => Str::startsWith($file->getMimeType(), 'image') ? 'image' : 'video'
+            ]);
         }
-
-        return [
-            'status' => true,
-            'message' => 'تم إنشاء الإعلان بنجاح',
-            'data' => $ad->load('media')
-        ];
     }
 
+    // هنا نحمّل media مع media_url المخصص
+      $ad->load(['media' => function($query) {
+        $query->select('*', 
+            \DB::raw('CONCAT("' . config('app.url') . '/storage/", media_path) as media_url')
+        );
+    }]);
 
+    // هنا نعيد $ad بدون load إضافي لأنه تم تحميله بالفعل
+    return [
+        'status' => true,
+        'message' => 'تم إنشاء الإعلان بنجاح',
+        'data' => $ad // تم التحميل مسبقاً، لا داعي لـ load('media') again
+    ];
+}
 
 public function approveAd($adId, $adminId)
 {
@@ -139,11 +145,11 @@ public function getAllAds_for_user()
                         'id' => $media->id,
                         'url' => $media->media_type === 'video' 
                             ? url("/api/stream-video/{$media->id}")
-                            : asset('storage/' . $media->media_path),
+                            : config('app.url') . '/storage/' . $media->media_path,
                         'type' => $media->media_type,
                         'thumbnail' => $media->media_type === 'video'
-                            ? asset('storage/video-thumbnails/'.pathinfo($media->media_path, PATHINFO_FILENAME).'.jpg')
-                            : asset('storage/' . $media->media_path),
+                            ? config('app.url') . '/storage/video-thumbnails/'.pathinfo($media->media_path, PATHINFO_FILENAME).'.jpg'
+                            : config('app.url') . '/storage/' . $media->media_path,
                     ];
                 })->toArray()
             ];
@@ -155,5 +161,4 @@ public function getAllAds_for_user()
         'message' => 'تم جلب الإعلانات بنجاح'
     ];
 }
-
 }

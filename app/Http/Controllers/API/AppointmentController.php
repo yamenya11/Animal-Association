@@ -106,7 +106,7 @@ class AppointmentController extends Controller
     {
         $appointments = Appointment::where('user_id', Auth::id())
             ->where('status', 'completed')
-            ->select('id', 'status', 'scheduled_at', 'is_immediate')
+            ->select('id', 'status', 'scheduled_date','scheduled_time', 'is_immediate')
             ->orderBy('created_at', 'desc')
             ->get();
 

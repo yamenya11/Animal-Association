@@ -17,11 +17,11 @@ class PolicyPostService
         $this->postPolicy = $postPolicy;
     }
 
-   public function createOfficialPost($user, array $data)
+public function createOfficialPost($user, array $data)
 {
     $imagePath = isset($data['image']) ? $data['image']->store('official-posts', 'public') : null;
 
-    return Post::create([
+    $post = Post::create([
         'user_id' => $user->id,
         'title' => $data['title'],
         'content' => $data['content'],
@@ -29,12 +29,21 @@ class PolicyPostService
         'image' => $imagePath,
         'status' => 'approved'
     ]);
+
+    // إضافة رابط الصورة للاستجابة
+    if ($post->image) {
+        $post->image_url = config('app.url') . '/storage/' . $post->image;
+    }
+
+    return $post;
 }
-  public function createPost(User $user, array $data): Post
+
+
+public function createPost(User $user, array $data): Post
 {
     $imagePath = isset($data['image']) ? $data['image']->store('posts', 'public') : null;
 
-    return Post::create([
+    $post = Post::create([
         'user_id' => $user->id,
         'title' => $data['title'],
         'content' => $data['content'],
@@ -43,6 +52,13 @@ class PolicyPostService
         'is_official' => $data['is_official'] ?? false,
         'status' => $user->hasRole(['admin', 'employee']) ? 'approved' : 'pending'
     ]);
+
+    // إضافة رابط الصورة للاستجابة
+    if ($post->image) {
+        $post->image_url = config('app.url') . '/storage/' . $post->image;
+    }
+
+    return $post;
 }
 
 public function forceDeletePost(Post $post): bool
@@ -53,29 +69,39 @@ public function forceDeletePost(Post $post): bool
     return $post->forceDelete();
 }
 
-    /**
-     * تحديث بوست موجود
-     */
-    public function updatePost(User $user, Post $post, array $data): Post
-    {
-        if (!$this->postPolicy->update($user, $post)) {
-            abort(403, 'غير مصرح بالتعديل');
-        }
-
-        if (isset($data['image'])) {
-            if ($post->image) {
-                Storage::disk('public')->delete($post->image);
-            }
-            $data['image'] = $data['image']->store('posts', 'public');
-        }
-
-        $post->update($data);
-        return $post;
+  
+   public function updatePost(User $user, Post $post, array $data): Post
+{
+    if (!$this->postPolicy->update($user, $post)) {
+        abort(403, 'غير مصرح بالتعديل');
     }
 
-
-    public function getUserPosts(User $user): Collection
-    {
-        return $user->posts()->with(['comments'])->latest()->get();
+    if (isset($data['image'])) {
+        if ($post->image) {
+            Storage::disk('public')->delete($post->image);
+        }
+        $data['image'] = $data['image']->store('posts', 'public');
     }
+
+    $post->update($data);
+    
+    // إضافة رابط الصورة للاستجابة بعد التحديث
+    if ($post->image) {
+        $post->image_url = config('app.url') . '/storage/' . $post->image;
+    }
+
+    return $post;
+}
+
+
+   public function getUserPosts(User $user): Collection
+{
+    return $user->posts()->with(['comments'])->latest()->get()->map(function($post) {
+        $postData = $post->toArray();
+        if ($post->image) {
+            $postData['image_url'] = config('app.url') . '/storage/' . $post->image;
+        }
+        return $postData;
+    });
+}
 }

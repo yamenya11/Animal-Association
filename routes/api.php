@@ -72,8 +72,8 @@ Route::delete('/profile/image', [ProfileController::class, 'deleteProfileImage']
 
 
         Route::post('/createRequest', [TemporaryCareController::class, 'createRequest']);
-         // إنشاء طلب رعاية مؤقتة جديد
-   // Route::post('/temporary-care/request', [TemporaryCareController::class, 'createRequest']);
+
+        // Route::post('/temporary-care/request', [TemporaryCareController::class, 'createRequest']);
     
     // الحصول على طلبات الرعاية للمستخدم الحالي
     Route::get('/temporary-care/my-requests', [TemporaryCareController::class, 'getUserRequests']);
@@ -93,11 +93,13 @@ Route::delete('/profile/image', [ProfileController::class, 'deleteProfileImage']
     Route::get('/posts/{post}/likes-count', [LikeController::class, 'likesCount']);
     Route::get('/posts/likes-count/post', [LikeController::class, 'getAllLike']);    // التطوع
     Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
-   Route::get('/volunteer-types/user', [VolunteerTypeController::class, 'index']);
+    Route::get('/volunteer-types/user', [VolunteerTypeController::class, 'index']);
+    Route::get('/appointments/client', [AppointmentController::class, 'showAppointmentMyUser']);//عرض مواعيد المستخدم
+ 
+//COURSE
+    Route::get('/courses/show/client', [CourseController::class, 'indexForUsers']);
 
-  Route::get('/appointments/client', [AppointmentController::class, 'showAppointmentMyUser']);//عرض مواعيد المستخدم
-
-
+  Route::get('/courses/getByCategories/client', [CourseController::class, 'getByCategories']);
     // الإشعارات
     Route::get('/notifications/userall', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
@@ -193,7 +195,8 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
 
     // 📚 عرض كورسات الطبيب نفسه
     Route::get('/doctor/courses', [CourseController::class, 'indexForDoctor']);
-
+    //عرض الكورسات
+  Route::get('/doctor/courses', [CourseController::class, 'indexForDoctor']);
     // 🗑️ حذف كورس يخص الطبيب (أو مسؤول)
     Route::delete('/doctor/courses/{id}', [CourseController::class, 'destroy']);
 

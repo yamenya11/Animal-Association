@@ -124,17 +124,31 @@ class EmployeeService
     }
 
     // إدارة الحيوانات
-    public function getAllAnimals()
-    {
-        return Animal::with('user')
-            ->latest()
-            ->get();
-    }
+  public function getAllAnimals()
+{
+    return Animal::with('user')
+        ->latest()
+        ->get()
+        ->map(function($animal) {
+            $animalData = $animal->toArray();
+            if ($animal->image) {
+                $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
+            }
+            return $animalData;
+        });
+}
 
-    public function getAnimal($animalId)
-    {
-        return Animal::with('user')->findOrFail($animalId);
+  public function getAnimal($animalId)
+{
+    $animal = Animal::with('user')->findOrFail($animalId);
+    
+    $animalData = $animal->toArray();
+    if ($animal->image) {
+        $animalData['image_url'] = config('app.url') . '/storage/' . $animal->image;
     }
+    
+    return $animalData;
+}
 
     public function createAnimal(array $data): array
     {
@@ -246,33 +260,33 @@ class EmployeeService
         }
     }
 
-    public function uploadAnimalImage($request): array
-    {
-        try {
-            if (!$request->hasFile('image')) {
-                return [
-                    'status' => false,
-                    'message' => 'لم يتم اختيار صورة'
-                ];
-            }
-
-            $file = $request->file('image');
-            $path = $file->store('animals', 'public');
-
-            return [
-                'status' => true,
-                'message' => 'تم رفع الصورة بنجاح',
-                'data' => [
-                    'path' => $path,
-                    'url' => Storage::url($path)
-                ]
-            ];
-        } catch (\Exception $e) {
+  public function uploadAnimalImage($request): array
+{
+    try {
+        if (!$request->hasFile('image')) {
             return [
                 'status' => false,
-                'message' => 'حدث خطأ أثناء رفع الصورة',
-                'error' => $e->getMessage()
+                'message' => 'لم يتم اختيار صورة'
             ];
         }
+
+        $file = $request->file('image');
+        $path = $file->store('animals', 'public');
+
+        return [
+            'status' => true,
+            'message' => 'تم رفع الصورة بنجاح',
+            'data' => [
+                'path' => $path,
+                'url' => config('app.url') . '/storage/' . $path
+            ]
+        ];
+    } catch (\Exception $e) {
+        return [
+            'status' => false,
+            'message' => 'حدث خطأ أثناء رفع الصورة',
+            'error' => $e->getMessage()
+        ];
     }
+}
 } 

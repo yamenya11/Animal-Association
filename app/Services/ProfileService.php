@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 class ProfileService
 {
-   public function getProfile(): array
+public function getProfile(): array
 {
     $user = Auth::user();
 
@@ -34,7 +34,7 @@ class ProfileService
     $adsCount = $user->ads()->count();
     $temporaryCareCount = $user->temporary()->count();
 
-    $activityScore = $donationsCount + $adoptionsCount + $urgentCasesCount + $adsCount+ $temporaryCareCount;
+    $activityScore = $donationsCount + $adoptionsCount + $urgentCasesCount + $adsCount + $temporaryCareCount;
     $level = $this->calculateLevel($activityScore);
 
     if ($user->level !== $level) {
@@ -49,7 +49,7 @@ class ProfileService
         'level'          => $user->level,
         'phone'          => $user->phone,
         'address'        => $user->address,
-        'profile_image'  => $user->profile_image ? asset('storage/' . $user->profile_image) : null,
+        'profile_image'  => $user->profile_image ? config('app.url') . '/storage/' . $user->profile_image : null,
         'donation_count' => $donationsCount,
         'adoption_count' => $adoptionsCount,
         'urgent_cases_count' => $urgentCasesCount,
@@ -62,7 +62,6 @@ class ProfileService
         'data'   => $profile,
     ];
 }
-
 
     private function calculateLevel(int $score): string
 {
@@ -94,7 +93,7 @@ public function uploadProfileImage(Request $request): array
     return [
         'status' => true,
         'message' => 'تم رفع الصورة بنجاح',
-        'profile_image_url' => asset('storage/' . $path)
+        'profile_image_url' => config('app.url') . '/storage/' . $path
     ];
 }
 public function deleteProfileImage(User $user): array
@@ -125,19 +124,16 @@ public function updateProfile(Request $request)
     DB::beginTransaction();
 
     try {
-      $request->validate([
-    'name' => 'sometimes|string|max:255',
-    'address' => 'sometimes|string|max:255',
-    'phone' => 'sometimes|string|max:15|unique:users,phone,' . $user->id,
-    'profile_image' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
-]);
-
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'address' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:15|unique:users,phone,' . $user->id,
+            'profile_image' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
         if ($request->has('name')) $user->name = $request->input('name');
         if ($request->has('address')) $user->address = $request->input('address');
         if ($request->has('phone')) $user->phone = $request->input('phone');
-
-      
 
         if ($request->hasFile('profile_image')) {
             if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
@@ -159,7 +155,7 @@ public function updateProfile(Request $request)
                 'address' => $user->address,
                 'phone' => $user->phone,
                 'profile_image' => $user->profile_image 
-                    ? asset('storage/' . $user->profile_image)
+                    ? config('app.url') . '/storage/' . $user->profile_image
                     : null,
             ]
         ];

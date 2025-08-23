@@ -57,22 +57,22 @@ class AuthController extends Controller
         'available' => $user->available
     ]);
 }
-      private function formatDoctorData(User $doctor)
-    {
-        return [
-            'id' => $doctor->id,
-            'name' => $doctor->name,
-            'email' => $doctor->email,
-            'specialization' => $doctor->specialization,
-            'experience' => $doctor->experience,
-            'phone' => $doctor->phone,
-            'bio' => $doctor->bio,
-            'profile_image_url' => $doctor->profile_image 
-                ? Storage::url($doctor->profile_image) 
-                : null,
-            'joined_at' => $doctor->created_at->format('Y-m-d')
-        ];
-    }
+private function formatDoctorData(User $doctor)
+{
+    return [
+        'id' => $doctor->id,
+        'name' => $doctor->name,
+        'email' => $doctor->email,
+        'specialization' => $doctor->specialization,
+        'experience' => $doctor->experience,
+        'phone' => $doctor->phone,
+        'bio' => $doctor->bio,
+        'profile_image_url' => $doctor->profile_image 
+            ? config('app.url') . '/storage/' . $doctor->profile_image 
+            : null,
+        'joined_at' => $doctor->created_at->format('Y-m-d')
+    ];
+}
 
     // عرض الملف الشخصي للطبيب الحالي (معدل)
  public function showCurrentDoctorProfile()
@@ -107,35 +107,38 @@ class AuthController extends Controller
     ]);
 }
     // تحديث الملف الشخصي للطبيب
-    public function updateDoctorProfile(Request $request)
-    {
-        $request->validate([
-            'specialization' => 'sometimes|string|max:100',
-            'experience' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
-            'bio' => 'sometimes|string|max:500',
-            'profile_image' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+ public function updateDoctorProfile(Request $request)
+{
+    $request->validate([
+        'specialization' => 'sometimes|string|max:100',
+        'experience' => 'sometimes|string|max:255',
+        'phone' => 'sometimes|string|max:20',
+        'bio' => 'sometimes|string|max:500',
+        'profile_image' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
+    ]);
 
-        $doctor = Auth::user();
-        $data = $request->only(['specialization', 'experience', 'phone', 'bio']);
+    $doctor = Auth::user();
+    $data = $request->only(['specialization', 'experience', 'phone', 'bio']);
 
-        if ($request->hasFile('profile_image')) {
-            // حذف الصورة القديمة إذا وجدت
-            if ($doctor->profile_image) {
-                Storage::disk('public')->delete($doctor->profile_image);
-            }
-            $data['profile_image'] = $request->file('profile_image')->store('doctor_profiles', 'public');
+    if ($request->hasFile('profile_image')) {
+        // حذف الصورة القديمة إذا وجدت
+        if ($doctor->profile_image) {
+            Storage::disk('public')->delete($doctor->profile_image);
         }
-
-        $doctor->update($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'تم تحديث الملف الشخصي بنجاح',
-            'data' => $this->formatDoctorData($doctor->fresh())
-        ]);
+        $data['profile_image'] = $request->file('profile_image')->store('doctor_profiles', 'public');
     }
+
+    $doctor->update($data);
+
+    // إضافة رابط الصورة الكامل للاستجابة
+    $doctorData = $this->formatDoctorData($doctor->fresh());
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'تم تحديث الملف الشخصي بنجاح',
+        'data' => $doctorData
+    ]);
+}
 
 
 
