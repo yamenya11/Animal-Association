@@ -49,7 +49,7 @@ public function createPost(Request $request): array
 
 public function show_post()
 {
-    return Post::join('users', 'posts.user_id', '=', 'users.id')
+    $posts = Post::join('users', 'posts.user_id', '=', 'users.id')
         ->select(
             'posts.id as post_id',
             'posts.content',
@@ -62,14 +62,25 @@ public function show_post()
             'posts.status'
         )
         ->where('posts.status', '!=', 'pending')
-        ->get()
-        ->map(function($post) {
-            $postData = (array)$post;
-            if ($post->image) {
-                $postData['image_url'] = config('app.url') . '/storage/' . $post->image;
-            }
-            return $postData;
-        });
+        ->get();
+
+    // معالجة كل منشور على حدة
+    return $posts->map(function($post) {
+        // إذا كان $post هو JSON string، قم بتحويله إلى array
+        if (is_string($post)) {
+            $postData = json_decode($post, true);
+        } else {
+            $postData = $post->toArray();
+        }
+
+        if (!empty($postData['image'])) {
+            $postData['image_url'] = config('app.url') . '/storage/' . $postData['image'];
+        } else {
+            $postData['image_url'] = null;
+        }
+        
+        return $postData;
+    });
 }
   public function respondToPost($postId, string $action): array
 {

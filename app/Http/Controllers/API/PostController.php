@@ -19,17 +19,26 @@ class PostController extends Controller
         $response = $this->postService->createPost($request);
         return response()->json($response, $response['status'] ? 201 : 400);
     }
-    public function show_all_post(){
-       $userId = Auth::id();
-     
-      
-        $post = $this->postService->show_post();
-
-        return response()->json([
-            'user_id'=>$userId,
-            'status' => true,
-            'data' => $post,
-        ]);
+ public function show_all_post(){
+    $userId = Auth::id();
     
-    }
+    $posts = $this->postService->show_post();
+
+    // إضافة image_url لكل منشور
+    $postsWithImageUrl = $posts->map(function($post) {
+        $postData = (array)$post;
+        if (!empty($postData['image'])) {
+            $postData['image_url'] = config('app.url') . '/storage/' . $postData['image'];
+        } else {
+            $postData['image_url'] = null;
+        }
+        return $postData;
+    });
+
+    return response()->json([
+        'user_id' => $userId,
+        'status' => true,
+        'data' => $postsWithImageUrl,
+    ]);
+}
 }

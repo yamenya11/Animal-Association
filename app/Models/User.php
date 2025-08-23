@@ -166,6 +166,31 @@ public function doctorCases()
     return $this->hasMany(AnimalCase::class, 'doctor_id');
 }
 
+
+//chat
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'participants')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function recipients(): HasMany
+    {
+        return $this->hasMany(Recipient::class);
+    }
+
+    public function participants(): HasMany
+    {
+        return $this->hasMany(Participant::class);
+    }
+    //////////////////
+
     /**
      * The attributes that should be hidden for serialization.
      *
