@@ -90,18 +90,18 @@ class DonateController extends Controller
 
 
 
- public function approvedDonations()
-    {
-        $userId = Auth::id();
+public function approvedDonations()
+{
+    $userId = Auth::id();
 
-        $donations = Donate::where('user_id', $userId)
-                           ->where('is_approved', true)
-                           ->orderBy('created_at', 'desc')
-                           ->get();
+    $donations = Donate::where('user_id', $userId)
+                       ->whereIn('is_approved', [true, false])
+                       ->orderBy('created_at', 'desc')
+                       ->get();
 
-        return response()->json([
-            'status' => true,
-            'data'   => $donations,
-        ]);
-    }
+    return response()->json([
+        'status' => true,
+        'data'   => $donations,
+    ]);
+}
 }

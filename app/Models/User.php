@@ -191,6 +191,15 @@ public function doctorCases()
     }
     //////////////////
 
+    public function courses()
+{
+    return $this->belongsToMany(Course::class, 'course_user')
+                ->using(CourseUser::class) // هنا نستعمل Pivot Model المخصص
+                ->withPivot(['is_liked', 'views'])
+                ->withTimestamps();
+}
+
+
     /**
      * The attributes that should be hidden for serialization.
      *

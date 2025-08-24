@@ -31,4 +31,12 @@ public function getVideoUrlAttribute()
     
     return Storage::disk('public')->url($this->video);
 }
+public function users()
+{
+    return $this->belongsToMany(User::class, 'course_user')
+                ->using(CourseUser::class)
+                ->withPivot(['is_liked', 'views'])
+                ->withTimestamps();
+}
+
 }
