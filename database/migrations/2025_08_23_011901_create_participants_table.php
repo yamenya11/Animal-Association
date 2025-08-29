@@ -19,7 +19,6 @@ return new class extends Migration
             $table->enum('role', ['admin', 'member'])->default('member');
             $table->unsignedBigInteger('last_read_message_id')->nullable();
            $table->timestamps();
-
     // لا يتكرر نفس العضو في نفس المحادثة
     $table->unique(['user_id', 'conversation_id']);
         });

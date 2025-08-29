@@ -30,7 +30,7 @@ public function createConversation(Request $request)
 {
     $data = $request->validate([
         'title' => 'required|string|max:255',
-        'participants' => 'required|array', // IDs للمتطوعين
+        'participants' => 'nullable|array', // مش مطلوب
     ]);
 
     $user = $request->user();
@@ -39,45 +39,59 @@ public function createConversation(Request $request)
         return response()->json(['error' => 'غير مسموح لك بإنشاء الغروب'], 403);
     }
 
-    // إنشاء المحادثة
     $conversation = Conversation::create([
         'title' => $data['title'],
         'type' => 'group',
         'created_by' => $user->id,
     ]);
 
-    $participants = [];
-
-    // إضافة الموظف كـ admin
-    $participants[] = Participant::create([
+    // أضف منشئ الغروب كـ admin
+    Participant::create([
         'user_id' => $user->id,
         'conversation_id' => $conversation->id,
         'role' => 'admin',
     ]);
 
-    // إضافة المتطوعين كمشاركين
+    // إضافة المشاركين (لو تم إرسالهم)
+   if (!empty($data['participants'])) {
     foreach ($data['participants'] as $userId) {
-        $participants[] = Participant::create([
-            'user_id' => $userId,
-            'conversation_id' => $conversation->id,
-            'role' => 'member',
-        ]);
+        if ($userId == $user->id) {
+            continue; // تجاهل منشئ الغروب
+        }
+
+        if (\App\Models\User::find($userId)) {
+            Participant::firstOrCreate([
+                'user_id' => $userId,
+                'conversation_id' => $conversation->id,
+            ], ['role' => 'member']);
+        }
     }
+}
+
 
     return response()->json([
         'message' => 'تم إنشاء الغروب بنجاح',
-        'conversation' => [
-            'id' => $conversation->id,
-            'title' => $conversation->title,
-            'type' => $conversation->type,
-            'created_by' => $conversation->created_by,
-            'created_at' => $conversation->created_at,
-            'updated_at' => $conversation->updated_at,
-        ],
-        'participants' => $participants
+        'conversation' => $conversation,
     ], 201);
 }
 
+public function getAvailableUsers($conversationId)
+{
+    $conversation = Conversation::findOrFail($conversationId);
+
+    // جلب IDs للمشاركين الحاليين
+    $currentParticipants = $conversation->participants()->pluck('user_id')->toArray();
+
+    // جلب كل المستخدمين باستثناء الموجودين + المستخدم الحالي
+    $users = \App\Models\User::whereNotIn('id', $currentParticipants)
+        ->where('id', '!=', auth()->id())
+        ->select('id', 'name')
+        ->get();
+
+    return response()->json([
+        'users' => $users
+    ]);
+}
 
 public function sendMessage(Request $request, $conversationId)
 {
@@ -262,18 +276,16 @@ public function addParticipant(Request $request, $conversationId)
         return response()->json(['error' => 'غير مسموح لك بإضافة متطوعين'], 403);
     }
 
-    // التحقق من صحة الطلب
+
     $request->validate([
         'user_id' => 'required|exists:users,id',
     ]);
 
-    // إضافة المتطوع كـ member فقط
     $newParticipant = Participant::firstOrCreate([
         'user_id' => $request->user_id,
         'conversation_id' => $conversation->id,
     ], ['role' => 'member']);
 
-    // تحميل بيانات المستخدم المرتبط بالمتطوع الجديد
     $newParticipant->load('user');
 
     return response()->json([
@@ -291,23 +303,19 @@ public function addParticipant(Request $request, $conversationId)
 }
 
 
-//عرض المتطوعين لاضافتهم لغروب
-public function getVolunteersByType($volunteerTypeId)
+public function getAllUsers()
 {
-    // جلب المستخدمين الذين لديهم دور متطوع ويطابق نوع المتطوع المطلوب
-    $volunteers = \App\Models\User::role('Client') // أو 'volunteer' حسب تعريفك في Spatie
-        ->whereHas('volunteerRequest', function ($q) use ($volunteerTypeId) {
-            $q->where('volunteer_type_id', $volunteerTypeId)
-              ->where('status', 'approved'); // يمكن تعديل الحالة حسب الحاجة
-        })
-        ->select('id', 'name', 'email')
+    $currentUserId = auth()->id();
+
+    $users = \App\Models\User::where('id', '!=', $currentUserId)
+        ->select('id', 'name')
         ->get();
 
     return response()->json([
-        'message' => 'قائمة المتطوعين',
-        'data' => $volunteers
+        'users' => $users
     ]);
 }
+
 
 
  

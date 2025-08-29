@@ -58,7 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //اضافة متطوعين
      Route::post('conversations/{conversation}/participants', [ChatController::class, 'addParticipant']);
 //عرض المتطوعين لاضافتهم للغروب
-     Route::get('volunteers/type/{volunteerTypeId}', [ChatController::class, 'getVolunteersByType']);
+     Route::get('volunteers/type', [ChatController::class, 'getAllUsers']);
 //ازالة مشارك
 Route::delete('/conversations/{conversation}/participants/{user}', [ChatController::class, 'removeParticipant']);
     // حذف الغروب
@@ -73,7 +73,7 @@ Route::patch('/conversations/{conversation}/messages/{message}/read',
 );
 //عرض اعضاء الغروب
 Route::get('/conversations/{conversation}/participants', [ChatController::class, 'getParticipants']);
-
+Route::get('/conversations/{conversation}/available-users', [ChatController::class, 'getAvailableUsers']);
 
 });
 
