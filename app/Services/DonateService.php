@@ -8,30 +8,31 @@ use Illuminate\Validation\Rule;
 class DonateService{
 
 
- public function store(Request $req): array
+public function store(Request $req): array
 {
     $validatedData = $req->validate([
         'full_name' => 'required|string|max:255',
         'number' => 'required|string|max:15',
         'donation_type' => 'required|string|max:15',
-       // 'amount' => 'required|numeric|min:1',
         'notes' => 'nullable|string|max:500',
         'ammountinkello' => 'required|string|max:15',
     ]);
 
-    $validatedData['user_id'] = auth()->id(); // سيتم تعيين null تلقائياً إذا لم يكن مسجلاً
+    $validatedData['user_id'] = auth()->id();
+    $validatedData['is_approved'] = false; // ← وضعية الانتظار
+
     $donation = Donate::create($validatedData);
 
     return [
         'status' => true,
-        'message' => 'تم تقديم التبرع بنجاح',
+        'message' => 'تم تقديم التبرع بنجاح وسيتم مراجعته من قبل الإدارة',
         'data' => $donation,
-        'user_id' => $donation->user_id // إرجاع user_id الفعلي
+        'is_approved' => false // ← تأكيد أنها قيد الانتظار
     ];
 }
 
 
-    public function respondToPost($donateId, Request $request)
+ public function respondToPost($donateId, Request $request)
 {
     $request->validate([
         'is_approved' => 'required|boolean'
@@ -41,8 +42,7 @@ class DonateService{
     $isApproved = filter_var($request->input('is_approved'), FILTER_VALIDATE_BOOLEAN);
 
     $donate->update([
-        'is_approved' => $isApproved,
-        'status' => $isApproved ? 'approved' : 'rejected'
+        'is_approved' => $isApproved
     ]);
 
     return response()->json([
@@ -51,6 +51,7 @@ class DonateService{
             ? 'تمت الموافقة على التبرع.'
             : 'تم رفض التبرع.',
         'data' => $donate,
+        'is_approved' => $isApproved // ← إرجاع الحالة الجديدة
     ]);
 }
 
