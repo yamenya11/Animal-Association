@@ -10,22 +10,40 @@ class CourseUser extends Model
     use HasFactory;
     protected $table = 'course_user';
 
-    protected $fillable = [
-        'course_id',
-        'user_id',
-        'is_liked',
-        'views',
-    ];
+            protected $fillable = [
+                'course_id',
+                'user_id',
+                'is_liked',
+                'video_views',
+                'last_watched_at', 
+            ];
 
-    // مثال: دالة لتسجيل مشاهدة جديدة
-    public function addView()
-    {
-        $this->increment('views');
-    }
+    
+        protected $casts = [
+                'is_liked' => 'boolean',
+                'last_watched_at' => 'datetime',
+            ];
 
-    // مثال: دالة لتبديل حالة الإعجاب
-    public function toggleLike()
-    {
-        $this->update(['is_liked' => !$this->is_liked]);
-    }
+            // دالة لتسجيل مشاهدة جديدة
+            public function addView()
+            {
+                $this->video_views++;
+                $this->last_watched_at = now();
+                $this->save();
+            }
+
+            // دالة لتبديل حالة الإعجاب
+            public function toggleLike()
+            {
+                $this->is_liked = !$this->is_liked;
+                $this->save();
+                
+                return $this->is_liked;
+            }
+
+            // دالة للتحقق إذا شاهد المستخدم الكورس
+            public function hasWatched()
+            {
+                return $this->video_views > 0;
+            }
 }

@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             
             $table->boolean('is_liked')->default(false);
-            $table->unsignedInteger('views')->default(0);
+            $table->unsignedInteger('video_views')->default(0); 
+            $table->timestamp('last_watched_at')->nullable();
             $table->timestamps();
         });
     }

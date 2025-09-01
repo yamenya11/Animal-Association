@@ -35,107 +35,110 @@ use App\Http\Controllers\VolunteerTypeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\RatingController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
 
-    // عرض المحادثات
-    Route::get('conversations', [ChatController::class, 'indexConversations']);
+            // عرض المحادثات
+            Route::get('conversations', [ChatController::class, 'indexConversations']);
+            // إنشاء غروب (الموظف فقط)
+            Route::post('conversations', [ChatController::class, 'createConversation']);
+            // عرض الرسائل في محادثة
+            Route::get('conversations/{conversation}/messages', [ChatController::class, 'messages']);
+            // إرسال رسالة
+            Route::post('conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
+            // حذف رسالة من نسخة المستخدم فقط
+            Route::delete('messages/{message}', [ChatController::class, 'deleteMessage']);
+            //اضافة متطوعين
+            Route::post('conversations/{conversation}/participants', [ChatController::class, 'addParticipant']);
+        //عرض المتطوعين لاضافتهم للغروب
+            Route::get('volunteers/type', [ChatController::class, 'getAllUsers']);
+        //ازالة مشارك
+        Route::delete('/conversations/{conversation}/participants/{user}', [ChatController::class, 'removeParticipant']);
+            // حذف الغروب
+        Route::delete('/conversations/{id}', [ChatController::class, 'deleteConversation']);
+        // تغيير دور عضو 
+        Route::post('/conversations/{conversation}/participants/{userId}/role', 
+            [ChatController::class, 'changeUserRole']
+        );
+        // تعليم الرسالة كمقروءة
+        Route::patch('/conversations/{conversation}/messages/{message}/read', 
+            [ChatController::class, 'markAsRead']
+        );
+        //عرض اعضاء الغروب
+        Route::get('/conversations/{conversation}/participants', [ChatController::class, 'getParticipants']);
+        Route::get('/conversations/{conversation}/available-users', [ChatController::class, 'getAvailableUsers']);
 
-    // إنشاء غروب (الموظف فقط)
-    Route::post('conversations', [ChatController::class, 'createConversation']);
-
-    // عرض الرسائل في محادثة
-    Route::get('conversations/{conversation}/messages', [ChatController::class, 'messages']);
-
-    // إرسال رسالة
-    Route::post('conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
-
-    // حذف رسالة من نسخة المستخدم فقط
-    Route::delete('messages/{message}', [ChatController::class, 'deleteMessage']);
-    //اضافة متطوعين
-     Route::post('conversations/{conversation}/participants', [ChatController::class, 'addParticipant']);
-//عرض المتطوعين لاضافتهم للغروب
-     Route::get('volunteers/type', [ChatController::class, 'getAllUsers']);
-//ازالة مشارك
-Route::delete('/conversations/{conversation}/participants/{user}', [ChatController::class, 'removeParticipant']);
-    // حذف الغروب
-Route::delete('/conversations/{id}', [ChatController::class, 'deleteConversation']);
-// تغيير دور عضو 
-Route::post('/conversations/{conversation}/participants/{userId}/role', 
-    [ChatController::class, 'changeUserRole']
-);
-// تعليم الرسالة كمقروءة
-Route::patch('/conversations/{conversation}/messages/{message}/read', 
-    [ChatController::class, 'markAsRead']
-);
-//عرض اعضاء الغروب
-Route::get('/conversations/{conversation}/participants', [ChatController::class, 'getParticipants']);
-Route::get('/conversations/{conversation}/available-users', [ChatController::class, 'getAvailableUsers']);
-
-});
+        });
 
 //Route::post('/user/toggle-availability', [AuthController::class, 'toggleAvailability'])->middleware('auth');
 
 // ==== المسارات العامة (بدون مصادقة) ====
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/animals/available/user', [AnimalController::class, 'available']); // عرض الحيوانات للتبني (للعامة)
-Route::get('/posts/get', [PostController::class, 'show_all_post']); // عرض البوستات (للعامة)
+        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/animals/available/user', [AnimalController::class, 'available']); // عرض الحيوانات للتبني (للعامة)
+        Route::get('/posts/get', [PostController::class, 'show_all_post']); // عرض البوستات (للعامة)
 
 // ==== المسارات التي تتطلب مصادقة (لجميع المستخدمين المسجلين) ====
-Route::middleware('auth:sanctum')->group(function () {
-    // الملف الشخصي
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/profile', [ProfileController::class, 'profile']);
-    Route::post('/profile/update', [ProfileController::class, 'update']);
-    Route::post('/profile/image', [ProfileController::class, 'uploadImage']);
-Route::delete('/profile/image', [ProfileController::class, 'deleteProfileImage']);
-    // المحفظة
-    Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
-    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
-    Route::get('/wallet/balance', [WalletController::class, 'balance']);
+    Route::middleware('auth:sanctum')->group(function () {
+        // الملف الشخصي
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/profile', [ProfileController::class, 'profile']);
+        Route::post('/profile/update', [ProfileController::class, 'update']);
+        Route::post('/profile/image', [ProfileController::class, 'uploadImage']);
+    Route::delete('/profile/image', [ProfileController::class, 'deleteProfileImage']);
+        // المحفظة
+        Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
+        Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
+        Route::get('/wallet/balance', [WalletController::class, 'balance']);
 
-    // الإعلانات
-    Route::post('/ads/user', [AdController::class, 'store']);
-    Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);
-     Route::get('/ads/{id}/publisher', [AdController::class, 'show']);
-    // التبني
-    Route::post('/adoptions/store/re', [AdoptionController::class, 'requestAdoption']);
-    Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
+        // الإعلانات
+        Route::post('/ads/user', [AdController::class, 'store']);
+        Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);
+        Route::get('/ads/{id}/publisher', [AdController::class, 'show']);
+        // التبني
+        Route::post('/adoptions/store/re', [AdoptionController::class, 'requestAdoption']);
+        Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
 
 
         Route::post('/createRequest', [TemporaryCareController::class, 'createRequest']);
 
         // Route::post('/temporary-care/request', [TemporaryCareController::class, 'createRequest']);
-    
-    // الحصول على طلبات الرعاية للمستخدم الحالي
-    Route::get('/temporary-care/my-requests', [TemporaryCareController::class, 'getUserRequests']);
-    Route::get('/temporary-care/processed/user', [TemporaryCareController::class, 'processedRequests']);
-    // الحصول على الحيوانات المتاحة للرعاية
-    Route::get('/temporary-care/available-animals', [TemporaryCareController::class, 'getAvailableAnimals']);
-    // البوستات
-    Route::post('/posts', [PostController::class, 'store']);
+        
+        // الحصول على طلبات الرعاية للمستخدم الحالي
+        Route::get('/temporary-care/my-requests', [TemporaryCareController::class, 'getUserRequests']);
+        Route::get('/temporary-care/processed/user', [TemporaryCareController::class, 'processedRequests']);
+        // الحصول على الحيوانات المتاحة للرعاية
+        Route::get('/temporary-care/available-animals', [TemporaryCareController::class, 'getAvailableAnimals']);
+        // البوستات
+        Route::post('/posts', [PostController::class, 'store']);
 
-    // التعليقات والإعجابات
-    Route::post('/posts/{post}/comment', [CommentController::class, 'store']);
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-    Route::post('/posts/{post}/like', [LikeController::class, 'toggle']);
-    Route::post('/comments/{commentId}/reply', [CommentController::class, 'reply']);
-    Route::get('posts/{postId}/comments', [CommentController::class, 'index']);
+        // التعليقات والإعجابات
+        Route::post('/posts/{post}/comment', [CommentController::class, 'store']);
+        Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+        Route::post('/posts/{post}/like', [LikeController::class, 'toggle']);
+        Route::post('/comments/{commentId}/reply', [CommentController::class, 'reply']);
+        Route::get('posts/{postId}/comments', [CommentController::class, 'index']);
 
-    Route::get('/posts/{post}/likes-count', [LikeController::class, 'likesCount']);
-    Route::get('/posts/likes-count/post', [LikeController::class, 'getAllLike']);    // التطوع
-    Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
-    Route::get('/volunteer-types/user', [VolunteerTypeController::class, 'index']);
-    Route::get('/appointments/client', [AppointmentController::class, 'getProcessedAppointments']);//عرض مواعيد المستخدم
+        Route::get('/posts/{post}/likes-count', [LikeController::class, 'likesCount']);
+        Route::get('/posts/likes-count/post', [LikeController::class, 'getAllLike']);    // التطوع
+        Route::post('/volunteer/apply', [VolunteerController::class, 'apply']);
+        Route::get('/volunteer-types/user', [VolunteerTypeController::class, 'index']);
+        Route::get('/appointments/client', [AppointmentController::class, 'getProcessedAppointments']);//عرض مواعيد المستخدم
  
 //COURSE
-    Route::get('/courses/show/client', [CourseController::class, 'indexForUsers']);
+        Route::get('/courses/show/client', [CourseController::class, 'indexForUsers']);
+        Route::get('/courses/getByCategories/client', [CourseController::class, 'getByCategories']);
+        Route::post('/courses/{course}/view', [CourseController::class, 'recordView']);
+        Route::post('/courses/user/{course}/like', [CourseController::class, 'toggleLike']);
+        Route::post('courses/{course}/rate', [RatingController::class, 'store']);
+        Route::post('ratings/{rating}', [RatingController::class, 'update']);
+        Route::get('courses/{course}/my-rating', [RatingController::class, 'getUserRating']);
 
-  Route::get('/courses/getByCategories/client', [CourseController::class, 'getByCategories']);
+
     // الإشعارات
     Route::get('/notifications/userall', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
@@ -227,14 +230,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 
 Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
-   Route::post('/doctor/courses', [CourseController::class, 'store']);
-
+    Route::post('/doctor/courses', [CourseController::class, 'store']);
     // 📚 عرض كورسات الطبيب نفسه
-    Route::get('/doctor/courses', [CourseController::class, 'indexForDoctor']);
+    Route::get('/courses', [CourseController::class, 'indexForUsers']);
     //عرض الكورسات
-  Route::get('/doctor/courses', [CourseController::class, 'indexForDoctor']);
+    Route::get('/doctor/courses', [CourseController::class, 'indexForDoctor']);
     // 🗑️ حذف كورس يخص الطبيب (أو مسؤول)
     Route::delete('/doctor/courses/{id}', [CourseController::class, 'destroy']);
+    Route::get('/doctor/courses/{course}/stats', [CourseController::class, 'getCourseStats']);
+    Route::get('/doctor/stats', [CourseController::class, 'getDoctorStats']);
+     Route::delete('admin/ratings/{rating}', [RatingController::class, 'adminDestroy']);
+    Route::get('admin/ratings', [RatingController::class, 'adminIndex']);
 
     Route::post('/doctor/reports', [ReportController::class, 'store']);
     Route::get('/doctor/reports', [ReportController::class, 'index']);
