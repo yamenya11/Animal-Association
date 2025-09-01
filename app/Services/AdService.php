@@ -27,49 +27,75 @@ public function __construct(NotificationService $notificationService = null, Wal
     $this->walletService = $walletService;
 }
 
-public function createAdWithMedia($request)
-{
-    $validated = $request->validate([
-        'title' => 'required|string',
-        'description' => 'required|string',
-        'price' => 'required|numeric',
-        'media.*' => 'nullable|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240',
-    ]);
+  public function createAdWithMedia($request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,mp4,avi,mov|max:10240',
+        ]);
 
-    $ad = Ad::create([
-        'user_id' => Auth::id(),
-        'title' => $validated['title'],
-        'description' => $validated['description'],
-        'price' => $validated['price'],
-        'status' => 'pending'
-    ]);
+        DB::beginTransaction();
+        
+        try {
+            $user = Auth::user();
+            $amount = (float) $validated['price'];
 
-    if ($request->hasFile('media')) {
-        foreach ($request->file('media') as $file) {
-            $path = $file->store('ads_media', 'public');
-            
-            AdMedia::create([
-                'ad_id' => $ad->id,
-                'media_path' => $path,
-                'media_type' => Str::startsWith($file->getMimeType(), 'image') ? 'image' : 'video'
+            // التحقق من الرصيد قبل إنشاء الإعلان
+            if ((float) $user->wallet_balance < $amount) {
+                throw new \Exception('رصيد غير كافي لإنشاء الإعلان');
+            }
+
+            $ad = Ad::create([
+                'user_id' => $user->id,
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'price' => $amount,
+                'status' => 'pending'
             ]);
+
+            // معالجة الملفات المرئية
+            if ($request->hasFile('media')) {
+                foreach ($request->file('media') as $file) {
+                    $path = $file->store('ads_media', 'public');
+                    
+                    AdMedia::create([
+                        'ad_id' => $ad->id,
+                        'media_path' => $path,
+                        'media_type' => Str::startsWith($file->getMimeType(), 'image') ? 'image' : 'video'
+                    ]);
+                }
+            }
+
+            // سحب المبلغ من المحفظة
+            $this->walletService->withdraw($user, $amount, $ad);
+
+            DB::commit();
+
+            // تحميل media مع media_url
+            $ad->load(['media' => function($query) {
+                $query->select('*', 
+                    DB::raw('CONCAT("' . config('app.url') . '/storage/", media_path) as media_url')
+                );
+            }]);
+
+            return [
+                'status' => true,
+                'message' => 'تم إنشاء الإعلان بنجاح',
+                'data' => $ad 
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return [
+                'status' => false,
+                'message' => 'فشل في إنشاء الإعلان: ' . $e->getMessage()
+            ];
         }
     }
 
-    // هنا نحمّل media مع media_url المخصص
-      $ad->load(['media' => function($query) {
-        $query->select('*', 
-            \DB::raw('CONCAT("' . config('app.url') . '/storage/", media_path) as media_url')
-        );
-    }]);
-
-    // هنا نعيد $ad بدون load إضافي لأنه تم تحميله بالفعل
-    return [
-        'status' => true,
-        'message' => 'تم إنشاء الإعلان بنجاح',
-        'data' => $ad // تم التحميل مسبقاً، لا داعي لـ load('media') again
-    ];
-}
 
 public function approveAd($adId, $adminId)
 {

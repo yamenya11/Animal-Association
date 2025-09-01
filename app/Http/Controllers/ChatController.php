@@ -35,7 +35,7 @@ public function createConversation(Request $request)
 
     $user = $request->user();
 
-    if (!$user->hasAnyRole(['admin', 'employee'])) {
+    if (!$user->hasAnyRole(['admin', 'employee','vet'])) {
         return response()->json(['error' => 'غير مسموح لك بإنشاء الغروب'], 403);
     }
 
