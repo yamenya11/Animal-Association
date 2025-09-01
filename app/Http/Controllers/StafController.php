@@ -36,7 +36,7 @@ public function listImmediateCases()
 {
     $appointments = Appointment::where('is_immediate', true)
         ->with(['animalCase.user']) // نحمل فقط بيانات الحالة والمستخدم
-        ->where('status', 'scheduled')
+        ->where('status', 'completed')
         ->orderBy('created_at', 'desc')
         ->get()
         ->map(function($appointment) {

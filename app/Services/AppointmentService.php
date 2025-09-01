@@ -54,55 +54,55 @@ $animalCase = AnimalCase::find($validated['animal_case_id']);
     'doctor' => auth()->user()->only(['id', 'name']),
 ]);
 }
-public function acceptappointmentImm($appointment, string $action): array
-{
-    $app = Appointment::with('user', 'animalCase')->findOrFail($appointment);
+// public function acceptappointmentImm($appointment, string $action): array
+// {
+//     $app = Appointment::with('user', 'animalCase')->findOrFail($appointment);
 
-    if (!in_array($action, ['completed', 'canceled'])) {
-        return [
-            'status' => false,
-            'message' => 'إجراء غير صالح. يجب أن يكون "completed" أو "canceled"',
-        ];
-    }
+//     if (!in_array($action, ['completed', 'canceled'])) {
+//         return [
+//             'status' => false,
+//             'message' => 'إجراء غير صالح. يجب أن يكون "completed" أو "canceled"',
+//         ];
+//     }
 
-    $app->status = $action;
+//     $app->status = $action;
 
-    if ($action === 'completed') {
-        // معالجة المواعيد الطارئة
-        if ($app->is_immediate && !$app->ambulance_id) {
-            $ambulance = Ambulance::firstOrCreate(
-                ['status' => 'available'],
-                [
-                    'driver_name' => 'سائق افتراضي',
-                    'driver_phone' => '0599' . rand(1000000, 9999999),
-                    'status' => 'on_mission'
-                ]
-            );
-            $app->ambulance_id = $ambulance->id;
-        }
+//     if ($action === 'completed') {
+//         // معالجة المواعيد الطارئة
+//         if ($app->is_immediate && !$app->ambulance_id) {
+//             $ambulance = Ambulance::firstOrCreate(
+//                 ['status' => 'available'],
+//                 [
+//                     'driver_name' => 'سائق افتراضي',
+//                     'driver_phone' => '0599' . rand(1000000, 9999999),
+//                     'status' => 'on_mission'
+//                 ]
+//             );
+//             $app->ambulance_id = $ambulance->id;
+//         }
         
-        // تحديث وصف الموعد
-        $app->description = $app->is_immediate 
-            ? 'تم إكمال الموعد الطارئ'
-            : 'تمت الموافقة وإكمال الموعد';
-    }
+//         // تحديث وصف الموعد
+//         $app->description = $app->is_immediate 
+//             ? 'تم إكمال الموعد الطارئ'
+//             : 'تمت الموافقة وإكمال الموعد';
+//     }
 
-    $app->save();
+//     $app->save();
 
-    // تحديث حالة الحالة الحيوانية المرتبطة
-    if ($app->animalCase) {
-        $app->animalCase->update([
-            'approval_status' => $action === 'completed' ? 'approved' : 'rejected'
-        ]);
-    }
+//     // تحديث حالة الحالة الحيوانية المرتبطة
+//     if ($app->animalCase) {
+//         $app->animalCase->update([
+//             'approval_status' => $action === 'completed' ? 'approved' : 'rejected'
+//         ]);
+//     }
 
-    return [
-        'status' => true,
-        'message' => $action === 'completed' 
-            ? 'تمت الموافقة وإكمال الموعد بنجاح'
-            : 'تم إلغاء الموعد',
-        'data' => $app->load(['ambulance', 'animalCase'])
-    ];
-}
+//     return [
+//         'status' => true,
+//         'message' => $action === 'completed' 
+//             ? 'تمت الموافقة وإكمال الموعد بنجاح'
+//             : 'تم إلغاء الموعد',
+//         'data' => $app->load(['ambulance', 'animalCase'])
+//     ];
+// }
 
 }

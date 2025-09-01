@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Course;
 use App\Models\Rating;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 class RatingController extends Controller
 {
       public function store(Request $request, $courseId)
@@ -100,19 +101,49 @@ class RatingController extends Controller
         return response()->json($rating);
     }
 
-      public function adminIndex()
-    {
-        if (!Auth::user()->hasRole('doctor')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'غير مصرح لك بهذا الإجراء'
-            ], 403);
-        }
-        
-        $ratings = Rating::with(['user', 'course'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-            
-        return response()->json($ratings);
+    public function adminIndex()
+{
+    if (!Auth::user()->hasRole('vet')) {
+        return response()->json([
+            'success' => false,
+            'message' => 'غير مصرح لك بهذا الإجراء'
+        ], 403);
     }
+    
+    // الحصول على التقييمات مع الت pagination
+    $ratings = Rating::with(['user', 'course'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+    
+    // حساب الإحصائيات الإجمالية
+    $totalRatings = Rating::count();
+    $averageRating = Rating::avg('rating') ?: 0;
+    $totalReviews = Rating::whereNotNull('review')->count();
+    
+    // توزيع التقييمات (عدد كل نجمة)
+    $ratingDistribution = Rating::selectRaw('rating, count(*) as count')
+        ->groupBy('rating')
+        ->orderBy('rating', 'desc')
+        ->get()
+        ->mapWithKeys(function ($item) {
+            return [$item->rating => $item->count];
+        });
+    
+    // إحصائيات المشاهدات (إذا كان لديك جدول المشاهدات)
+    $totalViews = DB::table('course_user')->sum('video_views');
+    $totalUniqueViewers = DB::table('course_user')->distinct('user_id')->count('user_id');
+    
+    return response()->json([
+        'success' => true,
+        'statistics' => [
+            'total_ratings' => $totalRatings,
+            'average_rating' => round($averageRating, 1),
+            'total_reviews' => $totalReviews,
+            'total_views' => $totalViews,
+            'total_unique_viewers' => $totalUniqueViewers,
+            'rating_distribution' => $ratingDistribution
+        ],
+        'ratings' => $ratings
+    ]);
+}
 }

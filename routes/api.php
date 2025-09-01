@@ -239,7 +239,7 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
     Route::delete('/doctor/courses/{id}', [CourseController::class, 'destroy']);
     Route::get('/doctor/courses/{course}/stats', [CourseController::class, 'getCourseStats']);
     Route::get('/doctor/stats', [CourseController::class, 'getDoctorStats']);
-     Route::delete('admin/ratings/{rating}', [RatingController::class, 'adminDestroy']);
+     Route::delete('admin/ratings/{rating}', [RatingController::class, 'destroy']);
     Route::get('admin/ratings', [RatingController::class, 'adminIndex']);
 
     Route::post('/doctor/reports', [ReportController::class, 'store']);

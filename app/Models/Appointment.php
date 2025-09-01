@@ -31,7 +31,10 @@ public function doctor()
 {
     return $this->belongsTo(User::class, 'doctor_id');
 }
-
+public function employee()
+    {
+        return $this->belongsTo(User::class, 'employee_id');
+    }
 protected $casts = [
     'scheduled_at' => 'datetime',
 ];

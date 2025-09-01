@@ -117,16 +117,16 @@ class AppointmentController extends Controller
     }
 
 
-  public function respond(Request $request, $app)
-    {
-        $request->validate([
-            'action' => 'required|in:completed,canceled',
-        ]);
+//   public function respond(Request $request, $app)
+//     {
+//         $request->validate([
+//             'action' => 'required|in:completed,canceled',
+//         ]);
 
-        $result = $this->appointmentService->acceptappointmentImm($app, $request->action);
+//         $result = $this->appointmentService->acceptappointmentImm($app, $request->action);
 
-        return response()->json($result);
-    }
+//         return response()->json($result);
+//     }
 
 
     public function getProcessedAppointments()
