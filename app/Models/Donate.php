@@ -9,12 +9,12 @@ class Donate extends Model
 {
     use HasFactory;
     protected $fillable = [
-    'full_name', 'number', 'email', 'donation_type', 'ammountinkello', 'notes', 'is_approved', 'user_id'
+    'full_name', 'number', 'email', 'donation_type', 'ammountinkello', 'notes', 'status', 'user_id'
 ];
 
       protected $casts = [
         'amount' => 'decimal:2',
-        'is_approved' => 'boolean'
+      //  'is_approved' => 'boolean'
     ];
 public function user()
 {

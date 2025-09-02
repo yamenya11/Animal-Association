@@ -40,39 +40,37 @@ class DonateController extends Controller
         ], 400);
     }
 }
-           public function index()
-{
-    $donations = DB::table('donates')
-        ->leftJoin('users', 'donates.user_id', '=', 'users.id')
-        ->select(
-            'donates.*',
-            'users.id as user_id', // تغيير هنا
-            'users.name as user_name',
-            'users.email as user_email'
-        )
-        ->orderBy('donates.created_at', 'desc')
-        ->get();
+        public function index()
+        {
+            $donations = DB::table('donates')
+                ->leftJoin('users', 'donates.user_id', '=', 'users.id')
+                ->select(
+                    'donates.*',
+                    'users.id as user_id', // تغيير هنا
+                    'users.name as user_name',
+                    'users.email as user_email'
+                )
+                ->orderBy('donates.created_at', 'desc')
+                ->get();
 
-    return response()->json([
-        'status' => true,
-        'message' => 'قائمة التبرعات',
-        'data' => $donations
-    ]);
-}
+            return response()->json([
+                'status' => true,
+                'message' => 'قائمة التبرعات',
+                'data' => $donations
+            ]);
+        }
 
  public function respond($donateId, Request $request)
 {
-    $request->validate([
-        'is_approved' => 'required|boolean' // تغيير التحقق إلى boolean
-    ]);
+    $validated = $request->validate([
+            'status' => 'required|in:approved,rejected'
+        ]);
 
     $donation = Donate::findOrFail($donateId);
-    $isApproved = filter_var($request->input('is_approved'), FILTER_VALIDATE_BOOLEAN);
 
     // تحديث حالة التبرع
-    $donation->update([
-        'is_approved' => $isApproved,
-        'status' => $isApproved ? 'approved' : 'rejected'
+      $donation->update([
+        'status' => $validated['status']
     ]);
 
     // إرسال الإشعار (إذا كان موجوداً)
@@ -80,8 +78,8 @@ class DonateController extends Controller
 
     return response()->json([
         'status' => true,
-        'message' => $isApproved 
-            ? 'تمت الموافقة على التبرع بنجاح' 
+        'message' => $validated['status'] === 'approved'
+            ? 'تمت الموافقة على التبرع بنجاح'
             : 'تم رفض التبرع',
         'data' => $donation
     ]);
@@ -92,16 +90,16 @@ class DonateController extends Controller
 
 public function approvedDonations()
 {
-    $userId = Auth::id();
+     $userId = Auth::id();
 
     $donations = Donate::where('user_id', $userId)
-                       ->whereIn('is_approved', [true, false])
                        ->orderBy('created_at', 'desc')
                        ->get();
 
     return response()->json([
         'status' => true,
         'data'   => $donations,
-    ]);
+        'message' => 'جميع تبرعاتك'
+    ]); 
 }
 }

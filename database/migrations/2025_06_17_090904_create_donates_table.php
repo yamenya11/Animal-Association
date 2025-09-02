@@ -20,7 +20,7 @@ return new class extends Migration
                 $table->decimal('amount', 15, 2)->nullable(); 
                  $table->string('ammountinkello')->nullable(); 
                 $table->text('notes')->nullable();
-                $table->boolean('is_approved')->default(false);                     
+                $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');                    
                $table->timestamps();
                 });
             }

@@ -11,50 +11,43 @@ class DonateService{
 public function store(Request $req): array
 {
     $validatedData = $req->validate([
-        'full_name' => 'required|string|max:255',
-        'number' => 'required|string|max:15',
-        'donation_type' => 'required|string|max:15',
-        'notes' => 'nullable|string|max:500',
+        'full_name'      => 'required|string|max:255',
+        'number'         => 'required|string|max:15',
+        'donation_type'  => 'required|string|max:15',
+        'notes'          => 'nullable|string|max:500',
         'ammountinkello' => 'required|string|max:15',
     ]);
 
     $validatedData['user_id'] = auth()->id();
-    $validatedData['is_approved'] = false; // ← وضعية الانتظار
+    $validatedData['status']  = 'pending'; // ← الحالة الافتراضية عند الإنشاء
 
     $donation = Donate::create($validatedData);
 
     return [
-        'status' => true,
+        'status'  => true,
         'message' => 'تم تقديم التبرع بنجاح وسيتم مراجعته من قبل الإدارة',
-        'data' => $donation,
-        'is_approved' => false // ← تأكيد أنها قيد الانتظار
+        'data'    => $donation,
     ];
 }
 
 
- public function respondToPost($donateId, Request $request)
-{
-    $request->validate([
-        'is_approved' => 'required|boolean'
-    ]);
+public function respondToPost($donateId, Request $request)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:approved,rejected'
+        ]);
 
-    $donate = Donate::findOrFail($donateId);
-    $isApproved = filter_var($request->input('is_approved'), FILTER_VALIDATE_BOOLEAN);
+        $donate = Donate::findOrFail($donateId);
+        $donate->update(['status' => $validated['status']]);
 
-    $donate->update([
-        'is_approved' => $isApproved
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => $isApproved
-            ? 'تمت الموافقة على التبرع.'
-            : 'تم رفض التبرع.',
-        'data' => $donate,
-        'is_approved' => $isApproved // ← إرجاع الحالة الجديدة
-    ]);
-}
-
+        return response()->json([
+            'status'  => true,
+            'message' => $validated['status'] === 'approved'
+                ? 'تمت الموافقة على التبرع.'
+                : 'تم رفض التبرع.',
+            'data'    => $donate,
+        ]);
+    }
 
 
 }

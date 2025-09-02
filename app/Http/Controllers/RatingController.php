@@ -83,15 +83,7 @@ class RatingController extends Controller
             'message' => 'تم حذف التقييم بنجاح'
         ]);
     }
-    public function getCourseRatings($courseId)
-    {
-        $ratings = Rating::with('user')
-            ->where('course_id', $courseId)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-            
-        return response()->json($ratings);
-    }
+   
       public function getUserRating($courseId)
     {
         $rating = Rating::where('user_id', Auth::id())
@@ -101,49 +93,24 @@ class RatingController extends Controller
         return response()->json($rating);
     }
 
-    public function adminIndex()
+
+public function getCourseRatings($courseId)
 {
-    if (!Auth::user()->hasRole('vet')) {
-        return response()->json([
-            'success' => false,
-            'message' => 'غير مصرح لك بهذا الإجراء'
-        ], 403);
-    }
-    
-    // الحصول على التقييمات مع الت pagination
-    $ratings = Rating::with(['user', 'course'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(20);
-    
-    // حساب الإحصائيات الإجمالية
-    $totalRatings = Rating::count();
-    $averageRating = Rating::avg('rating') ?: 0;
-    $totalReviews = Rating::whereNotNull('review')->count();
-    
-    // توزيع التقييمات (عدد كل نجمة)
-    $ratingDistribution = Rating::selectRaw('rating, count(*) as count')
-        ->groupBy('rating')
-        ->orderBy('rating', 'desc')
-        ->get()
-        ->mapWithKeys(function ($item) {
-            return [$item->rating => $item->count];
-        });
-    
-    // إحصائيات المشاهدات (إذا كان لديك جدول المشاهدات)
-    $totalViews = DB::table('course_user')->sum('video_views');
-    $totalUniqueViewers = DB::table('course_user')->distinct('user_id')->count('user_id');
-    
+    $ratings = Rating::where('course_id', $courseId)->paginate(20);
+
+    $statistics = [
+        'total_ratings' => Rating::where('course_id', $courseId)->count(),
+        'average_rating' => Rating::where('course_id', $courseId)->avg('rating') ?? 0,
+        'total_reviews' => Rating::where('course_id', $courseId)->whereNotNull('review')->count(),
+        'total_views' => View::where('course_id', $courseId)->count(), // إذا عندك جدول views
+    ];
+
     return response()->json([
         'success' => true,
-        'statistics' => [
-            'total_ratings' => $totalRatings,
-            'average_rating' => round($averageRating, 1),
-            'total_reviews' => $totalReviews,
-            'total_views' => $totalViews,
-            'total_unique_viewers' => $totalUniqueViewers,
-            'rating_distribution' => $ratingDistribution
-        ],
-        'ratings' => $ratings
+        'statistics' => $statistics,
+        'ratings' => $ratings,
     ]);
 }
+
+
 }

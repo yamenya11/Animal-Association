@@ -36,22 +36,31 @@ class Animal extends Model
                    ->where('available_for_care', true)
                    ->where('is_adopted', false);
     }
-public function adoptions()
-{
-    return $this->hasMany(Adoption::class);
-}
+        public function adoptions()
+        {
+            return $this->hasMany(Adoption::class);
+        }
  
-     public function type()
-    {
-        return $this->belongsTo(AnimalType::class, 'type_id');
-    }
-public function temporaryCareRequests()
-{
-    return $this->hasMany(TemporaryCareRequest::class);
-}
+        public function type()
+        {
+            return $this->belongsTo(AnimalType::class, 'type_id');
+        }
+        public function temporaryCareRequests()
+        {
+            return $this->hasMany(TemporaryCareRequest::class);
+        }
 
-public function user()
-{
-    return $this->belongsTo(User::class, 'user_id');
-}
+        public function user()
+        {
+            return $this->belongsTo(User::class, 'user_id');
+        }
+        public function reports()
+        {
+            return $this->hasMany(Report::class);
+        }
+
+                public function vaccines()
+        {
+            return $this->hasMany(Vaccine::class);
+        }
 }

@@ -7,33 +7,57 @@ use Illuminate\Support\Facades\Storage;
 
 class VaccineService
 {
-    public function create(array $validatedData): array
-    {
-        // التحقق من وجود صورة وصحتها
-        if (isset($validatedData['image'])) {
-            if (!$validatedData['image']->isValid()) {
-                throw new \Exception('ملف الصورة غير صالح');
-            }
-            $validatedData['image'] = $validatedData['image']->store('vaccine_images', 'public');
+  public function create(array $validatedData): array
+{
+    // إذا كان هناك animal_id، تحقق من وجود الحيوان
+    if (isset($validatedData['animal_id'])) {
+        $animal = Animal::find($validatedData['animal_id']);
+        if (!$animal) {
+            throw new \Exception('الحيوان غير موجود');
         }
-
-        $vaccine = Vaccine::create($validatedData);
         
-        return [
-            'status' => true,
-            'message' => 'تمت إضافة اللقاح بنجاح',
-            'data' => [
-                'animal_name' => $vaccine->animal_name,
-                'gender' => $vaccine->gender,
-                'type' => $vaccine->type,
-                'image_url' => $vaccine->image ? config('app.url') . '/storage/' . $vaccine->image : null,
-                'due_date' => $vaccine->due_date,
-                'id' => $vaccine->id,
-                'created_at' => $vaccine->created_at,
-                'updated_at' => $vaccine->updated_at
-            ]
-        ];
+        // استخدام بيانات الحيوان إذا لم يتم تقديمها
+        $validatedData['animal_name'] = $validatedData['animal_name'] ?? $animal->name;
+        $validatedData['gender'] = $validatedData['gender'] ?? $animal->gender; // إذا كان لديك حقل جنس
     }
+
+    // التحقق من وجود صورة وصحتها
+    if (isset($validatedData['image'])) {
+        if (!$validatedData['image']->isValid()) {
+            throw new \Exception('ملف الصورة غير صالح');
+        }
+        $validatedData['image'] = $validatedData['image']->store('vaccine_images', 'public');
+    }
+
+    $vaccine = Vaccine::create($validatedData);
+    
+    // تحميل بيانات الحيوان إذا كان مربوطاً
+    if ($vaccine->animal_id) {
+        $vaccine->load('animal');
+    }
+    
+    return [
+        'status' => true,
+        'message' => 'تمت إضافة اللقاح بنجاح',
+        'data' => [
+            'id' => $vaccine->id,
+            'animal_id' => $vaccine->animal_id, // ← إرجاع animal_id
+            'animal_name' => $vaccine->animal_name,
+            'animal_data' => $vaccine->animal ? [ // ← بيانات الحيوان إذا كان مربوطاً
+                'id' => $vaccine->animal->id,
+                'name' => $vaccine->animal->name,
+                'type' => $vaccine->animal->type,
+                'birth_date' => $vaccine->animal->birth_date
+            ] : null,
+            'gender' => $vaccine->gender,
+            'type' => $vaccine->type,
+            'image_url' => $vaccine->image ? config('app.url') . '/storage/' . $vaccine->image : null,
+            'due_date' => $vaccine->due_date,
+            'created_at' => $vaccine->created_at,
+            'updated_at' => $vaccine->updated_at
+        ]
+    ];
+}
 
     public function list()
     {

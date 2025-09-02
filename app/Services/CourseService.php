@@ -103,53 +103,45 @@ public function getCoursesByCategoriesForUsers($categoryName = null)
 
 
 
-    /**
-     * الحصول على الكورسات النشطة فقط (للمستخدمين العاديين)
-     */
+   
 public function getActiveCourses()
 {
-    return Course::with([
-        'category:id,name', // فقط ID واسم التصنيف
-        'doctor:id,name'    // فقط ID واسم الطبيب
-    ])
-    ->select(['id', 'name', 'description', 'video', 'duration', 'category_id', 'doctor_id'])
-    ->where('is_active', true)
-    ->get()
-    ->map(function($course) {
-        $courseData = $course->toArray();
-        if ($course->video) {
-            $courseData['video_url'] = config('app.url') . '/storage/' . $course->video;
-        }
-        
-        // إضافة اسم الطبيب فقط إذا كان موجوداً
-        $courseData['doctor_name'] = $course->doctor->name ?? null;
-        
-        // إضافة اسم التصنيف فقط إذا كان موجوداً
-        $courseData['category_name'] = $course->category->name ?? null;
-        
-        // إزالة البيانات الزائدة
-        unset($courseData['doctor'], $courseData['category']);
-        
-        return $courseData;
-    });
-}
-    /**
-     * الحصول على كورسات طبيب معين
-     */
- public function getDoctorCourses($doctorId)
-{
-    return Course::with(['category'])
-        ->select(['id', 'name', 'description', 'video', 'duration', 'category_id', 'is_active'])
-        ->where('doctor_id', $doctorId)
+    $courses = Course::with(['category:id,name','doctor:id,name'])
+        ->select(['id','name','description','video','duration','category_id','doctor_id'])
+        ->where('is_active', true)
         ->get()
         ->map(function($course) {
-            $courseData = $course->toArray();
-            if ($course->video) {
-                $courseData['video_url'] = config('app.url') . '/storage/' . $course->video;
-            }
-            return $courseData;
+            $data = $course->toArray();
+
+            // URL صحيح عبر Filesystem
+            $data['video_url'] = ($course->video && Storage::disk('public')->exists($course->video))
+                ? Storage::disk('public')->url($course->video)
+                : null;
+
+            $data['doctor_name']   = $course->doctor->name   ?? null;
+            $data['category_name'] = $course->category->name ?? null;
+
+            unset($data['doctor'], $data['category']);
+            return $data;
         });
+
+    return response()->json(['success' => true, 'data' => $courses]);
 }
+
+//  public function getDoctorCourses($doctorId)
+// {
+//     return Course::with(['category'])
+//         ->select(['id', 'name', 'description', 'video', 'duration', 'category_id', 'is_active'])
+//         ->where('doctor_id', $doctorId)
+//         ->get()
+//         ->map(function($course) {
+//             $courseData = $course->toArray();
+//             if ($course->video) {
+//                 $courseData['video_url'] = config('app.url') . '/storage/' . $course->video;
+//             }
+//             return $courseData;
+//         });
+// }
 
 public function deleteCourse($id, $user)
 {
@@ -170,43 +162,49 @@ public function deleteCourse($id, $user)
 public function addView($courseId, $userId)
 {
     try {
-        $course = Course::findOrFail($courseId); // البحث عن الكورس الصحيح
-        
+        // 1. البحث عن الكورس
+        $course = Course::findOrFail($courseId);
+
+        // 2. التحقق إذا كان المستخدم مرتبط بالكورس في pivot (جدول course_user)
         $interaction = $course->users()->where('user_id', $userId)->first();
-        
+
         if ($interaction) {
+            // 3. إذا كان المستخدم موجود مسبقاً → تحديث وقت المشاهدة فقط
             $course->users()->updateExistingPivot($userId, [
-                'last_watched_at' => now()
+                'last_watched_at' => now(),
             ]);
-            
+
             return [
-                'success' => true, 
-                'video_views' => $interaction->pivot->video_views,
+                'success' => true,
+                'video_views' => $interaction->pivot->video_views, // عدد المشاهدات المخزنة
                 'message' => 'تم تحديث وقت المشاهدة فقط',
                 'counted' => false
             ];
         }
-        
+
+        // 4. إذا ما كانش موجود → أول مشاهدة، نعمل attach
         $course->users()->attach($userId, [
             'video_views' => 1,
             'is_liked' => false,
             'last_watched_at' => now()
         ]);
-        
+
         return [
-            'success' => true, 
+            'success' => true,
             'video_views' => 1,
             'message' => 'تم تسجيل المشاهدة الأولى بنجاح',
             'counted' => true
         ];
-        
     } catch (\Exception $e) {
+        // 5. لو صار خطأ
         return [
             'success' => false,
             'message' => 'حدث خطأ: ' . $e->getMessage()
         ];
     }
 }
+
+
 public function toggleLike($courseId, $userId)
 {
     return DB::transaction(function () use ($courseId, $userId) {
@@ -240,78 +238,121 @@ public function toggleLike($courseId, $userId)
         }
     });
 }
-
-     public function getCourseStats($courseId, $doctorId = null)
-    {
-        $course = Course::with(['users' => function($query) {
+//احصائيات كورس محدد
+ public function getCourseStats($courseId, $doctorId = null)
+{
+    $course = Course::with([
+        'users' => function($query) {
             $query->select('users.id', 'users.name', 'users.email');
-        }])->findOrFail($courseId);
+        },
+        'ratings.user' // جلب التقييمات مع معلومات المستخدم
+    ])->findOrFail($courseId);
 
-        // التحقق إذا الطبيب هو صاحب الكورس
-        if ($doctorId && $course->doctor_id != $doctorId) {
-            throw new \Exception('غير مصرح بالوصول إلى إحصائيات هذا الكورس');
-        }
-
-        return [
-            'course_id' => $course->id,
-            'course_name' => $course->name,
-            'total_views' => $course->users()->sum('views'),
-            'total_likes' => $course->users()->wherePivot('is_liked', true)->count(),
-            'total_unique_viewers' => $course->users()->count(),
-            'recent_views' => $course->users()
-                ->orderBy('pivot_last_watched_at', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function($user) {
-                    return [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'views' => $user->pivot->views,
-                        'last_watched' => $user->pivot->last_watched_at
-                    ];
-                }),
-            'liked_users' => $course->users()
-                ->wherePivot('is_liked', true)
-                ->get()
-                ->map(function($user) {
-                    return [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'email' => $user->email
-                    ];
-                })
-        ];
+    // التحقق إذا الطبيب هو صاحب الكورس
+    if ($doctorId && $course->doctor_id != $doctorId) {
+        throw new \Exception('غير مصرح بالوصول إلى إحصائيات هذا الكورس');
     }
 
-      public function getDoctorStats($doctorId)
-    {
-        $courses = Course::withCount([
-                'users as total_views' => function($query) {
-                    $query->select(DB::raw('SUM(views)'));
-                },
-                'users as total_likes' => function($query) {
-                    $query->where('is_liked', true);
-                },
-                'users as total_unique_viewers'
-            ])
-            ->where('doctor_id', $doctorId)
-            ->get();
+    return [
+        'course_id' => $course->id,
+        'course_name' => $course->name,
 
-        return [
-            'total_courses' => $courses->count(),
-            'total_views_all_courses' => $courses->sum('total_views'),
-            'total_likes_all_courses' => $courses->sum('total_likes'),
-            'total_unique_viewers_all_courses' => $courses->sum('total_unique_viewers'),
-            'courses' => $courses->map(function($course) {
+        // 📊 المشاهدات واللايكات
+        'total_views' => $course->users()->sum('video_views'),
+        'total_likes' => $course->users()->wherePivot('is_liked', true)->count(),
+        'total_unique_viewers' => $course->users()->count(),
+
+        // 👀 آخر 10 مشاهدات
+        'recent_views' => $course->users()
+            ->orderBy('pivot_last_watched_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($user) {
                 return [
-                    'course_id' => $course->id,
-                    'course_name' => $course->name,
-                    'views' => $course->total_views,
-                    'likes' => $course->total_likes,
-                    'unique_viewers' => $course->total_unique_viewers
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'video_views' => $user->pivot->video_views,
+                    'last_watched' => $user->pivot->last_watched_at
+                ];
+            }),
+
+        // ❤️ المستخدمين اللي عملوا لايك
+        'liked_users' => $course->users()
+            ->wherePivot('is_liked', true)
+            ->get()
+            ->map(function($user) {
+                return [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'email' => $user->email
+                ];
+            }),
+
+        // ⭐ التقييمات
+        'average_rating' => $course->ratings->avg('rating'),
+        'ratings_count' => $course->ratings->count(),
+        'recent_ratings' => $course->ratings()
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(function($rating) {
+                return [
+                    'user_id' => $rating->user->id,
+                    'user_name' => $rating->user->name,
+                    'rating' => $rating->rating,
+                    'review' => $rating->review,
+                    'created_at' => $rating->created_at,
+                ];
+            }),
+    ];
+}
+public function getDoctorStats($doctorId)
+{
+    $courses = Course::with(['ratings.user', 'users'])->where('doctor_id', $doctorId)->get();
+
+    $totalRatings = 0;
+    $totalReviews = 0;
+    $ratingsSum = 0;
+
+    $recentRatings = collect();
+
+    foreach ($courses as $course) {
+        $totalRatings += $course->ratings->count();
+        $ratingsSum += $course->ratings->sum('rating');
+        $totalReviews += $course->ratings->whereNotNull('review')->count();
+
+        $recentRatings = $recentRatings->concat(
+            $course->ratings->sortByDesc('created_at')->take(5)->map(function($rating) {
+                return [
+                    'course_id' => $rating->course_id,
+                    'user_id' => $rating->user->id,
+                    'user_name' => $rating->user->name,
+                    'rating' => $rating->rating,
+                    'review' => $rating->review,
+                    'created_at' => $rating->created_at,
                 ];
             })
-        ];
+        );
     }
+
+    return [
+        'success' => true,
+        'statistics' => [
+            'total_ratings' => $totalRatings,
+            'average_rating' => $totalRatings ? round($ratingsSum / $totalRatings, 1) : 0,
+            'total_reviews' => $totalReviews,
+            'total_views' => $courses->sum(function($course) {
+                return $course->users->sum('video_views');
+            }),
+            'total_unique_viewers' => $courses->sum(function($course) {
+                return $course->users->count();
+            }),
+        ],
+        'recent_ratings' => $recentRatings->take(5)->values(),
+    ];
+}
+
+
+
 
 }

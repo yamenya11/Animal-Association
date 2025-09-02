@@ -20,4 +20,8 @@ class Vaccine extends Model
 {
     return Vaccine::whereDate('due_date', now()->toDateString())->get();
 }
+public function animal()
+{
+    return $this->belongsTo(Animal::class);
+}
 }
