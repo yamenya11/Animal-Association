@@ -274,19 +274,17 @@ public function createEvent(Request $request): array
 
     $event = Event::create($validated);
 
-    // إذا كان الأدمن، أضف نفسه كمشارك تلقائيًا
-    $participant = null;
-    if ($user->hasRole('admin')) {
-        $participant = EventParticipant::create([
-            'event_id' => $event->id,
-            'user_id' => $user->id,
-            'status' => 'registered',
-            'notes' => 'منشئ الحدث',
-        ]);
-    }
+    // إضافة منشئ الحدث كمشارك بشكل تلقائي (مرة واحدة فقط)
+    EventParticipant::firstOrCreate([
+        'event_id' => $event->id,
+        'user_id'  => $user->id,
+    ], [
+        'status' => 'registered',
+        'notes'  => 'منشئ الحدث',
+    ]);
 
     // إرجاع الحدث مع المشاركين
-    $event->load('participants.user'); // يفترض أن لديك علاقة participants في موديل Event
+    $event->load('participants.user');
 
     return [
         'status'  => true,
@@ -300,7 +298,8 @@ public function createEvent(Request $request): array
 
 
 
-   public function updateEvent(Request $request, $eventId): array
+
+  public function updateEvent(Request $request, $eventId): array
 {
     try {
         DB::beginTransaction();
@@ -308,43 +307,45 @@ public function createEvent(Request $request): array
         $event = Event::findOrFail($eventId);
 
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date|after:start_date',
-            'location' => 'sometimes|string',
+            'title'            => 'sometimes|string|max:255',
+            'description'      => 'sometimes|string',
+            'start_date'       => 'sometimes|date',
+            'end_date'         => 'sometimes|date|after:start_date',
+            'location'         => 'sometimes|string',
             'max_participants' => 'nullable|integer|min:1',
-            'status' => 'sometimes|in:pending,active,completed,cancelled'
+            'status'           => 'sometimes|in:pending,active,completed,cancelled'
         ]);
 
         $event->update($validated);
-        
-        $userId = Auth::id(); // Get the authenticated user's ID
-        
-        // Create event participant if needed
-        $eventParticipant = EventParticipant::create([
-            'event_id' => $event->id, // Use the event's ID
-            'user_id' => $userId,
-            'status' => 'registered', // This should be a string, not an array
-            'notes' => 'kkmo', // This should be a string, not an array
+
+        $userId = Auth::id();
+
+        // إضافة المستخدم كمشارك إذا لم يكن موجودًا بالفعل
+        EventParticipant::firstOrCreate([
+            'event_id' => $event->id,
+            'user_id'  => $userId,
+        ], [
+            'status' => 'registered',
+            'notes'  => 'تم الانضمام عند التحديث',
         ]);
 
         DB::commit();
 
         return [
-            'status' => true,
+            'status'  => true,
             'message' => 'تم تحديث الفعالية بنجاح',
-            'data' => $event
+            'data'    => $event->load('participants.user')
         ];
     } catch (\Exception $e) {
         DB::rollBack();
         return [
-            'status' => false,
+            'status'  => false,
             'message' => 'حدث خطأ أثناء تحديث الفعالية',
-            'error' => $e->getMessage()
+            'error'   => $e->getMessage()
         ];
     }
 }
+
 
     public function deleteEvent($eventId): array
     {
