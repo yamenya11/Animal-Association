@@ -6,8 +6,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 
 class AdobtStatusAccept extends Notification implements ShouldQueue
 {
@@ -31,7 +29,7 @@ class AdobtStatusAccept extends Notification implements ShouldQueue
     return $channels;
     }
 
-    public function toMail(object $notifiable): MailMessage
+     public function toMail(object $notifiable): MailMessage
     {
         $animalType = optional(optional($this->adoptRequest)->animal)->type ?? 'غير معروف';
 
@@ -56,12 +54,13 @@ class AdobtStatusAccept extends Notification implements ShouldQueue
         ];
     }
 
-    public function toDatabase(object $notifiable): array
+ public function toArray(object $notifiable): array
     {
         return [
+            'type'        => 'adoption_' . $this->adoptRequest->status,
             'adoption_id' => $this->adoptRequest->id,
             'message'     => 'تمت ' . ($this->adoptRequest->status === 'approved' ? 'الموافقة' : 'رفض') . ' طلب التبني الخاص بك',
-            'icon'        => asset('images/notification-icon.png'),
+            'status'      => $this->adoptRequest->status,
         ];
     }
 }

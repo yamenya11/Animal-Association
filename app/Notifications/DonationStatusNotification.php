@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Donate; // أضف هذا الاستيراد في الأعلى
+use App\Models\Donate;
 class DonationStatusNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -29,7 +29,7 @@ class DonationStatusNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-      $channels = ['database'];
+      
         
        $channels = ['database'];
     
@@ -43,9 +43,9 @@ class DonationStatusNotification extends Notification implements ShouldQueue
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+     public function toMail(object $notifiable): MailMessage
     {
-      $statusMessage = $this->getStatusMessage();
+        $statusMessage = $this->getStatusMessage();
 
         return (new MailMessage)
             ->subject('تحديث حالة التبرع')
@@ -56,13 +56,11 @@ class DonationStatusNotification extends Notification implements ShouldQueue
             ->line('شكراً لدعمكم ومساهمتكم في إنجاح رسالتنا');
     }
 
-      public function toFcm($notifiable)
+    public function toFcm($notifiable)
     {
-        $statusMessage = $this->getStatusMessage();
-
         return [
             'title' => 'حالة التبرع',
-            'body' => $statusMessage,
+            'body' => $this->getStatusMessage(),
             'data' => [
                 'donation_id' => $this->donation->id,
                 'type' => 'donation_status',
@@ -86,7 +84,7 @@ class DonationStatusNotification extends Notification implements ShouldQueue
             'message' => $this->getStatusMessage(),
             'amount' => $this->donation->amount,
             'currency' => $this->donation->currency,
-            'url' => route('donations.show', $this->donation->id),
+          //  'url' => route('donations.show', $this->donation->id),
             'icon' => asset('images/donation-icon.png')
         ];
     }
@@ -94,9 +92,9 @@ class DonationStatusNotification extends Notification implements ShouldQueue
       protected function getStatusMessage(): string
     {
         return match($this->status) {
-            'completed' => 'تم استلام تبرعك بنجاح',
+            'approved' => 'تمت الموافقة على التبرع، يمكنك زيارة الجمعية لتقديم الدعم',
             'pending' => 'جاري معالجة تبرعك',
-            'failed' => 'فشل في معالجة التبرع',
+            'rejected' => 'فشل في معالجة التبرع',
             default => 'تحديث على حالة التبرع'
         };
     }

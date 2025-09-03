@@ -191,8 +191,7 @@ public function accept_Adopt_Admin($adoptionId, $status): array
 
         $adoptionRequest->load(['user', 'animal.type']);
 
-       // $notificationService = app(NotificationService::class);
-       // $notificationService->sendAdoptionStatusNotification($adoptionRequest);
+               $adoptionRequest->user->notify(new \App\Notifications\AdobtStatusAccept($adoptionRequest));
 
         DB::commit();
 

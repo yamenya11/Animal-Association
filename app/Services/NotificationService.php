@@ -48,34 +48,28 @@ class NotificationService
     /**
      * إرسال إشعار بتحديث حالة التبني
      */
-    public function sendAdoptionStatusNotification(Adoption $adoption): bool
-    {
-        try {
-            $user = $adoption->user;
-            $user->notify(new AdobtStatusAccept($adoption));
-            
-            $statusText = $adoption->status === 'approved' ? 'الموافقة' : 'الرفض';
-            
-            $this->sendFcmNotification(
-                $user,
-                'حالة طلب التبني',
-                "تمت {$statusText} على طلب التبني الخاص بك",
-                [
-                    'adoption_id' => (string) $adoption->id,
-                    'type' => 'adoption_' . $adoption->status,
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
-                ]
-            );
-            
-            return true;
-        } catch (Throwable $e) {
-            Log::error('فشل إرسال إشعار حالة التبني', [
-                'adoption_id' => $adoption->id,
-                'error' => $e->getMessage()
-            ]);
-            return false;
+ public function sendAdoptionStatusNotification(Adoption $adoption): bool
+{
+    try {
+        $user = $adoption->user;
+
+        if (!$user) {
+            throw new \Exception("المستخدم غير موجود");
         }
+
+        
+        $user->notify(new AdobtStatusAccept($adoption));
+
+        return true;
+    } catch (Throwable $e) {
+        Log::error('فشل إرسال إشعار حالة التبني', [
+            'adoption_id' => $adoption->id,
+            'error' => $e->getMessage()
+        ]);
+        return false;
     }
+}
+
 
     /**
      * إرسال إشعار بتحديث حالة المنشور
@@ -112,39 +106,27 @@ class NotificationService
     /**
      * إرسال إشعار بتحديث حالة التبرع
      */
-    public function sendDonationStatusNotification(Donate $donation, string $status): bool
-    {
-        try {
-            $user = $donation->user;
-            
-            if (!$user) {
-                throw new \Exception("لم يتم العثور على مستخدم مرتبط بالتبرع");
-            }
-            
-            $user->notify(new DonationStatusNotification($donation, $status));
-            
-            $statusText = $status === 'approved' ? 'قبول' : 'رفض';
-            
-            $this->sendFcmNotification(
-                $user,
-                'تحديث حالة التبرع',
-                "تم {$statusText} تبرعك رقم {$donation->id}",
-                [
-                    'donation_id' => (string) $donation->id,
-                    'type' => 'donation_status',
-                    'status' => $status
-                ]
-            );
-            
-            return true;
-        } catch (Throwable $e) {
-            Log::error('فشل إرسال إشعار حالة التبرع', [
-                'donation_id' => $donation->id,
-                'error' => $e->getMessage()
-            ]);
-            return false;
+   public function sendDonationStatusNotification(Donate $donation, string $status): bool
+{
+    try {
+        $user = $donation->user;
+        
+        if (!$user) {
+            throw new \Exception("لم يتم العثور على مستخدم مرتبط بالتبرع");
         }
+
+        $user->notify(new DonationStatusNotification($donation, $status));
+        
+        return true;
+    } catch (Throwable $e) {
+        Log::error('فشل إرسال إشعار حالة التبرع', [
+            'donation_id' => $donation->id,
+            'error' => $e->getMessage()
+        ]);
+        return false;
     }
+}
+
 
     /**
      * إرسال إشعار حالة طارئة

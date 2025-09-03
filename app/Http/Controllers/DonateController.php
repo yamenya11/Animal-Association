@@ -74,7 +74,7 @@ class DonateController extends Controller
     ]);
 
     // إرسال الإشعار (إذا كان موجوداً)
-    // $this->notificationService->sendDonationStatusNotification($donation, $isApproved ? 'approved' : 'rejected');
+$donation->user->notify(new \App\Notifications\DonationStatusNotification($donation, $validated['status']));
 
     return response()->json([
         'status' => true,

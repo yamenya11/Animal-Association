@@ -39,7 +39,8 @@ public function respondToPost($donateId, Request $request)
 
         $donate = Donate::findOrFail($donateId);
         $donate->update(['status' => $validated['status']]);
-
+ 
+            $donate->user->notify(new \App\Notifications\DonationStatusNotification($donate, $validated['status']));
         return response()->json([
             'status'  => true,
             'message' => $validated['status'] === 'approved'

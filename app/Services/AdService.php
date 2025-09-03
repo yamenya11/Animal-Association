@@ -69,7 +69,7 @@ public function __construct(NotificationService $notificationService = null, Wal
             }
 
             // سحب المبلغ من المحفظة
-            $this->walletService->withdraw($user, $amount, $ad);
+           // $this->walletService->withdraw($user, $amount, $ad);
 
             DB::commit();
 
