@@ -247,6 +247,16 @@ public function toggleLike($courseId, $userId)
         }
     });
 }
+    public function getLikes($courseId)
+    {
+        $course = Course::withCount('likes')->with('likes.user:id,name')->findOrFail($courseId);
+
+        return [
+            'total_likes' => $course->likes_count,
+            'users'       => $course->likes->pluck('user')
+        ];
+    }
+
 //احصائيات كورس محدد
  public function getCourseStats($courseId, $doctorId = null)
 {

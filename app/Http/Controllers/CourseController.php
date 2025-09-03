@@ -168,6 +168,26 @@ class CourseController extends Controller
         }
     }
 
+     public function getLikes($courseId)
+{
+    $course = Course::with(['users' => function ($query) {
+        $query->wherePivot('is_liked', true);
+    }])->findOrFail($courseId);
+
+    return response()->json([
+        'status' => true,
+        'course_id' => $course->id,
+        'likes_count' => $course->users->count(),
+        'likes' => $course->users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+            ];
+        })
+    ]);
+}
+
+
        public function getCourseStats($courseId)
     {
         try {

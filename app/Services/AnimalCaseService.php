@@ -72,6 +72,7 @@ public function createCase(Request $request): array
             'description' => $result['appointment']->description
         ];
         
+                  $employee->notify(new \App\Notifications\ImmediateCaseNotification($case, $result['appointment']));
         if ($result['ambulance_available']) {
             // **إضافة معلومات السيارة**
             $responseData['ambulance_info'] = $result['ambulance_info'];

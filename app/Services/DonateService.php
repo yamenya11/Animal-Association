@@ -10,17 +10,34 @@ class DonateService{
 
 public function store(Request $req): array
 {
-    $validatedData = $req->validate([
-        'full_name'      => 'required|string|max:255',
+   $validatedData = $req->validate([
+        'full_name' => 'required|string|max:255',
         'number'         => 'required|string|max:15',
-        'donation_type'  => 'required|string|max:15',
+        'donation_type'  => 'required|string|in:food,money',
         'notes'          => 'nullable|string|max:500',
-        'ammountinkello' => 'required|string|max:15',
+        'ammountinkello' => 'nullable|string|max:15',
+        'amount'         => 'nullable|numeric|min:1',
     ]);
-
     $validatedData['user_id'] = auth()->id();
-    $validatedData['status']  = 'pending'; // ← الحالة الافتراضية عند الإنشاء
+    $validatedData['status']  = 'pending';
 
+ if ($validatedData['donation_type'] === 'food') {
+        if (empty($validatedData['ammountinkello'])) {
+            return [
+                'status'  => false,
+                'message' => 'يجب تحديد كمية الطعام بالكيلو عند اختيار التبرع طعاماً',
+            ];
+        }
+        $validatedData['amount'] = null; 
+    } elseif ($validatedData['donation_type'] === 'money') {
+        if (empty($validatedData['amount'])) {
+            return [
+                'status'  => false,
+                'message' => 'يجب تحديد مبلغ التبرع عند اختيار التبرع مالياً',
+            ];
+        }
+        $validatedData['ammountinkello'] = null; 
+    }
     $donation = Donate::create($validatedData);
 
     return [

@@ -22,7 +22,6 @@ class AdminService
 
 public function changeUserRole(User $user, string $role): array
 {
-    // التحقق من وجود الدور في النظام أولاً
     if (!Role::where('name', $role)->exists()) {
         return [
             'success' => false,
@@ -30,7 +29,6 @@ public function changeUserRole(User $user, string $role): array
         ];
     }
 
-    // تغيير الأدوار (سيحل محل جميع الأدوار الحالية)
     $user->syncRoles([$role]);
     
     return [
@@ -43,7 +41,7 @@ public function changeUserRole(User $user, string $role): array
         ]
     ];
 }
-    // إدارة المستخدمين
+
 public function getAllUsers()
 {
     return User::with(['roles:id,name', 'volunteerRequest'])
@@ -131,11 +129,11 @@ public function updateUserAsAdmin(Request $request, $userId): array
         ];
     }
 
-    // إدارة الخدمات
-    public function getAllServices()
-    {
-        return Service::all();
-    }
+    // // إدارة الخدمات
+    // public function getAllServices()
+    // {
+    //     return Service::all();
+    // }
 
    
 
@@ -152,80 +150,99 @@ public function updateUserAsAdmin(Request $request, $userId): array
         'total_ads_requests' => DB::table('ad_media')->count(),
 
         // إذا كنت تريد جمع قيمة التبرعات:
-        // 'total_donation_amount' => DB::table('donations')->sum('amount'),
+        'total_donation_amount' => DB::table('donates')
+            ->where('status', 'approved')
+            ->where('donation_type', 'money')
+            ->sum('amount'),
 
-        // 'revenue' => DB::table('services')
-        //     ->join('appointments', 'services.id', '=', 'appointments.service_id')
-        //     ->where('appointments.status', 'completed')
-        //     ->sum('services.price'),
+        // مجموع الطعام بالكيلو فقط (المقبولة)
+        'total_food_donations' => DB::table('donates')
+            ->where('status', 'approved')
+            ->where('donation_type', 'food')
+            ->sum(DB::raw("CAST(ammountinkello AS UNSIGNED)")),
     ];
 
     return $report;
 }
 
 
-   public function generateDailyReport()
-{
-    $today = now()->toDateString();
+        public function generateDailyReport()
+        {
+            $today = now()->toDateString();
 
-    $report = [
-        'new_users' => DB::table('users')
-            ->whereDate('created_at', $today)
-            ->count(),
+            $report = [
+                'new_users' => DB::table('users')
+                    ->whereDate('created_at', $today)
+                    ->count(),
 
-        'new_adoptions' => DB::table('adoptions')
-            ->whereDate('created_at', $today)
-            ->count(),
+                'new_adoptions' => DB::table('adoptions')
+                    ->whereDate('created_at', $today)
+                    ->count(),
 
-        'new_appointments' => DB::table('appointments')
-            ->whereDate('created_at', $today)
-            ->count(),
+                'new_appointments' => DB::table('appointments')
+                    ->whereDate('created_at', $today)
+                    ->count(),
 
-        'new_volunteers' => DB::table('volunteer_requests')
-            ->where('status', 'approved')
-            ->whereDate('created_at', $today)
-            ->count(),
+                'new_volunteers' => DB::table('volunteer_requests')
+                    ->where('status', 'approved')
+                    ->whereDate('created_at', $today)
+                    ->count(),
 
-        'new_donations' => DB::table('donates')
-            ->whereDate('created_at', $today)
-            ->count(),
+                'new_donations' => DB::table('donates')
+                    ->whereDate('created_at', $today)
+                    ->count(),
 
-        'new_ads_requests' => DB::table('ad_media')
-            ->whereDate('created_at', $today)
-            ->count(),
-    ];
+                // مجموع التبرعات المالية المقبولة اليوم
+                'donation_amount_today' => DB::table('donates')
+                    ->whereDate('created_at', $today)
+                    ->where('status', 'approved')
+                    ->where('donation_type', 'money')
+                    ->sum('amount'),
 
-    return [
-        'status' => true,
-        'data' => $report,
-    ];
-}
+                // مجموع التبرعات الغذائية بالكيلو المقبولة اليوم
+                'donation_food_today' => DB::table('donates')
+                    ->whereDate('created_at', $today)
+                    ->where('status', 'approved')
+                    ->where('donation_type', 'food')
+                    ->sum(DB::raw("CAST(ammountinkello AS UNSIGNED)")),
+
+                'new_ads_requests' => DB::table('ad_media')
+                    ->whereDate('created_at', $today)
+                    ->count(),
+            ];
+
+            return [
+                'status' => true,
+                'data' => $report,
+            ];
+        }
+
 
     // إدارة الفعاليات
- public function getAllEvents()
-{
-    $events = Event::with(['creator', 'participants.user'])
-        ->latest()
-        ->get()
-        ->map(function ($event) {
-            return [
-                'id' => $event->id,
-                'title' => $event->title,
-                'description' => $event->description,
-                'start_date' => \Carbon\Carbon::parse($event->start_date)->format('Y-m-d H:i'),
-                'end_date' => \Carbon\Carbon::parse($event->end_date)->format('Y-m-d H:i'),
-                'location' => $event->location,
-                'status' => $this->getStatusDisplay($event->status),
-                'creator' => $event->creator->name ?? 'غير معروف',
-                'participants_count' => $event->participants->count()
-            ];
-        });
+        public function getAllEvents()
+        {
+            $events = Event::with(['creator', 'participants.user'])
+                ->latest()
+                ->get()
+                ->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'description' => $event->description,
+                        'start_date' => \Carbon\Carbon::parse($event->start_date)->format('Y-m-d H:i'),
+                        'end_date' => \Carbon\Carbon::parse($event->end_date)->format('Y-m-d H:i'),
+                        'location' => $event->location,
+                        'status' => $this->getStatusDisplay($event->status),
+                        'creator' => $event->creator->name ?? 'غير معروف',
+                        'participants_count' => $event->participants->count()
+                    ];
+                });
 
-    return response()->json([
-        'status' => true,
-        'events' => $events
-    ]);
-}
+            return response()->json([
+                'status' => true,
+                'events' => $events
+            ]);
+        }
 
 protected function getStatusDisplay($status)
 {

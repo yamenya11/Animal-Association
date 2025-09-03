@@ -161,6 +161,22 @@ class NotificationService
         }
     }
 
+    public function sendUnifiedNotification(object $user, object $model, string $type, string $status, ?string $customMessage = null): bool
+{
+    try {
+        $user->notify(new \App\Notifications\UnifiedNotification($model, $type, $status, $customMessage));
+        return true;
+    } catch (\Throwable $e) {
+        \Log::error('فشل إرسال الإشعار الموحد', [
+            'user_id' => $user->id,
+            'type' => $type,
+            'status' => $status,
+            'error' => $e->getMessage()
+        ]);
+        return false;
+    }
+}
+
     /**
      * إرسال إشعار بتحديث حالة الموعد
      */

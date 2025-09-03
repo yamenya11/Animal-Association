@@ -142,6 +142,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
         Route::post('courses/{course}/rate', [RatingController::class, 'store']);
         Route::post('ratings/{rating}', [RatingController::class, 'update']);
         Route::get('courses/{course}/my-rating', [RatingController::class, 'getUserRating']);
+        Route::get('/courses/{id}/likes', [CourseController::class, 'getLikes']);
 
 
     // الإشعارات
