@@ -33,27 +33,33 @@ class CourseService
             // عرض الكورسات حسب التصنيفات للمستخدمين
 public function getCoursesByCategoriesForUsers($categoryName = null)
 {
-    return CatgoryCourse::query()
+    $categories = CatgoryCourse::query()
         ->when($categoryName, function($query) use ($categoryName) {
             $query->where('name', $categoryName);
         })
         ->with(['courses' => function($query) {
             $query->where('is_active', true)
-                  ->with(['doctor:id,name'])
-                  ->get()
-                  ->map(function($course) {
-                      $courseData = $course->toArray();
-                      if ($course->video) {
-                          $courseData['video_url'] = config('app.url') . '/storage/' . $course->video;
-                      }
-                      return $courseData;
-                  });
+                  ->with(['doctor:id,name']);
         }])
         ->whereHas('courses', function($query) {
             $query->where('is_active', true);
         })
-        ->get();
+        ->get()
+        ->map(function($category) {
+            $categoryData = $category->toArray();
+
+            // معالجة روابط الفيديو لكل كورس داخل الكاتيجوري
+            $categoryData['courses'] = collect($categoryData['courses'])->map(function($course) {
+                $course['video_url'] = $course['video'] ? config('app.url') . '/storage/' . $course['video'] : null;
+                return $course;
+            });
+
+            return $categoryData;
+        });
+
+    return $categories;
 }
+
 
       public function getCoursesForDoctors($doctorId = null)
 {
@@ -103,7 +109,6 @@ public function getCoursesByCategoriesForUsers($categoryName = null)
 
 
 
-   
 public function getActiveCourses()
 {
     $courses = Course::with(['category:id,name','doctor:id,name'])
@@ -111,22 +116,26 @@ public function getActiveCourses()
         ->where('is_active', true)
         ->get()
         ->map(function($course) {
-            $data = $course->toArray();
-
-            // URL صحيح عبر Filesystem
-            $data['video_url'] = ($course->video && Storage::disk('public')->exists($course->video))
-                ? Storage::disk('public')->url($course->video)
-                : null;
-
-            $data['doctor_name']   = $course->doctor->name   ?? null;
-            $data['category_name'] = $course->category->name ?? null;
-
-            unset($data['doctor'], $data['category']);
-            return $data;
+            return [
+                'id' => $course->id,
+                'name' => $course->name,
+                'description' => $course->description,
+                'duration' => $course->duration,
+                'video' => $course->video,
+                'video_url' => $course->video ? config('app.url') . '/storage/' . $course->video : null,
+                'category_id' => $course->category_id,
+                'category_name' => $course->category->name ?? null,
+                'doctor_id' => $course->doctor_id,
+                'doctor_name' => $course->doctor->name ?? null,
+            ];
         });
 
-    return response()->json(['success' => true, 'data' => $courses]);
+    return response()->json([
+        'success' => true,
+        'data' => $courses
+    ]);
 }
+
 
 //  public function getDoctorCourses($doctorId)
 // {

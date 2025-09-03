@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('vaccines', function (Blueprint $table) {
+      Schema::table('vaccines', function (Blueprint $table) {
             $table->string('image')->nullable()->after('type');
-            $table->enum('gender', ['male', 'female'])->nullable()->after('animal_name');
+            $table->enum('gender', ['male', 'female'])->nullable()->after('animal_id'); // بدل 'animal_name'
         });
     }
 
@@ -22,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('vaccines', function (Blueprint $table) {
-               $table->dropColumn(['image', 'gender']);
+       Schema::table('vaccines', function (Blueprint $table) {
+            $table->dropColumn(['image', 'gender']);
         });
     }
 };

@@ -19,7 +19,7 @@ class VaccineController extends Controller
 public function store(Request $request)
 {
     $validated = $request->validate([
-        'animal_name' => 'required|string|min:2',
+        'animal_id' => 'required|exists:animals,id',
         'gender' => 'required|in:ذكر,أنثى,male,female',
         'type' => 'required|string',
         'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -126,7 +126,7 @@ public function store(Request $request)
 public function update(Request $request, $id)
 {
     $validated = $request->validate([
-        'animal_name' => 'sometimes|string|min:2',
+        'animal_id' => 'sometimes|exists:animals,id',
         'gender' => 'sometimes|in:male,female',
         'type' => 'sometimes|string',
         'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',

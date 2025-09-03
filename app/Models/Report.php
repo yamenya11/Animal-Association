@@ -25,10 +25,12 @@ class Report extends Model
         'animal_id'
     ];
 
-        public function getImageUrlAttribute()
-        {
-        return $this->image ? Storage::url($this->image) : null;
-        }
+       public function getImageUrlAttribute()
+{
+    return $this->image 
+        ? config('app.url') . '/storage/' . $this->image 
+        : null;
+}
 
         public function doctor(): BelongsTo
         {

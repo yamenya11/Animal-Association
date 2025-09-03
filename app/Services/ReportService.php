@@ -24,17 +24,14 @@ public function createReport(array $data): Report
     $data['animal_name'] = $data['animal_name'] ?? $animal->name;
     $data['animal_age']  = $data['animal_age'] ?? $this->calculateAge($animal->birth_date);
 
-    // التحقق من وجود doctor_id
     if (empty($data['doctor_id'])) {
         throw new \Exception('لم يتم تحديد الطبيب المعالج.');
     }
 
-    // رفع الصورة إذا وُجدت
     if (!empty($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
         $data['image'] = $data['image']->store('reports/images', 'public');
     }
 
-    // تصحيح أسماء الحقول وإعداد بيانات التقرير
     $reportData = [
         'animal_id'         => $data['animal_id'],
         'animal_name'       => $data['animal_name'],
@@ -51,10 +48,13 @@ public function createReport(array $data): Report
         'doctor_id'         => $data['doctor_id'],
     ];
 
-    // إنشاء التقرير
-    return Report::create($reportData);
-}
+    $report = Report::create($reportData);
 
+    // إضافة رابط الصورة مباشرة
+    $report->image_url = $report->image ? config('app.url') . '/storage/' . $report->image : null;
+
+    return $report;
+}
 
 protected function calculateAge($birthDate)
 {
@@ -67,41 +67,47 @@ protected function calculateAge($birthDate)
     return $age->y; // العمر بالسنين
 }
 
-    public function updateReport($id, array $data)
-    {
-        $report = Report::findOrFail($id);
+   public function updateReport($id, array $data)
+{
+    $report = Report::findOrFail($id);
 
-        if (isset($data['image'])) {
-            // حذف الصورة القديمة إذا كانت موجودة
-            if ($report->image) {
-                Storage::disk('public')->delete($report->image);
-            }
-            $imagePath = $data['image']->store('reports/images', 'public');
-            $data['image'] = $imagePath;
-        }
-
-        $report->update($data);
-        return $report;
-    }
-
-    public function getReport($id)
-    {
-        return Report::findOrFail($id);
-    }
-
-    public function getAllReports()
-    {
-        return Report::all();
-    }
-
-    public function deleteReport($id)
-    {
-        $report = Report::findOrFail($id);
-        
+    if (isset($data['image'])) {
         if ($report->image) {
             Storage::disk('public')->delete($report->image);
         }
-        
-        return $report->delete();
+        $data['image'] = $data['image']->store('reports/images', 'public');
     }
+
+    $report->update($data);
+
+    // إضافة رابط الصورة مباشرة
+   $report->image_url = $report->image 
+    ? config('app.url') . '/storage/' . $report->image 
+    : null;
+
+    return $report;
+}
+
+  public function getAllReportsWithAnimal()
+    {
+        // تحميل التقارير مع الحيوان المرتبط
+        return Report::with('animal')->get();
+    }
+
+    public function getReportWithAnimal($id)
+    {
+        return Report::with('animal')->findOrFail($id);
+    }
+
+    public function deleteReport($id)
+{
+    $report = Report::findOrFail($id);
+    
+    if ($report->image) {
+        Storage::disk('public')->delete($report->image);
+    }
+    
+    return $report->delete();
+}
+
 }
