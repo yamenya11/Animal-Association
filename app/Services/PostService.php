@@ -97,8 +97,8 @@ public function show_post()
     $post->save();
 
     // إشعار عبر خدمة الإشعارات
-    //$notificationService = app(NotificationService::class);
-    //$notificationService->sendPostStatusNotification($post, $action);
+    $notificationService = app(NotificationService::class);
+    $notificationService->sendPostStatusNotification($post, $action);
   $postData = $post->toArray();
     if ($post->image) {
         $postData['image_url'] = config('app.url') . '/storage/' . $post->image;
