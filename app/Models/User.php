@@ -31,18 +31,19 @@ namespace App\Models;
              *
              * @var array<int, string>
              */
-        protected $fillable = [
-            'name',
-            'email',
-            'password',
-            'profile_image',
-            'address',
-            'phone',
-            'level',
-            'wallet_balance',
-            'experience',
-            'bio'
-        ];
+            protected $fillable = [
+                'name',
+                'email',
+                'password',
+                'profile_image',
+                'address',
+                'phone',
+                'level',
+                'wallet_balance',
+                'experience',
+                'bio',
+                'specialization'
+            ];
                 public function notifications()
                 {
                 return $this->morphMany(DatabaseNotification::class, 'notifiable')

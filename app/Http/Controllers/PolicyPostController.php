@@ -14,7 +14,7 @@ class PolicyPostController extends Controller
     {
         $this->postService = $postService;
     }
- public function storeOfficial(Request $request)
+public function storeOfficial(Request $request)
 {
     $validated = $request->validate([
         'title' => 'required|string|max:255',
@@ -23,21 +23,19 @@ class PolicyPostController extends Controller
         'image' => 'nullable|image|max:2048'
     ]);
 
-    // Handle image upload if present
-      $imagePath = null;
-    if ($request->hasFile('image')) {
-$imagePath = isset($data['image']) ? $data['image']->store('official-posts', 'public') : null;    }
-
+    // أرسل الملف نفسه إلى الخدمة بدون تحويله مسبقًا
     $post = $this->postService->createOfficialPost(
         $request->user(), 
-        array_merge($validated, ['image' => $imagePath])
+        array_merge($validated, ['image' => $request->file('image') ?? null])
     );
+
     return response()->json([
         'status' => true,
         'message' => 'تم إنشاء المنشور الرسمي بنجاح',
         'data' => $post
     ], 201);
 }
+
     // إنشاء بوست
     public function store(Request $request)
     {
@@ -81,4 +79,33 @@ $imagePath = isset($data['image']) ? $data['image']->store('official-posts', 'pu
         'message' => 'تم حذف المنشور بنجاح'
     ]);
 }
+
+
+public function getOfficialPosts()
+{
+    // جلب كل المنشورات الرسمية (approved) للمسؤولين
+    $posts = \App\Models\Post::where('type_post', '!=', null)
+        ->where('status', 'approved')
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function($post) {
+            return [
+                'id' => $post->id,
+                'user_id' => $post->user_id,
+                'title' => $post->title,
+                'content' => $post->content,
+                'type_post' => $post->type_post,
+                'image_url' => $post->image ? config('app.url') . '/storage/' . $post->image : null,
+                'status' => $post->status,
+                'created_at' => $post->created_at,
+                'updated_at' => $post->updated_at,
+            ];
+        });
+
+    return response()->json([
+        'status' => true,
+        'data' => $posts
+    ]);
+}
+
 }

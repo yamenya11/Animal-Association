@@ -285,7 +285,7 @@ protected function getStatusDisplay($status)
 }
 
 
- public function createEvent(Request $request): array
+public function createEvent(Request $request): array
 {
     $validated = $request->validate([
         'title'            => 'required|string|max:255',
@@ -296,12 +296,27 @@ protected function getStatusDisplay($status)
         'max_participants' => 'nullable|integer|min:1',
     ]);
 
-    $validated['created_by'] = auth()->id();
+    $user = auth()->user();
+    $validated['created_by'] = $user->id;
 
-    // ✅ تفعيل الحدث فوراً إذا كان المستخدم أدمن
-    $validated['status'] = auth()->user()->hasRole('admin') ? 'active' : 'pending';
+    // تفعيل الحدث فورًا إذا كان الأدمن
+    $validated['status'] = $user->hasRole('admin') ? 'active' : 'pending';
 
     $event = Event::create($validated);
+
+    // إذا كان الأدمن، أضف نفسه كمشارك تلقائيًا
+    $participant = null;
+    if ($user->hasRole('admin')) {
+        $participant = EventParticipant::create([
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+            'status' => 'registered',
+            'notes' => 'منشئ الحدث',
+        ]);
+    }
+
+    // إرجاع الحدث مع المشاركين
+    $event->load('participants.user'); // يفترض أن لديك علاقة participants في موديل Event
 
     return [
         'status'  => true,
@@ -309,6 +324,8 @@ protected function getStatusDisplay($status)
         'data'    => $event,
     ];
 }
+
+
 
 
 

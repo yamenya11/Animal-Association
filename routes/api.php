@@ -36,7 +36,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\RatingController;
-
+use \App\Http\Controllers\Admin\UserController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -306,7 +306,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::put('/users/{userId}', [AdminController::class, 'updateUser']);
         Route::delete('/users/{userId}', [AdminController::class, 'deleteUser']);
         Route::post('/users/{user}/change-role', [AdminController::class, 'changeUserRole']);
-
+       Route::post('/admin/users/add', [UserController::class, 'store']);
     // إدارة الخدمات
     Route::get('/admin/services', [AdminController::class, 'getServices']);
     Route::post('/admin/services', [AdminController::class, 'addService']);
@@ -380,6 +380,7 @@ Route::middleware(['auth:sanctum', 'role:admin|employee'])->group(function () {
         Route::post('/official-posts', [PolicyPostController::class, 'storeOfficial']);
         Route::delete('/posts/{post}', [PolicyPostController::class, 'forceDestroy']);
         Route::delete('/posts/{post}/force-delete', [PolicyPostController::class, 'forceDestroy']);
+        Route::get('/official-posts', [PolicyPostController::class, 'getOfficialPosts']);
         
         // إدارة التعليقات
         Route::post('/comments', [PolicyCommentController::class, 'store']);
