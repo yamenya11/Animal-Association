@@ -26,46 +26,25 @@ use Kreait\Firebase\Messaging\{
 };
 use Kreait\Firebase\Messaging\Messaging;
 use Throwable;
+use Kreait\Firebase\Facades\Firebase;
 
 class NotificationService
 {
-    protected Messaging $messaging;
-
-    public function __construct(Messaging $messaging)
-    {
-        $this->messaging = $messaging;
-    }
-
+   
     /**
      * إرسال إشعار بالموافقة على الإعلان
      */
-    public function sendAdApprovedNotification(Ad $ad): bool
+  public function sendAdApprovedNotification($ad)
     {
-        try {
-            $user = $ad->user;
-            $user->notify(new AdApprovedNotification($ad));
-            
-            $this->sendFcmNotification(
-                $user,
-                'تمت الموافقة على إعلانك',
-                'إعلانك "'.$ad->title.'" تمت الموافقة عليه',
-                [
-                    'ad_id' => (string) $ad->id,
-                    'type' => 'ad_approved'
-                ]
-            );
-            
-            return true;
-        } catch (Throwable $e) {
-            Log::error("فشل إرسال إشعار الموافقة على الإعلان", [
-                'ad_id' => $ad->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return false;
-        }
-    }
+        $user = $ad->user;
 
+        if (!$user) return false;
+
+        // الإشعار في DB و FCM تلقائياً
+        $user->notify(new AdApprovedNotification($ad));
+
+        return true;
+    }
     /**
      * إرسال إشعار بتحديث حالة التبني
      */

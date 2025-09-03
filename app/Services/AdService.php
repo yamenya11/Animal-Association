@@ -119,15 +119,15 @@ public function __construct(NotificationService $notificationService = null, Wal
                 // Pass the ad to the withdraw method
                 $this->walletService->withdraw($user, $amount, $ad);
 
-                $ad->update([
-                    'status' => 'approved',
-                    'approved_by' => $adminId,
-                    'approved_at' => now(),
-                ]);
+                        $ad->update([
+                'status' => 'approved',
+                'approved_by' => $adminId,
+                'approved_at' => now(),
+            ]);
 
-                // $user->notify(new AdApprovedNotification($ad));
-            //   $notificationService = app(NotificationService::class);
-            //   $notificationService->sendAdApprovedNotification($ad);
+            // إرسال إشعار FCM
+            $notificationService = app(\App\Services\NotificationService::class);
+            $notificationService->sendAdApprovedNotification($ad);
                 DB::commit();
 
                 return [

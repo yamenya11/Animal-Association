@@ -37,9 +37,14 @@ use App\Http\Controllers\AmbulanceController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\RatingController;
 use \App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\FcmController;
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+  Route::middleware('auth:sanctum')->post('/fcm/update-token', [FcmController::class, 'updateToken']);
+
         Route::middleware('auth:sanctum')->group(function () {
 
             // عرض المحادثات
@@ -330,21 +335,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 // مسارات الموظف
 Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
-    // إدارة المستخدمين
-    Route::get('/employee/users', [EmployeeController::class, 'getUsers']);
-
-    // إدارة المحتوى
-    Route::get('/employee/content/pending', [EmployeeController::class, 'getPendingContent']);
-    Route::post('/employee/content/{contentId}/approve', [EmployeeController::class, 'approveContent']);
-    Route::post('/employee/content/{contentId}/reject', [EmployeeController::class, 'rejectContent']);
 
     // التقارير
     Route::get('/employee/reports/daily', [EmployeeController::class, 'getDailyReport']);
-
-    // التواصل مع المتطوعين
-    Route::get('/employee/volunteers', [EmployeeController::class, 'getVolunteers']);
-    Route::post('/employee/volunteers/{volunteerId}/message', [EmployeeController::class, 'sendMessageToVolunteer']);
-
     // مسارات الفعاليات للموظفين
     Route::get('/employee/events', [EmployeeController::class, 'getAvailableEvents']);
     Route::post('/employee/events/{eventId}/register', [EmployeeController::class, 'registerForEvent']);

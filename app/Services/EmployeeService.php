@@ -37,40 +37,7 @@ class EmployeeService
             ->get();
     }
 
-    // public function approveContent($contentId, ?string $notes = null): array
-    // {
-    //     $content = Post::findOrFail($contentId);
-    //     $content->status = 'approved';
-    //     $content->notes = $notes;
-    //     $content->save();
-
-    //     // إرسال إشعار للمستخدم
-    //     $content->user->notify(new PostStatusUpdated($content, 'approved'));
-
-    //     return [
-    //         'status' => true,
-    //         'message' => 'تمت الموافقة على المحتوى بنجاح',
-    //         'data' => $content
-    //     ];
-    // }
-
-    // public function rejectContent($contentId, ?string $notes = null): array
-    // {
-    //     $content = Post::findOrFail($contentId);
-    //     $content->status = 'rejected';
-    //     $content->notes = $notes;
-    //     $content->save();
-
-    //     // إرسال إشعار للمستخدم
-    //     $content->user->notify(new PostStatusUpdated($content, 'rejected'));
-
-    //     return [
-    //         'status' => true,
-    //         'message' => 'تم رفض المحتوى',
-    //         'data' => $content
-    //     ];
-    // }
-
+   
     // التقارير
     public function generateDailyReport()
     {
@@ -91,37 +58,7 @@ class EmployeeService
         return $report;
     }
 
-    // التواصل مع المتطوعين
-    public function getActiveVolunteers()
-    {
-        return VolunteerRequest::where('status', 'approved')
-            ->with('user')
-            ->get();
-    }
-
-    public function sendMessageToVolunteer($volunteerId, string $message): array
-    {
-        $volunteer = VolunteerRequest::findOrFail($volunteerId);
-
-        if ($volunteer->status !== 'approved') {
-            return [
-                'status' => false,
-                'message' => 'هذا المتطوع غير نشط'
-            ];
-        }
-
-        $message = Message::create([
-            'from_user_id' => auth()->id(),
-            'to_user_id' => $volunteer->user_id,
-            'message' => $message
-        ]);
-
-        return [
-            'status' => true,
-            'message' => 'تم إرسال الرسالة بنجاح',
-            'data' => $message
-        ];
-    }
+   
 
     // إدارة الحيوانات
   public function getAllAnimals()

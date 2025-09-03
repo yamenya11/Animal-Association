@@ -137,54 +137,7 @@ public function updateUserAsAdmin(Request $request, $userId): array
         return Service::all();
     }
 
-    // public function createService(Request $request): array
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'description' => 'required|string',
-    //         'price' => 'required|numeric',
-    //         'duration' => 'required|integer'
-    //     ]);
-
-    //     $service = Service::create($validated);
-
-    //     return [
-    //         'status' => true,
-    //         'message' => 'تم إضافة الخدمة بنجاح',
-    //         'data' => $service
-    //     ];
-    // }
-
-    // public function updateService(Request $request, $serviceId): array
-    // {
-    //     $service = Service::findOrFail($serviceId);
-
-    //     $validated = $request->validate([
-    //         'name' => 'sometimes|string|max:255',
-    //         'description' => 'sometimes|string',
-    //         'price' => 'sometimes|numeric',
-    //         'duration' => 'sometimes|integer'
-    //     ]);
-
-    //     $service->update($validated);
-
-    //     return [
-    //         'status' => true,
-    //         'message' => 'تم تحديث الخدمة بنجاح',
-    //         'data' => $service
-    //     ];
-    // }
-
-    // public function deleteService($serviceId): array
-    // {
-    //     $service = Service::findOrFail($serviceId);
-    //     $service->delete();
-
-    //     return [
-    //         'status' => true,
-    //         'message' => 'تم حذف الخدمة بنجاح'
-    //     ];
-    // }
+   
 
   public function generatePerformanceReport()
 {
