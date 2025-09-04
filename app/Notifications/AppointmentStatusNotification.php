@@ -4,75 +4,52 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Appointment; // أضف هذا الاستيراد في الأعلى
+use App\Models\Appointment;
 
 class AppointmentStatusNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-     protected $appointment;
-    protected $status;
+    protected $appointment;
 
-    public function __construct(Appointment $appointment, string $status)
+    public function __construct(Appointment $appointment)
     {
         $this->appointment = $appointment;
-        $this->status = $status;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
-      $channels = ['database'];
-    
-    if ($notifiable->fcm_token) {
-        $channels[] = 'fcm';
-    }
-    
-    return $channels;
+        $channels = ['database'];
+        
+        if ($notifiable->fcm_token) {
+            $channels[] = 'fcm';
+        }
+
+        return $channels;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
+    public function toFcm($notifiable)
     {
-        return (new MailMessage)
-            ->subject('تحديث حالة الموعد - راجع البريد الوارد')
-            ->greeting('مرحباً ' . $notifiable->name)
-            ->line('تم ' . ($this->status === 'approved' ? 'قبول' : 'رفض') . ' موعدك.')
-            ->line('رقم الموعد: ' . $this->appointment->id)
-            ->line('الحالة الجديدة: ' . $this->status);
-    }
-
-       public function toFcm($notifiable)
-    {
-        $statusMessage = $this->getStatusMessage();
-
-         return [
-            'title' => 'تحديث حالة الموعد',
-            'body' => 'تم ' . ($this->status === 'approved' ? 'قبول' : 'رفض') . ' موعدك رقم ' . $this->appointment->id,
-            'data' => [
-                'type' => 'appointment_status',
+        return [
+            'title' => 'تم تحديد موعد جديد',
+            'body'  => 'موعدك رقم ' . $this->appointment->id . 
+                       ' بتاريخ ' . $this->appointment->scheduled_at->format('Y-m-d H:i'),
+            'data'  => [
+                'type' => 'appointment_scheduled',
                 'appointment_id' => (string) $this->appointment->id,
-                'status' => $this->status,
-                'scheduled_at' => $this->appointment->scheduled_at->toIso8601String(),
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
+                'scheduled_at'   => $this->appointment->scheduled_at->toIso8601String(),
+                'click_action'   => 'FLUTTER_NOTIFICATION_CLICK'
             ]
         ];
     }
 
     public function toArray(object $notifiable): array
     {
-         return [
+        return [
             'appointment_id' => $this->appointment->id,
-            'status' => $this->status,
-            'message' => 'تم ' . ($this->status === 'approved' ? 'قبول' : 'رفض') . ' موعدك.',
+            'scheduled_at'   => $this->appointment->scheduled_at->toDateTimeString(),
+            'message'        => 'تم تحديد موعد جديد بتاريخ ' . $this->appointment->scheduled_at->format('Y-m-d H:i'),
         ];
     }
 }

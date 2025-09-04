@@ -244,54 +244,54 @@ public function updateUserAsAdmin(Request $request, $userId): array
             ]);
         }
 
-protected function getStatusDisplay($status)
-{
-    return match ($status) {
-        'pending' => 'قيد الانتظار',
-        'active' => 'نشط',
-        'completed' => 'منتهي',
-        default => $status
-    };
-}
+        protected function getStatusDisplay($status)
+        {
+            return match ($status) {
+                'pending' => 'قيد الانتظار',
+                'active' => 'نشط',
+                'completed' => 'منتهي',
+                default => $status
+            };
+        }
 
 
-public function createEvent(Request $request): array
-{
-    $validated = $request->validate([
-        'title'            => 'required|string|max:255',
-        'description'      => 'required|string',
-        'start_date'       => 'required|date',
-        'end_date'         => 'required|date|after:start_date',
-        'location'         => 'required|string',
-        'max_participants' => 'nullable|integer|min:1',
-    ]);
+    public function createEvent(Request $request): array
+    {
+        $validated = $request->validate([
+            'title'            => 'required|string|max:255',
+            'description'      => 'required|string',
+            'start_date'       => 'required|date',
+            'end_date'         => 'required|date|after:start_date',
+            'location'         => 'required|string',
+            'max_participants' => 'nullable|integer|min:1',
+        ]);
 
-    $user = auth()->user();
-    $validated['created_by'] = $user->id;
+        $user = auth()->user();
+        $validated['created_by'] = $user->id;
 
-    // تفعيل الحدث فورًا إذا كان الأدمن
-    $validated['status'] = $user->hasRole('admin') ? 'active' : 'pending';
+        // تفعيل الحدث فورًا إذا كان الأدمن
+        $validated['status'] = $user->hasRole('admin') ? 'active' : 'pending';
 
-    $event = Event::create($validated);
+        $event = Event::create($validated);
 
-    // إضافة منشئ الحدث كمشارك بشكل تلقائي (مرة واحدة فقط)
-    EventParticipant::firstOrCreate([
-        'event_id' => $event->id,
-        'user_id'  => $user->id,
-    ], [
-        'status' => 'registered',
-        'notes'  => 'منشئ الحدث',
-    ]);
+        // إضافة منشئ الحدث كمشارك بشكل تلقائي (مرة واحدة فقط)
+        EventParticipant::firstOrCreate([
+            'event_id' => $event->id,
+            'user_id'  => $user->id,
+        ], [
+            'status' => 'registered',
+            'notes'  => 'منشئ الحدث',
+        ]);
 
-    // إرجاع الحدث مع المشاركين
-    $event->load('participants.user');
+        // إرجاع الحدث مع المشاركين
+        $event->load('participants.user');
 
-    return [
-        'status'  => true,
-        'message' => 'تم إنشاء الفعالية بنجاح',
-        'data'    => $event,
-    ];
-}
+        return [
+            'status'  => true,
+            'message' => 'تم إنشاء الفعالية بنجاح',
+            'data'    => $event,
+        ];
+    }
 
 
 

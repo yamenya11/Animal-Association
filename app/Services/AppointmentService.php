@@ -10,99 +10,84 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\sendAppointmentStatusNotification;
 use App\Services\NotificationService;
+use App\Notifications\AppointmentStatusNotification;
 
 class AppointmentService
 {
 
 
-public function scheduleAppointment(Request $request)
-{
-     $validated = $request->validate([
-         'animal_case_id'  => 'required|exists:animal_cases,id',
-        'scheduled_date' => 'required|date|after_or_equal:today',
-        'scheduled_time' => 'required|date_format:H:i',
-        'description'    => 'required|string|min:10'
-    ]);
+        public function scheduleAppointment(Request $request)
+        {
+            $validated = $request->validate([
+                'animal_case_id'  => 'required|exists:animal_cases,id',
+                'scheduled_date'  => 'required|date|after_or_equal:today',
+                'scheduled_time'  => 'required|date_format:H:i',
+                'description'     => 'required|string|min:10'
+            ]);
 
-    // البحث عن الحالة باستخدام اسم الحيوان
-$animalCase = AnimalCase::find($validated['animal_case_id']);
-    // التحقق من عدم وجود موعد سابق
-    if ($animalCase->appointments()->where('status', 'scheduled')->exists()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'هذه الحالة لديها موعد مجدول بالفعل'
-        ], 422);
-    }
+            $animalCase = AnimalCase::find($validated['animal_case_id']);
 
-    $appointment = Appointment::create([
-        'user_id' => $animalCase->user_id,
-       // 'doctor_id' => auth()->id(), // الطبيب الحالي
-        'animal_case_id' => $animalCase->id,
-        'scheduled_date' => $validated['scheduled_date'],
-        'scheduled_time' => $validated['scheduled_time'],
-        'description' => $validated['description'],
-        'status' => 'scheduled'
-    ]);
+            // دمج التاريخ والوقت
+            $scheduledAt = \Carbon\Carbon::createFromFormat(
+                'Y-m-d H:i',
+                $validated['scheduled_date'] . ' ' . $validated['scheduled_time']
+            );
 
-    // إرسال إشعار للمستخدم
-    //$animalCase->user->notify(new AppointmentScheduled($appointment));
+            // تحذير فقط إذا كان في موعد بنفس الوقت
+            $existsSameTime = Appointment::where('scheduled_at', $scheduledAt)
+                ->where('status', 'scheduled')
+                ->exists();
 
-  return response()->json([
-    'status' => true,
-    'message' => 'تم جدولة الموعد بنجاح',
-    'appointment' => $appointment->load('animalCase:id,name_animal,case_type,image'),
-    'doctor' => auth()->user()->only(['id', 'name']),
-]);
-}
-// public function acceptappointmentImm($appointment, string $action): array
-// {
-//     $app = Appointment::with('user', 'animalCase')->findOrFail($appointment);
+            $appointment = Appointment::create([
+                'user_id'        => $animalCase->user_id,
+                'animal_case_id' => $animalCase->id,
+                'scheduled_at'   => $scheduledAt,
+                'description'    => $validated['description'],
+                'status'         => 'scheduled'
+            ]);
 
-//     if (!in_array($action, ['completed', 'canceled'])) {
-//         return [
-//             'status' => false,
-//             'message' => 'إجراء غير صالح. يجب أن يكون "completed" أو "canceled"',
-//         ];
-//     }
+            // إشعار للمستخدم
+            $animalCase->user->notify(new AppointmentStatusNotification($appointment, 'scheduled'));
 
-//     $app->status = $action;
+            return response()->json([
+                'status'       => true,
+                'message'      => 'تم جدولة الموعد بنجاح' . ($existsSameTime ? ' ⚠ يوجد موعد آخر بنفس التوقيت' : ''),
+                'appointment'  => $appointment->load('animalCase:id,name_animal,case_type,image'),
+                'doctor'       => auth()->user()->only(['id', 'name']),
+                'warning'      => $existsSameTime,
+            ]);
+        }
 
-//     if ($action === 'completed') {
-//         // معالجة المواعيد الطارئة
-//         if ($app->is_immediate && !$app->ambulance_id) {
-//             $ambulance = Ambulance::firstOrCreate(
-//                 ['status' => 'available'],
-//                 [
-//                     'driver_name' => 'سائق افتراضي',
-//                     'driver_phone' => '0599' . rand(1000000, 9999999),
-//                     'status' => 'on_mission'
-//                 ]
-//             );
-//             $app->ambulance_id = $ambulance->id;
-//         }
-        
-//         // تحديث وصف الموعد
-//         $app->description = $app->is_immediate 
-//             ? 'تم إكمال الموعد الطارئ'
-//             : 'تمت الموافقة وإكمال الموعد';
-//     }
+        public function updateAppointment(Request $request, $id)
+        {
+            $validated = $request->validate([
+                'scheduled_date' => 'required|date|after_or_equal:today',
+                'scheduled_time' => 'required|date_format:H:i',
+                'description'    => 'nullable|string|min:10'
+            ]);
 
-//     $app->save();
+            $appointment = Appointment::findOrFail($id);
 
-//     // تحديث حالة الحالة الحيوانية المرتبطة
-//     if ($app->animalCase) {
-//         $app->animalCase->update([
-//             'approval_status' => $action === 'completed' ? 'approved' : 'rejected'
-//         ]);
-//     }
+            $scheduledAt = \Carbon\Carbon::createFromFormat(
+                'Y-m-d H:i',
+                $validated['scheduled_date'] . ' ' . $validated['scheduled_time']
+            );
 
-//     return [
-//         'status' => true,
-//         'message' => $action === 'completed' 
-//             ? 'تمت الموافقة وإكمال الموعد بنجاح'
-//             : 'تم إلغاء الموعد',
-//         'data' => $app->load(['ambulance', 'animalCase'])
-//     ];
-// }
+            // تحديث الموعد
+            $appointment->update([
+                'scheduled_at' => $scheduledAt,
+                'description'  => $validated['description'] ?? $appointment->description,
+            ]);
+
+            // إرسال إشعار للمستخدم بالتحديث
+            $appointment->user->notify(new AppointmentStatusNotification($appointment));
+
+            return response()->json([
+                'status'      => true,
+                'message'     => 'تم تعديل الموعد بنجاح',
+                'appointment' => $appointment->load('animalCase:id,name_animal,case_type,image'),
+            ]);
+        }
+
 
 }

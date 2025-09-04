@@ -37,70 +37,14 @@ class AppointmentController extends Controller
         ]);
         }
 
-
-//    public function handleImmediateCaseDecision(Request $request, Appointment $appointment)
-// {
-//     $user = Auth::user();
-
-//     if (!$user->hasRole(['employee', 'doctor'])) {
-//         return response()->json([
-//             'status' => false,
-//             'message' => 'غير مصرح لك بتولي هذه الحالة.',
-//         ], 403);
-//     }
-
-//     if ($appointment->employee_id || $appointment->doctor_id) {
-//         // الحالة تم توليها مسبقًا
-
-//         // تحقق هل هذا المستخدم هو من تولى الحالة
-//         if (($user->hasRole('employee') && $appointment->employee_id !== $user->id) ||
-//             ($user->hasRole('doctor') && $appointment->doctor_id !== $user->id)) {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'لا يمكنك اتخاذ قرار على حالة لم تتولها.',
-//             ], 403);
-//         }
-
-//         // الآن ننتظر قرار المستخدم: قبول أو رفض
-//         $request->validate([
-//             'action' => 'required|in:accept,reject',
-//         ]);
-
-//         if ($request->action === 'accept') {
-//             $appointment->status = 'approved';
-//             $message = 'تم قبول الحالة بنجاح.';
-//         } else {
-//             $appointment->status = 'rejected';
-//             $message = 'تم رفض الحالة بنجاح.';
-//         }
-
-//         $appointment->save();
-
-//         return response()->json([
-//             'status' => true,
-//             'message' => $message,
-//             'data' => $appointment,
-//         ]);
-
-//     } else {
-//         // تعيين الموظف أو الطبيب إذا لم يتم التعيين بعد
-//         if ($user->hasRole('employee')) {
-//             $appointment->employee_id = $user->id;
-//         } elseif ($user->hasRole('doctor')) {
-//             $appointment->doctor_id = $user->id;
-//         }
-
-//         $appointment->status = 'pending'; // لا تقبل أو ترفض بعد التعيين
-
-//         $appointment->save();
-
-//         return response()->json([
-//             'status' => true,
-//             'message' => 'تم تولي الحالة، يمكنك قبولها أو رفضها لاحقاً.',
-//             'data' => $appointment,
-//         ]);
-//     }
-// }
+ public function update(Request $request): JsonResponse
+        {
+            $appointment = $this->appointmentService->updateAppointment($request);
+            return response()->json([
+                'status'=>true,
+                'data'=>$appointment
+            ],200);
+        }
 
   public function showAppointmentMyUser()
     {

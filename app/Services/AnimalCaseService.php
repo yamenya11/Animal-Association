@@ -66,13 +66,19 @@ public function createCase(Request $request): array
         // إضافة بيانات الموعد
         $responseData['appointment'] = [
             'id' => $result['appointment']->id,
-            'scheduled_date' => $result['appointment']->scheduled_date,
-            'scheduled_time' => $result['appointment']->scheduled_time,
+             'scheduled_at'=> $result['appointment']->scheduled_at
+                ? $result['appointment']->scheduled_at->toIso8601String()
+                : null,
+
             'status' => $result['appointment']->status,
             'description' => $result['appointment']->description
         ];
         
-                  $employee->notify(new \App\Notifications\ImmediateCaseNotification($case, $result['appointment']));
+        if ($result['employee']) {
+            $result['employee']->notify(
+                new \App\Notifications\ImmediateCaseNotification($case, $result['appointment'])
+            );
+        }
         if ($result['ambulance_available']) {
             // **إضافة معلومات السيارة**
             $responseData['ambulance_info'] = $result['ambulance_info'];
@@ -105,33 +111,29 @@ protected function handleEmergencyCase(AnimalCase $case): array
 
     $ambulance = Ambulance::where('status', 'available')->first();
 
-    // تحديد الوصف بناء على وجود السيارة
-    if ($ambulance) {
-        $description = 'طلب طارئ - سيارة إسعاف متاحة';
-    } else {
-        $description = 'طلب طارئ - يرجى التوجه إلى أقرب فرع';
-    }
+    $description = $ambulance
+        ? 'طلب طارئ - سيارة إسعاف متاحة'
+        : 'طلب طارئ - يرجى التوجه إلى أقرب فرع';
 
-    $appointment = Appointment::create([
-        'user_id' => $case->user_id,
-        'employee_id' => $employee ? $employee->id : null,
-        'animal_case_id' => $case->id,
-        'scheduled_date' => $scheduledTime->format('Y-m-d'),
-        'scheduled_time' => $scheduledTime->format('H:i:s'),
-        'status' => 'completed',
-        'is_immediate' => true,
-        'ambulance_id' => $ambulance ? $ambulance->id : null,
-        'description' => $description
+        $appointment = Appointment::create([
+        'user_id'       => $case->user_id,
+        'employee_id'   => $employee?->id,
+        'animal_case_id'=> $case->id,
+        'scheduled_at'  => now()->addMinutes(5), // datetime كامل
+        'status'        => 'completed',
+        'is_immediate'  => true,
+        'description'   => $description,
     ]);
+
 
     if ($ambulance) {
         $ambulance->update(['status' => 'on_mission']);
         return [
             'success' => true,
+            'employee' => $employee,
             'ambulance_available' => true,
             'appointment' => $appointment,
             'ambulance_info' => [
-               // 'plate_number' => $ambulance->plate_number ?: 'غير معروف',
                 'driver_name' => $ambulance->driver_name,
                 'driver_phone' => $ambulance->driver_phone,
                 'estimated_arrival' => '5 دقائق'
@@ -140,11 +142,13 @@ protected function handleEmergencyCase(AnimalCase $case): array
     } else {
         return [
             'success' => true,
+            'employee' => $employee,
             'ambulance_available' => false,
             'appointment' => $appointment
         ];
     }
 }
+
 
 public function getApprovedCases()
 {
