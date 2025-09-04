@@ -22,7 +22,7 @@ class Report extends Model
         'midical_separated',
         'note',
         'doctor_id',
-        'animal_id'
+       'animal_case_id'
     ];
 
        public function getImageUrlAttribute()
@@ -37,10 +37,10 @@ class Report extends Model
             // افترض أن لديك حقل doctor_id في جدول reports
         return $this->belongsTo(User::class, 'doctor_id');
         }
-        public function animal()
-            {
-                return $this->belongsTo(Animal::class);
-            }
+       public function animalCase()
+    {
+        return $this->belongsTo(AnimalCase::class);
+    }
 
 
 }

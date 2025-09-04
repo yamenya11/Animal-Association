@@ -146,6 +146,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
     // الإشعارات
+      
+    
     Route::get('/notifications/userall', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
@@ -258,7 +260,8 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
 
  Route::get('/animal-cases/approved', [AnimalCaseController::class, 'getApprovedCases']); // عرض حالات الحيوانات
     Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
-
+   Route::get('/doctor/appointments', [AppointmentController::class, 'getDoctorAppointments']);
+   
     Route::post('/creat/vaccine', [VaccineController::class, 'store']);
     Route::get('/show/vaccine', [VaccineController::class, 'index']);
      Route::get('/show/vaccine/{id}', [VaccineController::class, 'show']);
@@ -334,6 +337,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::get('/admin/processed-requests', [RequestController::class, 'getProcessedRequests']);
 });
 
+    Route::middleware(['auth:sanctum'])->get('/animals', [EmployeeController::class, 'index']);         // عرض كل الحيوانات
+
 // مسارات الموظف
 Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
 
@@ -349,7 +354,6 @@ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
 // مسارات إدارة الحيوانات
 Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
     // Animal Management
-    Route::get('/animals', [EmployeeController::class, 'index']);           // عرض كل الحيوانات
     Route::get('/animals/{id}', [EmployeeController::class, 'show']);       // عرض حيوان محدد
     Route::get('/animals/available', [EmployeeController::class, 'getAvailableAnimals']); // الحيوانات المتاحة
     Route::post('/animals', [EmployeeController::class, 'store']);          // إضافة حيوان

@@ -98,7 +98,7 @@ public function sendMessage(Request $request, $conversationId)
     $data = $request->validate([
         'body' => 'nullable|string',
         'type' => 'required|in:text,image,file,audio,video',
-        'media' => 'nullable|file', // للتأكد من قبول الملفات
+        'media' => 'nullable|file',
     ]);
 
     $user = $request->user();
@@ -116,6 +116,7 @@ public function sendMessage(Request $request, $conversationId)
         'conversation_id' => $conversation->id,
         'user_id' => $user->id,
     ];
+    
 
     // معالجة الملفات إذا وجدت
     if ($request->hasFile('media') && in_array($data['type'], ['image', 'file', 'audio', 'video'])) {
@@ -138,6 +139,11 @@ public function sendMessage(Request $request, $conversationId)
         ->where('user_id', $user->id)
         ->first();
 
+    $participants = $conversation->participants()->where('user_id', '!=', $user->id)->get();
+
+    foreach ($participants as $participant) {
+        $participant->user->notify(new NewGroupMessageNotification($message));
+    }
     // تحضير الاستجابة
     $response = [
         'id' => $message->id,
@@ -174,7 +180,7 @@ public function sendMessage(Request $request, $conversationId)
  public function messages($conversationId)
 {
     $conversation = Conversation::with(['messages.user' => function($query) {
-        $query->select('id', 'name', 'profile_image'); // اختر فقط الحقول الضرورية
+        $query->select('id', 'name', 'profile_image');
     }])->findOrFail($conversationId);
 
     $messages = $conversation->messages->map(function($message) {

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('animal_id')->nullable()->constrained('animals')->onDelete('cascade');
+            $table->foreignId('animal_case_id')->constrained('animal_cases')->onDelete('cascade');
             $table->string('animal_name')->nullable();
              $table->integer('animal_age');
             $table->string('animal_weight');

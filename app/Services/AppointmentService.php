@@ -26,7 +26,7 @@ class AppointmentService
             ]);
 
             $animalCase = AnimalCase::find($validated['animal_case_id']);
-
+            $doctorId = auth()->id();
             // دمج التاريخ والوقت
             $scheduledAt = \Carbon\Carbon::createFromFormat(
                 'Y-m-d H:i',
@@ -38,12 +38,14 @@ class AppointmentService
                 ->where('status', 'scheduled')
                 ->exists();
 
-            $appointment = Appointment::create([
+                    $appointment = Appointment::create([
                 'user_id'        => $animalCase->user_id,
+                'employee_id'    => $doctorId,
                 'animal_case_id' => $animalCase->id,
                 'scheduled_at'   => $scheduledAt,
                 'description'    => $validated['description'],
-                'status'         => 'scheduled'
+                'status'         => 'scheduled',
+                'is_immediate'   => false
             ]);
 
             // إشعار للمستخدم

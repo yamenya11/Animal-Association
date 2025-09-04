@@ -61,7 +61,7 @@ public function listImmediateCases()
                 ],
                 'appointment_details' => [
                     'created_at' => $appointment->created_at->diffForHumans(),
-                    'scheduled_time' => $appointment->scheduled_time,
+                    'scheduled_time' => $appointment->scheduled_at,
                     'status' => $appointment->status
                 ]
             ];

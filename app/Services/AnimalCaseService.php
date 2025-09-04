@@ -153,7 +153,7 @@ protected function handleEmergencyCase(AnimalCase $case): array
 public function getApprovedCases()
 {
     return AnimalCase::where('approval_status', 'approved')
-        ->with(['user', 'animal'])
+        ->where('request_type','regular')
         ->orderBy('updated_at', 'desc')
         ->get()
         ->map(function($case) {

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\AppointmentService;
 use Illuminate\Http\JsonResponse;
 use App\Models\Appointment;
+use App\Models\AnimalCase;
 use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
@@ -50,7 +51,7 @@ class AppointmentController extends Controller
     {
         $appointments = Appointment::where('user_id', Auth::id())
             ->where('status', 'completed')
-            ->select('id', 'status', 'scheduled_date','scheduled_time', 'is_immediate')
+            ->select('id', 'status', 'scheduled_at', 'is_immediate')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -60,23 +61,26 @@ class AppointmentController extends Controller
         ]);
     }
 
+        public function getDoctorAppointments(Request $request)
+        {
+            $appointments = Appointment::where('employee_id', auth()->id())
+                ->with(['animalCase:id,name_animal,case_type'])
+                ->where('is_immediate', false)
+                ->select('id', 'scheduled_at', 'status', 'description', 'animal_case_id')
+                ->orderBy('scheduled_at', 'desc')
+                ->get();
 
-//   public function respond(Request $request, $app)
-//     {
-//         $request->validate([
-//             'action' => 'required|in:completed,canceled',
-//         ]);
-
-//         $result = $this->appointmentService->acceptappointmentImm($app, $request->action);
-
-//         return response()->json($result);
-//     }
+            return response()->json([
+                'status' => true,
+                'data' => $appointments
+            ]);
+        }
 
 
     public function getProcessedAppointments()
 {
     // جلب المواعيد التي تمت الموافقة عليها أو رفضها فقط
-    $appointments = Appointment::whereIn('status', ['scheduled', 'canceled'])
+    $appointments = Appointment::whereIn('status', ['completed', 'canceled'])
                               ->with(['user','animalCase', 'ambulance'])
                               ->get();
 
@@ -88,7 +92,7 @@ class AppointmentController extends Controller
 
     public function getAppointmentsByStatus($status)
 {
-    if (!in_array($status, ['completed', 'canceled'])) {
+    if (!in_array($status, ['scheduled','completed', 'canceled'])) {
         return response()->json([
             'status' => false,
             'message' => 'حالة غير صالحة. يرجى استخدام "completed" أو "canceled"'

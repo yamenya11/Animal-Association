@@ -20,7 +20,7 @@ class ReportController extends Controller
 public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'animal_id' => 'required|integer|exists:animals,id',
+            'animal_case_id' => 'required|exists:animal_cases,id',
             'animal_name' => 'nullable|string|max:255',
             'animal_age' => 'nullable|integer',
             'animal_weight' => 'nullable|string',
@@ -62,7 +62,7 @@ public function store(Request $request)
  public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'animal_id' => 'sometimes|integer|exists:animals,id',
+            'animal_case_id' => 'sometimes|integer|exists:animal_cases,id',
             'animal_name' => 'sometimes|string|max:255',
             'animal_age' => 'sometimes|integer',
             'animal_weight' => 'sometimes|string|max:10',

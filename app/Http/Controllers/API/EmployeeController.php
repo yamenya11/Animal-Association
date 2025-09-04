@@ -26,6 +26,7 @@ class EmployeeController extends Controller
 
         public function filte_index(Request $request): JsonResponse
         {
+
             $query = Animal::with(['type', 'user']);
 
             if ($request->has('purpose') && in_array($request->purpose, ['adoption', 'temporary_care'])) {
@@ -89,6 +90,12 @@ class EmployeeController extends Controller
 
             public function index(): JsonResponse
         {
+            if(!auth()->user()->hasRole(['vet','employee','admin'])){
+           return response()->json([
+            'status'=>false,
+            'message' => 'لاتملك صلاحية'],403);
+                
+            }
             $animals = Animal::with(['type', 'user'])
                 ->get()
                 ->map(function($animal) {

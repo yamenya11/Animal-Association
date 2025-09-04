@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Report;
-use App\Models\Animal;
+use App\Models\AnimalCase;
 use Illuminate\Support\Facades\Storage;
 
 class ReportService
@@ -11,13 +11,13 @@ class ReportService
 public function createReport(array $data): Report
 {
     // التحقق من وجود animal_id وربطه بالحيوان
-    if (empty($data['animal_id'])) {
-        throw new \Exception('يجب تحديد الحيوان.');
+    if (empty($data['animal_case_id'])) {
+        throw new \Exception('يجب تحديد حالة الحيوان.');
     }
 
-    $animal = Animal::find($data['animal_id']);
+    $animal = AnimalCase::find($data['animal_case_id']);
     if (!$animal) {
-        throw new \Exception('الحيوان غير موجود.');
+        throw new \Exception('الحالة غير موجود.');
     }
 
     // استخدام بيانات الحيوان كافتراضية إذا لم تُرسل
@@ -33,7 +33,7 @@ public function createReport(array $data): Report
     }
 
     $reportData = [
-        'animal_id'         => $data['animal_id'],
+        'animal_case_id'         => $data['animal_case_id'],
         'animal_name'       => $data['animal_name'],
         'animal_age'        => $data['animal_age'],
         'animal_weight'     => $data['animal_weight'] ?? null,

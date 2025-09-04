@@ -49,4 +49,8 @@ public function doctor()
 {
     return $this->belongsTo(User::class, 'doctor_id');
 }
+ public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
 }
