@@ -38,7 +38,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\RatingController;
 use \App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FcmController;
-
+use App\Http\Controllers\FinancialReportController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -337,7 +337,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // // التقارير
     Route::get('/admin/reports/performance', [AdminController::class, 'getPerformanceReport']);
     Route::get('/admin/reports/daily', [AdminController::class, 'getDailyReport']);
-
+  Route::get('/export-ads', [FinancialReportController::class, 'exportAds']);   //تقرير مالي
     // // مسارات إدارة الفعاليات للمدير
         Route::get('/events', [AdminController::class, 'getEvents']);
         Route::post('/events', [AdminController::class, 'createEvent']);
