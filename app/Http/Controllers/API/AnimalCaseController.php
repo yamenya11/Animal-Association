@@ -67,4 +67,16 @@ public function approve(Request $request, $caseId)
             'data' => $case
         ]);
     }
+
+    
+    public function myApprovedCases()
+    {
+        $cases = $this->animalCaseService->getApprovedCasesByUser();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'تم جلب الحالات الخاصة بك بعد الموافقة بنجاح',
+            'data' => $cases
+        ], 200);
+    }
 }

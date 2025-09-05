@@ -294,7 +294,7 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
 Route::get('/animal-cases/doctor', [AnimalCaseController::class, 'index'])
      ->middleware(['auth:sanctum', 'role:vet']);
 
-
+Route::middleware('auth:sanctum')->get('/my-cases', [AnimalCaseController::class, 'myApprovedCases']);
 
 
 

@@ -183,5 +183,16 @@ public function getApprovedCases()
                 });
         }
 
+         public function getApprovedCasesByUser()
+    {
+        $userId = Auth::id(); // معرف المستخدم الحالي
+
+        return AnimalCase::where('user_id', $userId)
+            ->where('approval_status', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
+           
+    }
+
 
 }
