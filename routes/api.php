@@ -47,9 +47,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/guides', [GuideController::class, 'createGuide']);
-            Route::put('/guides/{id}', [GuideController::class, 'updateGuide']);
+            Route::post('/guides/{id}', [GuideController::class, 'updateGuide']);
             Route::delete('/guides/{id}', [GuideController::class, 'deleteGuide']);
             Route::get('/guides', [GuideController::class, 'listAllByCategory']);
+             Route::get('/guides', [GuideController::class, 'index']);
             Route::get('/guides/{id}', [GuideController::class, 'showGuide']);
         });
 

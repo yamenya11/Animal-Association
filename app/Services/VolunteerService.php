@@ -15,12 +15,12 @@ public function createRequest(Request $request): array
     $validated = $request->validate([
         'full_name' => 'required|string|max:255',
         'phone' => 'nullable|string|max:20|regex:/^[0-9]+$/',
-        'volunteer_type_name' => 'required|string|max:255', // استخدام الاسم بدلاً من slug
+        'volunteer_type_name' => 'required|string|max:255', 
         'availability' => 'nullable|string|max:255',
         'notes' => 'nullable|string',
     ]);
 
-    // البحث عن النوع بالاسم (بدون حساسية لحالة الأحرف)
+
     $volunteerType = VolunteerType::where('name_en', $validated['volunteer_type_name'])
                         ->orWhere('name_en', $validated['volunteer_type_name'])
                         ->first();
@@ -32,7 +32,7 @@ public function createRequest(Request $request): array
         ];
     }
 
-    // معالجة ملف السيرة الذاتية
+   
     $filePath = null;
     if ($request->hasFile('cv')) {
         $file = $request->file('cv');
@@ -40,7 +40,6 @@ public function createRequest(Request $request): array
         $filePath = $file->storeAs('uploads/cvs', $filename, 'public');
     }
 
-    // إنشاء طلب التطوع
     $volunteer = VolunteerRequest::create([
         'user_id' => auth()->id(),
         'full_name' => $validated['full_name'],

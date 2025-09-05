@@ -65,7 +65,7 @@ public function create(array $validatedData)
         $vaccine = Vaccine::findOrFail($vaccineId);
         
         if ($request->hasFile('image')) {
-            // Delete old image if exists
+        
             if ($vaccine->image) {
                 Storage::disk('public')->delete($vaccine->image);
             }
@@ -74,7 +74,7 @@ public function create(array $validatedData)
             $vaccine->save();
         }
         
-        // إضافة رابط الصورة للاستجابة
+       
         $vaccineData = $vaccine->toArray();
         if ($vaccine->image) {
             $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
@@ -88,20 +88,20 @@ public function create(array $validatedData)
         $vaccine = Vaccine::findOrFail($vaccineId);
 
         if (isset($validatedData['image']) && $validatedData['image']->isValid()) {
-            // Delete old image if exists
+         
             if ($vaccine->image) {
                 Storage::disk('public')->delete($vaccine->image);
             }
             
             $validatedData['image'] = $validatedData['image']->store('vaccine_images', 'public');
         } else {
-            // Keep the old image if no new image is provided
+       
             unset($validatedData['image']);
         }
 
         $vaccine->update($validatedData);
         
-        // إضافة رابط الصورة للاستجابة
+      
         $vaccineData = $vaccine->fresh()->toArray();
         if ($vaccine->image) {
             $vaccineData['image_url'] = config('app.url') . '/storage/' . $vaccine->image;
@@ -114,7 +114,6 @@ public function create(array $validatedData)
     {
         $vaccine = Vaccine::findOrFail($vaccineId);
         
-        // Delete associated image if exists
         if ($vaccine->image) {
             Storage::disk('public')->delete($vaccine->image);
         }

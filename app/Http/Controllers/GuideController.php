@@ -7,9 +7,27 @@ use App\Models\Category;
 use App\Models\AnimalGuide;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
-
+use Spatie\Permission\Models\Role; 
 class GuideController extends Controller
 {
+
+
+
+            public function index()
+        {
+                if (auth()->user()->hasRole('vet')) {
+            $categories = Category::all(); 
+        } else {
+            $categories = [];
+        }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'تم جلب دليل الحيوانات بنجاح',
+                'data' => $categories
+            ], 200);
+        }
+
   
    public function listAllByCategory()
 {
