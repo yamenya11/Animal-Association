@@ -122,4 +122,51 @@ class NotificationController extends Controller
         
         return isset($links[$type]) ? $links[$type].$id : null;
     }
+
+    public function getChatNotifications(Request $request)
+    {
+        $user = $request->user();
+
+        $notifications = $user->notifications()
+            ->where('type', 'App\Notifications\NewMessageNotification')
+            ->orWhere('type', 'App\Notifications\NewGroupMessageNotification')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->through(function ($notification) {
+                return $this->formatChatNotification($notification);
+            });
+
+        return response()->json([
+            'status' => true,
+            'notifications' => $notifications,
+            'unread_chat_count' => $user->unreadNotifications()
+                ->where('type', 'App\Notifications\NewMessageNotification')
+                ->orWhere('type', 'App\Notifications\NewGroupMessageNotification')
+                ->count(),
+        ]);
+    }
+
+    protected function formatChatNotification(DatabaseNotification $notification)
+{
+    $data = is_array($notification->data) 
+        ? $notification->data 
+        : json_decode($notification->data, true) ?? [];
+
+    return [
+        'id' => $notification->id,
+        'type' => $data['type'] ?? 'chat_message',
+        'conversation_id' => $data['conversation_id'] ?? null,
+        'message_id' => $data['message_id'] ?? null,
+        'sender_id' => $data['sender_id'] ?? null,
+        'title' => 'رسالة جديدة',
+        'body' => $data['body'] ?? '📎 رسالة تحتوي مرفق',
+        'is_read' => !is_null($notification->read_at),
+        'created_at' => $notification->created_at->toIso8601String(),
+        'chat_data' => [ // بيانات إضافية للدردشة
+            'sender_name' => $data['sender_name'] ?? null,
+            'group_title' => $data['group_title'] ?? null,
+            'message_type' => $data['type'] ?? 'text'
+        ]
+    ];
+}
 }

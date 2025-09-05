@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Participant;
 use App\Models\Recipient;
+use App\Notifications\NewMessageNotification;
 class ChatController extends Controller
 {
   
@@ -142,7 +143,7 @@ public function sendMessage(Request $request, $conversationId)
     $participants = $conversation->participants()->where('user_id', '!=', $user->id)->get();
 
     foreach ($participants as $participant) {
-        $participant->user->notify(new NewGroupMessageNotification($message));
+        $participant->user->notify(new NewMessageNotification($message));
     }
     // تحضير الاستجابة
     $response = [

@@ -12,9 +12,9 @@ class AnimalGuide extends Model
 
     public function category()
 {
-    return $this->belongsTo(Category::class);
+    return $this->belongsTo(Category::class,'category_id');
 }
  protected $fillable = [
-        'name', 'type', 'image', 'description', 'food',
+        'name', 'type', 'image', 'description', 'food','category_id'
     ];
 }

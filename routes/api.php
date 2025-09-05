@@ -43,6 +43,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+      
+
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::post('/guides', [GuideController::class, 'createGuide']);
+            Route::put('/guides/{id}', [GuideController::class, 'updateGuide']);
+            Route::delete('/guides/{id}', [GuideController::class, 'deleteGuide']);
+            Route::get('/guides', [GuideController::class, 'listAllByCategory']);
+            Route::get('/guides/{id}', [GuideController::class, 'showGuide']);
+        });
+
   Route::middleware('auth:sanctum')->post('/fcm/update-token', [FcmController::class, 'updateToken']);
 
         Route::middleware('auth:sanctum')->group(function () {
@@ -150,9 +160,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     
     Route::get('/notifications/userall', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/notifications/chat', [NotificationController::class, 'getChatNotifications']);
+    Route::post('/notifications/read/all', [NotificationController::class, 'markAllAsRead']);
 
-    //الدليل
-    Route::get('/animal-guide', [GuideController::class, 'listAllByCategory']);
+   
 
 });
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -261,7 +272,7 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
  Route::get('/animal-cases/approved', [AnimalCaseController::class, 'getApprovedCases']); // عرض حالات الحيوانات
     Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
    Route::get('/doctor/appointments', [AppointmentController::class, 'getDoctorAppointments']);
-   
+
     Route::post('/creat/vaccine', [VaccineController::class, 'store']);
     Route::get('/show/vaccine', [VaccineController::class, 'index']);
      Route::get('/show/vaccine/{id}', [VaccineController::class, 'show']);
