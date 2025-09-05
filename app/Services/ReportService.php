@@ -10,7 +10,7 @@ class ReportService
 {
 public function createReport(array $data): Report
 {
-    // التحقق من وجود animal_id وربطه بالحيوان
+   
     if (empty($data['animal_case_id'])) {
         throw new \Exception('يجب تحديد حالة الحيوان.');
     }
@@ -20,7 +20,7 @@ public function createReport(array $data): Report
         throw new \Exception('الحالة غير موجود.');
     }
 
-    // استخدام بيانات الحيوان كافتراضية إذا لم تُرسل
+   
     $data['animal_name'] = $data['animal_name'] ?? $animal->name;
     $data['animal_age']  = $data['animal_age'] ?? $this->calculateAge($animal->birth_date);
 
@@ -40,7 +40,7 @@ public function createReport(array $data): Report
         'image'             => $data['image'] ?? null,
         'status'            => $data['status'] ?? 'Pending',
         'temperature'       => $data['temperature'] ?? null,
-        'pulse'             => $data['pulse'] ?? null,
+        'pluse'             => $data['pluse'] ?? null,
         'respiration'       => $data['respiration'] ?? null,
         'general_condition' => $data['general_condition'] ?? null,
         'medical_separated' => $data['medical_separated'] ?? null,
@@ -50,7 +50,6 @@ public function createReport(array $data): Report
 
     $report = Report::create($reportData);
 
-    // إضافة رابط الصورة مباشرة
     $report->image_url = $report->image ? config('app.url') . '/storage/' . $report->image : null;
 
     return $report;
@@ -64,7 +63,7 @@ protected function calculateAge($birthDate)
     $today = new DateTime();
     $age = $today->diff($birth);
     
-    return $age->y; // العمر بالسنين
+    return $age->y; 
 }
 
    public function updateReport($id, array $data)
@@ -80,7 +79,7 @@ protected function calculateAge($birthDate)
 
     $report->update($data);
 
-    // إضافة رابط الصورة مباشرة
+    
    $report->image_url = $report->image 
     ? config('app.url') . '/storage/' . $report->image 
     : null;
@@ -90,13 +89,12 @@ protected function calculateAge($birthDate)
 
   public function getAllReportsWithAnimal()
     {
-        // تحميل التقارير مع الحيوان المرتبط
-        return Report::with('animal')->get();
+        return Report::with('animalCase')->get();
     }
 
     public function getReportWithAnimal($id)
     {
-        return Report::with('animal')->findOrFail($id);
+        return Report::with('animalCase')->findOrFail($id);
     }
 
     public function deleteReport($id)

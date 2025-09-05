@@ -72,7 +72,6 @@ class GuideController extends Controller
   
  public function updateGuide(Request $request, $id): JsonResponse
 {
-    // التحقق من الصلاحية
     if (!auth()->user()->hasAnyRole(['admin', 'employee', 'vet'])) {
         return response()->json([
             'status' => false,
@@ -91,9 +90,7 @@ class GuideController extends Controller
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
     ]);
 
-    // معالجة الصورة إذا وجدت
     if ($request->hasFile('image')) {
-        // حذف الصورة القديمة إذا كانت موجودة
         if ($animalGuide->image) {
             Storage::disk('public')->delete($animalGuide->image);
         }
@@ -104,7 +101,6 @@ class GuideController extends Controller
 
     $animalGuide->update($validated);
 
-    // إضافة الـ URL الكامل للصورة
     $animalGuide->image_url = $animalGuide->image ? config('app.url') . '/storage/' . $animalGuide->image : null;
 
     return response()->json([
@@ -114,12 +110,9 @@ class GuideController extends Controller
     ]);
 }
 
-    /**
-     * حذف دليل حيوان (للمستخدمين المصرح لهم)
-     */
+
     public function deleteGuide($id): JsonResponse
     {
-        // التحقق من الصلاحية
         if (!auth()->user()->hasAnyRole(['admin', 'employee', 'vet'])) {
             return response()->json([
                 'status' => false,
@@ -129,7 +122,6 @@ class GuideController extends Controller
 
         $animalGuide = AnimalGuide::findOrFail($id);
 
-        // حذف الصورة إذا كانت موجودة
         if ($animalGuide->image) {
             Storage::disk('public')->delete($animalGuide->image);
         }
@@ -142,9 +134,7 @@ class GuideController extends Controller
         ]);
     }
 
-    /**
-     * عرض دليل حيوان محدد (لجميع المستخدمين)
-     */
+
     public function showGuide($id): JsonResponse
 {
     $animalGuide = AnimalGuide::with('category')->findOrFail($id);
