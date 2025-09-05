@@ -18,11 +18,13 @@ class Vaccine extends Model
 ];
 
 public function dueToday()
-    {
-        return $this->whereDate('due_date', now()->toDateString())
-                    ->with('animal') 
-                    ->get();
-    }
+{
+    return Vaccine::whereDate('due_date', now()->toDateString())
+                  ->with('animal') 
+                  ->get();
+}
+
+
 public function animal()
 {
     return $this->belongsTo(Animal::class);

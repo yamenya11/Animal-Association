@@ -43,14 +43,15 @@ class VaccineDueNotification extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray($notifiable)
-        {
-            return [
-                'title' => 'موعد لقاح اليوم',
-                'message' => 'اليوم موعد لقاح ' . $this->vaccine->type .
-                            ' للحيوان: ' . ($this->vaccine->animal->name ?? 'غير محدد'),
-                'due_date' => $this->vaccine->due_date,
-            ];
-        }
+public function toArray($notifiable)
+{
+    return [
+        'title' => 'موعد لقاح اليوم',
+        'message' => 'اليوم موعد لقاح ' . $this->vaccine->type .
+                    ' للحيوان: ' . ($this->vaccine->animal->name ?? 'غير معروف'),
+        'due_date' => $this->vaccine->due_date,
+    ];
+}
+
 
 }

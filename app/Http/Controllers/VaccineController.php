@@ -26,9 +26,18 @@ public function store(Request $request)
         'due_date' => 'required|date|after_or_equal:today',
     ]);
 
-    try {
-        $result = $this->vaccineService->create($validated);
-        return response()->json($result, 201);
+     try {
+        $vaccine = $this->vaccineService->create($validated);
+
+        // أرسل الإشعار للطبيب الذي أنشأ اللقاح مباشرة
+        $doctor = auth()->user();
+        $doctor->notify(new \App\Notifications\VaccineDueNotification($vaccine));
+
+        return response()->json([
+            'status' => true,
+            'message' => 'تمت إضافة اللقاح بنجاح وإرسال الإشعار للطبيب',
+            'data' => $vaccine
+        ], 201);
 
     } catch (\Exception $e) {
         return response()->json([
@@ -38,7 +47,6 @@ public function store(Request $request)
         ], 500);
     }
 }
-
 
 
     public function index()
@@ -56,12 +64,15 @@ public function store(Request $request)
       // عرض جميع الإشعارات للمستخدم الحالي
     public function notifications()
     {
-        $notifications = auth()->user()->notifications;
+         $notifications = auth()->user()
+        ->notifications()
+        ->where('type', 'App\\Notifications\\VaccineDueNotification')
+        ->get();
 
-        return response()->json([
-            'status' => true,
-            'notifications' => $notifications,
-        ]);
+    return response()->json([
+        'status' => true,
+        'notifications' => $notifications
+    ]);
     }
 
     // عرض الإشعارات الغير مقروءة فقط
