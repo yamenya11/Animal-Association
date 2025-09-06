@@ -42,7 +42,6 @@ public function __construct(NotificationService $notificationService = null, Wal
             $user = Auth::user();
             $amount = (float) $validated['price'];
 
-            // التحقق من الرصيد قبل إنشاء الإعلان
             if ((float) $user->wallet_balance < $amount) {
                 throw new \Exception('رصيد غير كافي لإنشاء الإعلان');
             }
@@ -55,7 +54,6 @@ public function __construct(NotificationService $notificationService = null, Wal
                 'status' => 'pending'
             ]);
 
-            // معالجة الملفات المرئية
             if ($request->hasFile('media')) {
                 foreach ($request->file('media') as $file) {
                     $path = $file->store('ads_media', 'public');
@@ -67,13 +65,9 @@ public function __construct(NotificationService $notificationService = null, Wal
                     ]);
                 }
             }
-
-            // سحب المبلغ من المحفظة
-           // $this->walletService->withdraw($user, $amount, $ad);
-
             DB::commit();
 
-            // تحميل media مع media_url
+
             $ad->load(['media' => function($query) {
                 $query->select('*', 
                     DB::raw('CONCAT("' . config('app.url') . '/storage/", media_path) as media_url')
@@ -116,16 +110,14 @@ public function __construct(NotificationService $notificationService = null, Wal
                     throw new \Exception('رصيد غير كافي');
                 }
 
-                // Pass the ad to the withdraw method
                 $this->walletService->withdraw($user, $amount, $ad);
 
-                        $ad->update([
+          $ad->update([
                 'status' => 'approved',
                 'approved_by' => $adminId,
                 'approved_at' => now(),
             ]);
 
-            // إرسال إشعار FCM
             $notificationService = app(\App\Services\NotificationService::class);
             $notificationService->sendAdApprovedNotification($ad);
                 DB::commit();

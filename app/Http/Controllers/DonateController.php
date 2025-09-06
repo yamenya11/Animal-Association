@@ -15,91 +15,91 @@ class DonateController extends Controller
     protected $donateService;
 
     protected $notificationService;
- public function __construct(DonateService $donateService=null, NotificationService $notificationService=null)
-{
-    $this->donateService = $donateService;
-    $this->notificationService = $notificationService;
-}
-
-    public function create_donate(Request $request): JsonResponse
-{
-    try {
-        $response = $this->donateService->store($request);
-
-       return response()->json([
-            'status' => $response['status'] ?? true,
-            'message' => $response['message'],
-            'data' => $response['data'],
-            'user_id' => $response['data']->user_id // إضافة هذا السطر
-        ], 201);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'فشل في إنشاء التبرع: ' . $e->getMessage()
-        ], 400);
+    public function __construct(DonateService $donateService=null, NotificationService $notificationService=null)
+    {
+        $this->donateService = $donateService;
+        $this->notificationService = $notificationService;
     }
-}
-        public function index()
+
+        public function create_donate(Request $request): JsonResponse
+    {
+        try {
+            $response = $this->donateService->store($request);
+
+        return response()->json([
+                'status' => $response['status'] ?? true,
+                'message' => $response['message'],
+                'data' => $response['data'],
+                'user_id' => $response['data']->user_id 
+            ], 201);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'فشل في إنشاء التبرع: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+            public function index()
+            {
+                $donations = DB::table('donates')
+                    ->leftJoin('users', 'donates.user_id', '=', 'users.id')
+                    ->select(
+                        'donates.*',
+                        'users.id as user_id', 
+                        'users.name as user_name',
+                        'users.email as user_email'
+                    )
+                    ->orderBy('donates.created_at', 'desc')
+                    ->get();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'قائمة التبرعات',
+                    'data' => $donations
+                ]);
+            }
+
+        public function respond($donateId, Request $request)
         {
-            $donations = DB::table('donates')
-                ->leftJoin('users', 'donates.user_id', '=', 'users.id')
-                ->select(
-                    'donates.*',
-                    'users.id as user_id', // تغيير هنا
-                    'users.name as user_name',
-                    'users.email as user_email'
-                )
-                ->orderBy('donates.created_at', 'desc')
-                ->get();
+            $validated = $request->validate([
+                    'status' => 'required|in:approved,rejected'
+                ]);
+
+            $donation = Donate::findOrFail($donateId);
+
+            // تحديث حالة التبرع
+            $donation->update([
+                'status' => $validated['status']
+            ]);
+
+            // إرسال الإشعار (إذا كان موجوداً)
+            $donation->user->notify(new \App\Notifications\DonationStatusNotification($donation, $validated['status']));
 
             return response()->json([
                 'status' => true,
-                'message' => 'قائمة التبرعات',
-                'data' => $donations
+                'message' => $validated['status'] === 'approved'
+                    ? 'تمت الموافقة على التبرع بنجاح'
+                    : 'تم رفض التبرع',
+                'data' => $donation
             ]);
         }
 
- public function respond($donateId, Request $request)
-{
-    $validated = $request->validate([
-            'status' => 'required|in:approved,rejected'
-        ]);
-
-    $donation = Donate::findOrFail($donateId);
-
-    // تحديث حالة التبرع
-      $donation->update([
-        'status' => $validated['status']
-    ]);
-
-    // إرسال الإشعار (إذا كان موجوداً)
-$donation->user->notify(new \App\Notifications\DonationStatusNotification($donation, $validated['status']));
-
-    return response()->json([
-        'status' => true,
-        'message' => $validated['status'] === 'approved'
-            ? 'تمت الموافقة على التبرع بنجاح'
-            : 'تم رفض التبرع',
-        'data' => $donation
-    ]);
-}
 
 
 
+        public function approvedDonations()
+        {
+            $userId = Auth::id();
 
-public function approvedDonations()
-{
-     $userId = Auth::id();
+            $donations = Donate::where('user_id', $userId)
+                            ->orderBy('created_at', 'desc')
+                            ->get();
 
-    $donations = Donate::where('user_id', $userId)
-                       ->orderBy('created_at', 'desc')
-                       ->get();
-
-    return response()->json([
-        'status' => true,
-        'data'   => $donations,
-        'message' => 'جميع تبرعاتك'
-    ]); 
-}
+            return response()->json([
+                'status' => true,
+                'data'   => $donations,
+                'message' => 'جميع تبرعاتك'
+            ]); 
+        }
 }

@@ -62,7 +62,7 @@ class CourseController extends Controller
             }
         }
 
-            // عرض جميع الكورسات (للمستخدمين العاديين - النشطة فقط)
+         
             public function indexForUsers()
             {
                 $courses = $this->courseService->getActiveCourses();
@@ -75,7 +75,7 @@ class CourseController extends Controller
                 // عرض الكورسات حسب التصنيفات (للمستخدمين)
             public function getByCategories(Request $request)
             {
-                $categoryName = $request->input('category'); // أو يمكن استخدام route parameter
+                $categoryName = $request->input('category'); 
                 
                 $courses = $this->courseService->getCoursesByCategoriesForUsers($categoryName);
                 

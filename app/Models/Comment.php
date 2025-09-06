@@ -35,7 +35,6 @@ class Comment extends Model
         protected static function booted()
     {
         static::deleting(function ($comment) {
-            // حذف الردود المرتبطة بالتعليق قبل حذف التعليق نفسه
             $comment->replies()->delete();
         });
     }

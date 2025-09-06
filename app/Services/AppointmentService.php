@@ -27,18 +27,16 @@ class AppointmentService
 
             $animalCase = AnimalCase::find($validated['animal_case_id']);
             $doctorId = auth()->id();
-            // دمج التاريخ والوقت
             $scheduledAt = \Carbon\Carbon::createFromFormat(
                 'Y-m-d H:i',
                 $validated['scheduled_date'] . ' ' . $validated['scheduled_time']
             );
 
-            // تحذير فقط إذا كان في موعد بنفس الوقت
             $existsSameTime = Appointment::where('scheduled_at', $scheduledAt)
                 ->where('status', 'scheduled')
                 ->exists();
 
-                    $appointment = Appointment::create([
+                $appointment = Appointment::create([
                 'user_id'        => $animalCase->user_id,
                 'employee_id'    => $doctorId,
                 'animal_case_id' => $animalCase->id,
@@ -48,7 +46,6 @@ class AppointmentService
                 'is_immediate'   => false
             ]);
 
-            // إشعار للمستخدم
             $animalCase->user->notify(new AppointmentStatusNotification($appointment, 'scheduled'));
 
             return response()->json([
@@ -75,13 +72,12 @@ class AppointmentService
                 $validated['scheduled_date'] . ' ' . $validated['scheduled_time']
             );
 
-            // تحديث الموعد
+          
             $appointment->update([
                 'scheduled_at' => $scheduledAt,
                 'description'  => $validated['description'] ?? $appointment->description,
             ]);
 
-            // إرسال إشعار للمستخدم بالتحديث
             $appointment->user->notify(new AppointmentStatusNotification($appointment));
 
             return response()->json([

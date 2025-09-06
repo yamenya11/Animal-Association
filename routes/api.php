@@ -39,11 +39,13 @@ use App\Http\Controllers\RatingController;
 use \App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FinancialReportController;
+use App\Http\Controllers\SearchController;
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-      
+    
 
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/guides', [GuideController::class, 'createGuide']);
@@ -164,7 +166,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     Route::get('/notifications/chat', [NotificationController::class, 'getChatNotifications']);
     Route::post('/notifications/read/all', [NotificationController::class, 'markAllAsRead']);
 
-   
+   //البحث
+     Route::get('/search', [SearchController::class, 'search']);
 
 });
 Route::middleware(['auth:sanctum'])->group(function () {

@@ -8,64 +8,64 @@ use Illuminate\Validation\Rule;
 class DonateService{
 
 
-public function store(Request $req): array
-{
-   $validatedData = $req->validate([
-        'full_name' => 'required|string|max:255',
-        'number'         => 'required|string|max:15',
-        'donation_type'  => 'required|string|in:food,money',
-        'notes'          => 'nullable|string|max:500',
-        'ammountinkello' => 'nullable|string|max:15',
-        'amount'         => 'nullable|numeric|min:1',
-    ]);
-    $validatedData['user_id'] = auth()->id();
-    $validatedData['status']  = 'pending';
+        public function store(Request $req): array
+        {
+        $validatedData = $req->validate([
+                'full_name' => 'required|string|max:255',
+                'number'         => 'required|string|max:15',
+                'donation_type'  => 'required|string|in:food,money',
+                'notes'          => 'nullable|string|max:500',
+                'ammountinkello' => 'nullable|string|max:15',
+                'amount'         => 'nullable|numeric|min:1',
+            ]);
+            $validatedData['user_id'] = auth()->id();
+            $validatedData['status']  = 'pending';
 
- if ($validatedData['donation_type'] === 'food') {
-        if (empty($validatedData['ammountinkello'])) {
+        if ($validatedData['donation_type'] === 'food') {
+                if (empty($validatedData['ammountinkello'])) {
+                    return [
+                        'status'  => false,
+                        'message' => 'يجب تحديد كمية الطعام بالكيلو عند اختيار التبرع طعاماً',
+                    ];
+                }
+                $validatedData['amount'] = null; 
+            } elseif ($validatedData['donation_type'] === 'money') {
+                if (empty($validatedData['amount'])) {
+                    return [
+                        'status'  => false,
+                        'message' => 'يجب تحديد مبلغ التبرع عند اختيار التبرع مالياً',
+                    ];
+                }
+                $validatedData['ammountinkello'] = null; 
+            }
+            $donation = Donate::create($validatedData);
+
             return [
-                'status'  => false,
-                'message' => 'يجب تحديد كمية الطعام بالكيلو عند اختيار التبرع طعاماً',
+                'status'  => true,
+                'message' => 'تم تقديم التبرع بنجاح وسيتم مراجعته من قبل الإدارة',
+                'data'    => $donation,
             ];
         }
-        $validatedData['amount'] = null; 
-    } elseif ($validatedData['donation_type'] === 'money') {
-        if (empty($validatedData['amount'])) {
-            return [
-                'status'  => false,
-                'message' => 'يجب تحديد مبلغ التبرع عند اختيار التبرع مالياً',
-            ];
-        }
-        $validatedData['ammountinkello'] = null; 
-    }
-    $donation = Donate::create($validatedData);
-
-    return [
-        'status'  => true,
-        'message' => 'تم تقديم التبرع بنجاح وسيتم مراجعته من قبل الإدارة',
-        'data'    => $donation,
-    ];
-}
 
 
-public function respondToPost($donateId, Request $request)
-    {
-        $validated = $request->validate([
-            'status' => 'required|in:approved,rejected'
-        ]);
+        public function respondToPost($donateId, Request $request)
+            {
+                $validated = $request->validate([
+                    'status' => 'required|in:approved,rejected'
+                ]);
 
-        $donate = Donate::findOrFail($donateId);
-        $donate->update(['status' => $validated['status']]);
- 
-            $donate->user->notify(new \App\Notifications\DonationStatusNotification($donate, $validated['status']));
-        return response()->json([
-            'status'  => true,
-            'message' => $validated['status'] === 'approved'
-                ? 'تمت الموافقة على التبرع.'
-                : 'تم رفض التبرع.',
-            'data'    => $donate,
-        ]);
-    }
+                $donate = Donate::findOrFail($donateId);
+                $donate->update(['status' => $validated['status']]);
+        
+                    $donate->user->notify(new \App\Notifications\DonationStatusNotification($donate, $validated['status']));
+                return response()->json([
+                    'status'  => true,
+                    'message' => $validated['status'] === 'approved'
+                        ? 'تمت الموافقة على التبرع.'
+                        : 'تم رفض التبرع.',
+                    'data'    => $donate,
+                ]);
+            }
 
 
 }

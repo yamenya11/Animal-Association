@@ -31,23 +31,19 @@ use Kreait\Firebase\Facades\Firebase;
 class NotificationService
 {
    
-    /**
-     * إرسال إشعار بالموافقة على الإعلان
-     */
+ 
   public function sendAdApprovedNotification($ad)
     {
         $user = $ad->user;
 
         if (!$user) return false;
 
-        // الإشعار في DB و FCM تلقائياً
+       
         $user->notify(new AdApprovedNotification($ad));
 
         return true;
     }
-    /**
-     * إرسال إشعار بتحديث حالة التبني
-     */
+  
  public function sendAdoptionStatusNotification(Adoption $adoption): bool
 {
     try {
@@ -71,9 +67,7 @@ class NotificationService
 }
 
 
-    /**
-     * إرسال إشعار بتحديث حالة المنشور
-     */
+ 
     public function sendPostStatusNotification(Post $post, string $action): bool
     {
         try {
@@ -103,34 +97,30 @@ class NotificationService
         }
     }
 
-    /**
-     * إرسال إشعار بتحديث حالة التبرع
-     */
-   public function sendDonationStatusNotification(Donate $donation, string $status): bool
-{
-    try {
-        $user = $donation->user;
+  
+//    public function sendDonationStatusNotification(Donate $donation, string $status): bool
+// {
+//     try {
+//         $user = $donation->user;
         
-        if (!$user) {
-            throw new \Exception("لم يتم العثور على مستخدم مرتبط بالتبرع");
-        }
+//         if (!$user) {
+//             throw new \Exception("لم يتم العثور على مستخدم مرتبط بالتبرع");
+//         }
 
-        $user->notify(new DonationStatusNotification($donation, $status));
+//         $user->notify(new DonationStatusNotification($donation, $status));
         
-        return true;
-    } catch (Throwable $e) {
-        Log::error('فشل إرسال إشعار حالة التبرع', [
-            'donation_id' => $donation->id,
-            'error' => $e->getMessage()
-        ]);
-        return false;
-    }
-}
+//         return true;
+//     } catch (Throwable $e) {
+//         Log::error('فشل إرسال إشعار حالة التبرع', [
+//             'donation_id' => $donation->id,
+//             'error' => $e->getMessage()
+//         ]);
+//         return false;
+//     }
+// }
 
 
-    /**
-     * إرسال إشعار حالة طارئة
-     */
+
     public function sendImmediateCaseNotification(User $employee, AnimalCase $case, Appointment $appointment): bool
     {
         try {
@@ -177,48 +167,44 @@ class NotificationService
     }
 }
 
-    /**
-     * إرسال إشعار بتحديث حالة الموعد
-     */
-    public function sendAppointmentStatusNotification(Appointment $appointment, string $status): bool
-    {
-        try {
-            $user = $appointment->user;
+  
+    // public function sendAppointmentStatusNotification(Appointment $appointment, string $status): bool
+    // {
+    //     try {
+    //         $user = $appointment->user;
             
-            if (!$user) {
-                throw new \Exception("الموعد لا يحتوي على مستخدم مرتبط");
-            }
+    //         if (!$user) {
+    //             throw new \Exception("الموعد لا يحتوي على مستخدم مرتبط");
+    //         }
             
-            $user->notify(new AppointmentStatusNotification($appointment, $status));
+    //         $user->notify(new AppointmentStatusNotification($appointment, $status));
             
-            $statusText = $status === 'approved' ? 'قبول' : 'رفض';
+    //         $statusText = $status === 'approved' ? 'قبول' : 'رفض';
             
-            $this->sendFcmNotification(
-                $user,
-                'تحديث حالة الموعد',
-                "تم {$statusText} موعدك رقم {$appointment->id}",
-                [
-                    'type' => 'appointment_status',
-                    'appointment_id' => (string) $appointment->id,
-                    'status' => $status,
-                    'scheduled_at' => $appointment->scheduled_at->toIso8601String(),
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
-                ]
-            );
+    //         $this->sendFcmNotification(
+    //             $user,
+    //             'تحديث حالة الموعد',
+    //             "تم {$statusText} موعدك رقم {$appointment->id}",
+    //             [
+    //                 'type' => 'appointment_status',
+    //                 'appointment_id' => (string) $appointment->id,
+    //                 'status' => $status,
+    //                 'scheduled_at' => $appointment->scheduled_at->toIso8601String(),
+    //                 'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
+    //             ]
+    //         );
             
-            return true;
-        } catch (Throwable $e) {
-            Log::error('فشل إرسال إشعار حالة الموعد', [
-                'appointment_id' => $appointment->id,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
-    }
+    //         return true;
+    //     } catch (Throwable $e) {
+    //         Log::error('فشل إرسال إشعار حالة الموعد', [
+    //             'appointment_id' => $appointment->id,
+    //             'error' => $e->getMessage()
+    //         ]);
+    //         return false;
+    //     }
+    // }
 
-    /**
-     * دالة مساعدة لإرسال إشعار FCM
-     */
+   
     protected function sendFcmNotification(?User $user, string $title, string $body, array $data = []): bool
     {
         if (!$user || !$user->fcm_token) {
