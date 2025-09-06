@@ -142,12 +142,12 @@ class CourseService
     {
         $course = Course::findOrFail($id);
 
-        // // التحقق من الصلاحيات
-        if (!$user->hasRole('admin') && !($user->hasRole('vet') && $course->doctor_id == $user->id)) {
-            throw new \Exception('غير مصرح بهذا الإجراء');
-        }
+     
+        // if (!$user->hasRole('admin') && !($user->hasRole('vet') && $course->doctor_id == $user->id)) {
+        //     throw new \Exception('غير مصرح بهذا الإجراء');
+        // }
 
-        // حذف الفيديو المرتبط
+    
         if ($course->video) {
             Storage::disk('public')->delete($course->video);
         }
@@ -157,27 +157,23 @@ class CourseService
     public function addView($courseId, $userId)
     {
         try {
-            // 1. البحث عن الكورس
             $course = Course::findOrFail($courseId);
 
-            // 2. التحقق إذا كان المستخدم مرتبط بالكورس في pivot (جدول course_user)
             $interaction = $course->users()->where('user_id', $userId)->first();
 
             if ($interaction) {
-                // 3. إذا كان المستخدم موجود مسبقاً → تحديث وقت المشاهدة فقط
                 $course->users()->updateExistingPivot($userId, [
                     'last_watched_at' => now(),
                 ]);
 
                 return [
                     'success' => true,
-                    'video_views' => $interaction->pivot->video_views, // عدد المشاهدات المخزنة
+                    'video_views' => $interaction->pivot->video_views, 
                     'message' => 'تم تحديث وقت المشاهدة فقط',
                     'counted' => false
                 ];
             }
 
-            // 4. إذا ما كانش موجود → أول مشاهدة، نعمل attach
             $course->users()->attach($userId, [
                 'video_views' => 1,
                 'is_liked' => false,
@@ -191,7 +187,6 @@ class CourseService
                 'counted' => true
             ];
         } catch (\Exception $e) {
-            // 5. لو صار خطأ
             return [
                 'success' => false,
                 'message' => 'حدث خطأ: ' . $e->getMessage()
@@ -204,6 +199,7 @@ class CourseService
         {
             return DB::transaction(function () use ($courseId, $userId) {
                 $course = Course::findOrFail($courseId);
+
                 $existingInteraction = $course->users()->where('user_id', $userId)->first();
                 
                 if ($existingInteraction) {
@@ -250,10 +246,9 @@ class CourseService
             'users' => function($query) {
                 $query->select('users.id', 'users.name', 'users.email');
             },
-            'ratings.user' // جلب التقييمات مع معلومات المستخدم
+            'ratings.user'  
         ])->findOrFail($courseId);
 
-        // التحقق إذا الطبيب هو صاحب الكورس
         if ($doctorId && $course->doctor_id != $doctorId) {
             throw new \Exception('غير مصرح بالوصول إلى إحصائيات هذا الكورس');
         }
@@ -262,12 +257,10 @@ class CourseService
             'course_id' => $course->id,
             'course_name' => $course->name,
 
-            // 📊 المشاهدات واللايكات
             'total_views' => $course->users()->sum('video_views'),
             'total_likes' => $course->users()->wherePivot('is_liked', true)->count(),
             'total_unique_viewers' => $course->users()->count(),
 
-            // 👀 آخر 10 مشاهدات
             'recent_views' => $course->users()
                 ->orderBy('pivot_last_watched_at', 'desc')
                 ->limit(10)
@@ -281,7 +274,6 @@ class CourseService
                     ];
                 }),
 
-            // ❤️ المستخدمين اللي عملوا لايك
             'liked_users' => $course->users()
                 ->wherePivot('is_liked', true)
                 ->get()
@@ -293,7 +285,6 @@ class CourseService
                     ];
                 }),
 
-            // ⭐ التقييمات
             'average_rating' => $course->ratings->avg('rating'),
             'ratings_count' => $course->ratings->count(),
             'recent_ratings' => $course->ratings()

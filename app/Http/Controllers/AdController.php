@@ -19,18 +19,22 @@ class AdController extends Controller
         $result = $this->adService->createAdWithMedia($request);
         return response()->json($result);
     }
+
     public function show_All_Ads(Request $request)
     {
         $result = $this->adService->getAllAds_for_user();
         return response()->json($result);
     }
 
-    public function show($id)
-{
-    $ad = Ad::findOrFail($id);
-    return response()->json([
-        'status' => true,
-        'data' => $ad // أو استخدام Resource إذا كنت تستخدمه
-    ]);
-}
+    public function showUserAds(Request $request)
+    {
+        $result = $this->adService->getUserAds();
+        return response()->json($result);
+    }
+    
+      public function show($id)
+    {
+        $result = $this->adService->getAdDetails($id);
+        return response()->json($result);
+    }
 }

@@ -117,6 +117,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
         Route::post('/ads/user', [AdController::class, 'store']);
         Route::get('/ads/show/user', [AdController::class, 'show_All_Ads']);
         Route::get('/ads/{id}/publisher', [AdController::class, 'show']);
+        Route::get('/user-ads', [AdController::class, 'showUserAds']);
         // التبني
         Route::post('/adoptions/store/re', [AdoptionController::class, 'requestAdoption']);
         Route::get('/adoptions/my', [AdoptionController::class, 'myAdoptions']);
@@ -200,9 +201,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/animal-cases/immediate', [StafController::class, 'listImmediateCases']);
     Route::get('/doctors', [StafController::class, 'availableDoctors']);
     Route::post('/appointments/schedule/{caseId}', [StafController::class, 'scheduleImmediate']);
-    Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
-Route::get('appointments/processed', [AppointmentController::class, 'getProcessedAppointments']);
-Route::get('appointments/status/{status}', [AppointmentController::class, 'getAppointmentsByStatus']);
+   // Route::post('/employee/appointment/{id}/respond', [AppointmentController::class, 'respond']);
+    Route::get('appointments/processed', [AppointmentController::class, 'getProcessedAppointments']);
+    Route::get('appointments/status/{status}', [AppointmentController::class, 'getAppointmentsByStatus']);
 
     Route::get('/cases/regular', [StafController::class, 'listRegularCases']);//عرض الحالات العادية
     Route::get('/cases/immediate', [StafController::class, 'listImmediateCases']); //عرض الحالات الضرورية
@@ -210,17 +211,17 @@ Route::get('appointments/status/{status}', [AppointmentController::class, 'getAp
     Route::post('/user/toggle-availability', [AuthController::class, 'toggleAvailability']);
 
 
-       Route::get('/volunteer-types', [VolunteerTypeController::class, 'index']); // عرض جميع الأقسام
+    Route::get('/volunteer-types', [VolunteerTypeController::class, 'index']); // عرض جميع الأقسام
     Route::post('/volunteer-types/store', [VolunteerTypeController::class, 'store']); // إنشاء قسم جديد
     Route::get('/volunteer-types/{id}', [VolunteerTypeController::class, 'show']); // عرض قسم معين (يحتاج تعديل في الـ Controller)
     Route::put('/volunteer-types/{id}', [VolunteerTypeController::class, 'update']); // تحديث قسم
     Route::delete('volunteer-types/{id}', [VolunteerTypeController::class, 'destroy']); // حذف قسم
     Route::get('/volunteer/with-count', [VolunteerTypeController::class, 'indexWithCount']);
-Route::get('/volunteer-types/{id}/volunteers', [VolunteerTypeController::class, 'showVolunteers']);
+    Route::get('/volunteer-types/{id}/volunteers', [VolunteerTypeController::class, 'showVolunteers']);
 
-Route::get('/events/dashboard', [EventController::class, 'dashboard']);
+    Route::get('/events/dashboard', [EventController::class, 'dashboard']);
 
- Route::get('/ambulances', [AmbulanceController::class, 'index']);
+    Route::get('/ambulances', [AmbulanceController::class, 'index']);
     Route::post('/ambulances', [AmbulanceController::class, 'store']);
     Route::put('/ambulances/{ambulance}', [AmbulanceController::class, 'update']);
     Route::delete('/ambulances/{ambulance}', [AmbulanceController::class, 'destroy']);
@@ -234,7 +235,7 @@ Route::get('/events/dashboard', [EventController::class, 'dashboard']);
 
 
 // ==== مسارات الإدمن (Admin) ====
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/volunteer/requests', [VolunteerController::class, 'index']);
     Route::post('/volunteer/requests/{id}', [VolunteerController::class, 'respond']);
     Route::post('/admin/posts/{id}/respond', [AdminPostController::class, 'respond']);
@@ -271,9 +272,9 @@ Route::middleware(['auth:sanctum', 'role:vet'])->group(function () {
     Route::post('/doctor/reports/{id}', [ReportController::class, 'update']);
     Route::delete('/doctor/reports/{id}', [ReportController::class, 'destroy']);
     Route::patch('/reports/{id}/status', [ReportController::class, 'updateStatus']);
-      Route::get('/reports/search', [ReportController::class, 'search']);
+    Route::get('/reports/search', [ReportController::class, 'search']);
 
- Route::get('/animal-cases/approved', [AnimalCaseController::class, 'getApprovedCases']); // عرض حالات الحيوانات
+   Route::get('/animal-cases/approved', [AnimalCaseController::class, 'getApprovedCases']); // عرض حالات الحيوانات
     Route::post('/appointments/request', [AppointmentController::class, 'request']); // طلب موعد
    Route::get('/doctor/appointments', [AppointmentController::class, 'getDoctorAppointments']);
 

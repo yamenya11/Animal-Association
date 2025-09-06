@@ -179,4 +179,79 @@ public function __construct(NotificationService $notificationService = null, Wal
                     'message' => 'تم جلب الإعلانات بنجاح'
                 ];
             }
+
+            public function getUserAds()
+        {
+            $user = Auth::user();
+
+            $ads = Ad::with(['media'])
+                ->where('user_id', $user->id)
+                ->get()
+                ->map(function ($ad) {
+                    return [
+                        'id' => $ad->id,
+                        'title' => $ad->title,
+                        'description' => $ad->description,
+                        'price' => $ad->price,
+                        'status' => $ad->status, // ✅ هنا نعرض مقبول أو مرفوض
+                        'media' => $ad->media->map(function ($media) {
+                            return [
+                                'id' => $media->id,
+                                'url' => $media->media_type === 'video' 
+                                    ? url("/api/stream-video/{$media->id}")
+                                    : config('app.url') . '/storage/' . $media->media_path,
+                                'type' => $media->media_type,
+                                'thumbnail' => $media->media_type === 'video'
+                                    ? config('app.url') . '/storage/video-thumbnails/' . pathinfo($media->media_path, PATHINFO_FILENAME) . '.jpg'
+                                    : config('app.url') . '/storage/' . $media->media_path,
+                            ];
+                        })->toArray()
+                    ];
+                });
+
+            return [
+                'status' => true,
+                'data' => $ads,
+                'message' => 'تم جلب إعلانات المستخدم'
+            ];
+        }
+
+
+        public function getAdDetails($id)
+        {
+            $ad = Ad::with(['user', 'media'])->findOrFail($id);
+
+            return [
+                'status' => true,
+                'data' => [
+                    'id' => $ad->id,
+                    'title' => $ad->title,
+                    'description' => $ad->description,
+                    'price' => $ad->price,
+                    'status' => $ad->status,
+                    'user' => [
+                        'id' => $ad->user->id,
+                        'name' => $ad->user->name,
+                        'email' => $ad->user->email,
+                    ],
+                    'media' => $ad->media->map(function ($media) {
+                        return [
+                            'id' => $media->id,
+                            'url' => $media->media_type === 'video' 
+                                ? url("/api/stream-video/{$media->id}")
+                                : config('app.url') . '/storage/' . $media->media_path,
+                            'type' => $media->media_type,
+                            'thumbnail' => $media->media_type === 'video'
+                                ? config('app.url') . '/storage/video-thumbnails/' . pathinfo($media->media_path, PATHINFO_FILENAME) . '.jpg'
+                                : config('app.url') . '/storage/' . $media->media_path,
+                        ];
+                    })->toArray()
+                ],
+                'message' => 'تم جلب تفاصيل الإعلان بنجاح'
+            ];
+        }
+
+
+
+
 }
