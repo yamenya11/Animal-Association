@@ -40,6 +40,7 @@ use \App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\StatisticsController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -365,6 +366,11 @@ Route::middleware(['auth:sanctum', 'role:employee'])->group(function () {
     Route::post('/employee/events/{eventId}/register', [EmployeeController::class, 'registerForEvent']);
     Route::post('/employee/events/{eventId}/cancel', [EmployeeController::class, 'cancelEventRegistration']);
     Route::get('/employee/my-events', [EmployeeController::class, 'getMyEvents']);
+
+       Route::get('/stats/general', [StatisticsController::class, 'generalStats']);
+    Route::get('/stats/general/appointments', [StatisticsController::class, 'appointmentStats']);
+    Route::get('/stats/general/animal-cases', [StatisticsController::class, 'animalCaseStats']);
+    Route::get('/stats/general/adoption-care', [StatisticsController::class, 'adoptionCareStats']);
 });
 
 // مسارات إدارة الحيوانات
