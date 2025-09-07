@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('animal_guides', function (Blueprint $table) {
-       $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->nullable();
+      Schema::table('animal_guides', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->nullable()->change();
+        });
 
+        // إضافة الـ foreign key
+        Schema::table('animal_guides', function (Blueprint $table) {
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -23,7 +27,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('animal_guides', function (Blueprint $table) {
-            //
+           $table->dropForeign(['user_id']);
         });
     }
 };
