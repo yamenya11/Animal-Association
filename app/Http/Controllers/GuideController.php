@@ -76,7 +76,7 @@ class GuideController extends Controller
         $path = $request->file('image')->store('animal_guides', 'public');
         $validated['image'] = $path;
     }
-
+     $validated['user_id'] = auth()->id();
     $animalGuide = AnimalGuide::create($validated);
 
     $animalGuide->image_url = $animalGuide->image ? config('app.url') . '/storage/' . $animalGuide->image : null;
@@ -88,6 +88,31 @@ class GuideController extends Controller
     ], 201);
 }
   
+      public function getguidForDoctror(): JsonResponse
+{
+    if (!auth()->user()->hasRole('vet')) {
+        return response()->json([
+            'status' => false,
+            'message' => 'مسموح فقط للأطباء بعرض الأدلة'
+        ], 403);
+    }
+
+   $animalGuides = AnimalGuide::where('user_id', auth()->id())->get();
+
+   $animalGuides = $animalGuides->map(function ($a) {
+        $a->image_url = $a->image ? config('app.url') . '/storage/' . $a->image : null;
+        return $a;
+    });
+    return response()->json([
+        'status' => true,
+        'message' => $animalGuides->isEmpty()
+            ? 'لا توجد أدلة مرتبطة بهذا الطبيب'
+            : 'تم جلب أدلة الطبيب بنجاح',
+        'data' => $animalGuides
+    ], 200);
+
+}
+
  public function updateGuide(Request $request, $id): JsonResponse
 {
     if (!auth()->user()->hasAnyRole(['admin', 'employee', 'vet'])) {
