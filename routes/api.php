@@ -54,7 +54,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
             Route::delete('/guides/{id}', [GuideController::class, 'deleteGuide']);
              Route::get('/guides/fordoctor', [GuideController::class, 'getguidForDoctror']);
             Route::get('/guides', [GuideController::class, 'listAllByCategory']);
-             Route::get('/guides', [GuideController::class, 'index']);
+             Route::get('/guides/catgory', [GuideController::class, 'index']);
             Route::get('/guides/{id}', [GuideController::class, 'showGuide']);
           
 
