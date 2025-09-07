@@ -22,7 +22,7 @@ class AppointmentService
                 'animal_case_id'  => 'required|exists:animal_cases,id',
                 'scheduled_date'  => 'required|date|after_or_equal:today',
                 'scheduled_time'  => 'required|date_format:H:i',
-                'description'     => 'required|string|min:10'
+                'description'     => 'nullable|string|min:1'
             ]);
 
             $animalCase = AnimalCase::find($validated['animal_case_id']);

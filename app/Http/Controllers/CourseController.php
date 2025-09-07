@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Models\CatgoryCourse;
+
 use Illuminate\Support\Facades\Storage;
 class CourseController extends Controller
 {
@@ -221,4 +222,14 @@ class CourseController extends Controller
             ], 500);
         }
     }
+
+            public function getCategories()
+                {
+                    $categories = CatgoryCourse::all();
+
+                    return response()->json([
+                        'success' => true,
+                        'data' => $categories
+                    ], 200);
+                }
 }
