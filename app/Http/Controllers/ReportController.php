@@ -196,7 +196,7 @@ public function store(Request $request)
 
 public function search(Request $request)
     {
-        $query = Report::with('animal');
+        $query = Report::with('animalCase');
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
