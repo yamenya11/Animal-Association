@@ -32,9 +32,7 @@ public function getLikesCount($postId): int
         return $post->likes()->count();
     }
 
-    /**
-     * الحصول على جميع المنشورات مع عدد الإعجابات لكل منها
-     */
+  
     public function getAllLike(): array
     {
         return Post::withCount('likes')

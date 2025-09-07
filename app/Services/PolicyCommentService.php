@@ -16,9 +16,7 @@ class PolicyCommentService
         $this->commentPolicy = $commentPolicy;
     }
 
-    /**
-     * إضافة تعليق جديد
-     */
+ 
     public function createComment(User $user, array $data): Comment
     {
         return Comment::create([
@@ -29,9 +27,7 @@ class PolicyCommentService
         ]);
     }
 
-    /**
-     * تحديث تعليق
-     */
+  
     public function updateComment(User $user, Comment $comment, string $content): Comment
     {
         if (!$this->commentPolicy->edit($user, $comment)) {
@@ -52,9 +48,7 @@ class PolicyCommentService
             ->get();
     }
 
-    /**
-     * الحصول على ردود تعليق معين
-     */
+   
     public function getCommentReplies(int $commentId): Collection
     {
         return Comment::with('user')
@@ -62,7 +56,6 @@ class PolicyCommentService
             ->latest()
             ->get();
     }
-// app/Services/CommentService.php
 
 public function forceDeleteComment(User $user, Comment $comment): array
 {

@@ -81,9 +81,12 @@ class SearchService
 
     protected function searchPosts($query)
     {
-        return Post::where('title', 'LIKE', "%{$query}%")
-            ->orWhere('content', 'LIKE', "%{$query}%")
-            ->get()
+      return Post::where(function ($q) use ($query) {
+            $q->where('title', 'LIKE', "%{$query}%")
+              ->orWhere('content', 'LIKE', "%{$query}%");
+        })
+        ->where('status', 'approved') 
+        ->get()
             ->map(function ($post) use ($query) {
                 $post->model_type = 'posts';
                 $post->relevance = $this->calculateRelevance($post, $query, ['title', 'content']);
